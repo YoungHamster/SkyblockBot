@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "skyblock-bot",
+  "version": "${version}",
+  "name": "Skyblock Bot",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/skyblock-bot/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.viktorx.skyblockbot.client.SkyblockBotClient"
+    ],
+    "main": [
+      "com.viktorx.skyblockbot.SkyblockBot"
+    ]
+  },
+  "mixins": [
+    "skyblock-bot.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.14.8",
+    "fabric": "*",
+    "minecraft": "1.18.2"
+  }
+}
