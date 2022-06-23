@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.client;
 
+import com.viktorx.skyblockbot.keybinds.Keybinds;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -8,6 +9,5 @@ import net.fabricmc.api.Environment;
 public class SkyblockBotClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        Bar
     }
 }
