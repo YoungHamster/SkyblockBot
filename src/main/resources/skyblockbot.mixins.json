@@ -4,6 +4,7 @@
   "package": "com.viktorx.skyblockbot.mixins",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "PlayerListHudMixin"
   ],
   "client": [
   ],

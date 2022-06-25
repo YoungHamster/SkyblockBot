@@ -2,6 +2,7 @@ package com.viktorx.skyblockbot.skyblock;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.ScoreboardPlayerScore;
@@ -30,14 +31,14 @@ public class ScoreboardUtils {
      * if the worlds not loaded, scoreboard isnt present
      * or if the sidebar objective isnt created.
      */
-    public static List<String> getSidebarLines(Scoreboard worldScoreboard) {
+    public static List<String> getLines(int SLOT_ID) {
         List<String> lines = new ArrayList<>();
-        Scoreboard scoreboard = worldScoreboard;
+        Scoreboard scoreboard = MinecraftClient.getInstance().world.getScoreboard();
         if (scoreboard == null) {
             return lines;
         }
 
-        ScoreboardObjective objective = scoreboard.getObjectiveForSlot(1);
+        ScoreboardObjective objective = scoreboard.getObjectiveForSlot(SLOT_ID);
 
         if (objective == null) {
             return lines;

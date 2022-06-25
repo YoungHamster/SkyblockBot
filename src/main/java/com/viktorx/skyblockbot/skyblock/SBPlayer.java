@@ -6,12 +6,14 @@ public class SBPlayer {
     private String currentServer;
     private SBProfile profile;
     private SBGoal goal;
-    private MinecraftClient client;
 
     public void run() {
-        client.player.sendChatMessage("/l");
-        client.player.sendChatMessage("/play sb");
-
+        MinecraftClient client = MinecraftClient.getInstance();
+        if(!SBUtils.isServerSkyblock()) {
+            client.player.sendChatMessage("/l");
+            client.player.sendChatMessage("/play sb");
+        }
+        profile.loadData();
     }
 
     public String getCurrentIsland() {
