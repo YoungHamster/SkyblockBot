@@ -1,12 +1,17 @@
 package com.viktorx.skyblockbot.skyblock;
 
+import com.viktorx.skyblockbot.SkyblockBot;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.screen.slot.Slot;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public class SBUtils {
@@ -72,5 +77,33 @@ public class SBUtils {
             return -1;
         }
         return (long) Float.parseFloat(purseLine.replace("Purse:", ""));
+    }
+
+    public static String getSlotText(int slot) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        return client.player.getInventory().getStack(slot).getName().getString();
+    }
+
+    // tries to get slot with that name multiple times to account for lag
+    // throws TimeoutException if doesn't find needed stack name after set amount of time
+    public static Slot getSlot(String itemStackName) throws TimeoutException {
+        List<Slot> slotList;
+        MinecraftClient client = MinecraftClient.getInstance();
+        int numberOfTries = 25;
+        int i = 0;
+        do {
+            slotList = client.player.currentScreenHandler.slots.stream()
+                    .filter(slot -> slot.getStack().getName().getString().contains(itemStackName))
+                    .collect(Collectors.toList());
+
+            try {
+                Thread.sleep(40);
+            } catch (InterruptedException ignored) {}
+            i++;
+            if(i > numberOfTries) {
+               throw new TimeoutException();
+            }
+        } while (slotList.size() == 0);
+        return slotList.get(0);
     }
 }

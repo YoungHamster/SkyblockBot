@@ -1,18 +1,31 @@
 package com.viktorx.skyblockbot.keybinds;
 
+import baritone.api.BaritoneAPI;
 import com.viktorx.skyblockbot.NotBotCore;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.skyblock.SBUtils;
-import com.viktorx.skyblockbot.skyblock.ScoreboardUtils;
+import com.viktorx.skyblockbot.Utils;
+import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Keybinds {
     private static KeyBinding startStopBot;
     private static KeyBinding printTestInfo;
+
+    private static final Queue<KeyBinding> tickKeyPressQueue = new LinkedBlockingQueue<>();
+
+    public static List<ItemStack> currentInventory = null;
 
     private static boolean wasPressed = false;
 
@@ -32,6 +45,12 @@ public class Keybinds {
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+        });
+
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            CompletableFuture<Void> clickTick =
+                    CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
+
             if (startStopBot.wasPressed()) {
                 if (!wasPressed) {
                     NotBotCore.run(client.player);
@@ -40,13 +59,40 @@ public class Keybinds {
                 }
                 wasPressed = !wasPressed;
             }
-        });
 
-        ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            if (printTestInfo.wasPressed()) {
-                SkyblockBot.LOGGER.info(SBUtils.getBankBalance());
+            if (printTestInfo.isPressed()) {
+                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        SkyblockBot.LOGGER.info("InterruptedException. Don't care");
+                    }
+                    for(ItemStack item: client.player.currentScreenHandler.getStacks()) {
+                        SkyblockBot.LOGGER.info(item.getName().getString());
+                    }
+                });
             }
         });
 
+    }
+
+    // puts keybinds in a queue where no more than one key gets pressed every tick
+    public static void asyncPressKeyAfterTick(KeyBinding key) {
+        Keybinds.tickKeyPressQueue.add(key);
+    }
+
+    private static void asyncPressKeyAfterTick() {
+        KeyBinding key;
+        key = Keybinds.tickKeyPressQueue.poll();
+        if (key != null) {
+            KeyBinding.onKeyPressed(((KeyBindingMixin) key).getBoundKey());
+            key.setPressed(true);
+            try {
+                Thread.sleep(40); // press button for 2 ticks, maybe make it random later
+            } catch (InterruptedException e) {
+                SkyblockBot.LOGGER.info("InterruptedException. Don't care");
+            }
+            key.setPressed(false);
+        }
     }
 }
