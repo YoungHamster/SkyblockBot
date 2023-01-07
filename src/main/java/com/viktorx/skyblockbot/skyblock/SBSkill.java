@@ -1,13 +1,16 @@
 package com.viktorx.skyblockbot.skyblock;
 
+import com.viktorx.skyblockbot.Utils;
+
 public class SBSkill {
 
     private final String name;
     private int level;
-    private float exp;
 
-    public SBSkill(String name) {
-        this.name = name;
+    public SBSkill(String itemStackName) {
+        String[] strings = itemStackName.split(" ");
+        name = strings[0];
+        level = Utils.convertRomanToInt(strings[1]);
     }
 
 
@@ -23,11 +26,9 @@ public class SBSkill {
         this.level = level;
     }
 
-    public float getExp() {
-        return exp;
-    }
-
-    public void setExp(float exp) {
-        this.exp = exp;
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append(":").append(level);
+        return sb.toString();
     }
 }

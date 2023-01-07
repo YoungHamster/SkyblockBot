@@ -1,7 +1,6 @@
 package com.viktorx.skyblockbot.mixins;
 
-import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.keybinds.Keybinds;
+import com.viktorx.skyblockbot.CurrentInventory;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.InventoryS2CPacket;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ClientPlayNetworkHandlerMixin {
     @Inject(method = "onInventory", at = @At("HEAD"))
     public void interceptInventory(InventoryS2CPacket packet, CallbackInfo ci) {
-        Keybinds.currentInventory = packet.getContents();
-        SkyblockBot.LOGGER.info("SyncID: " + packet.getSyncId());
+        CurrentInventory.setItemStacks(packet.getContents());
+        CurrentInventory.setSyncID(packet.getSyncId());
     }
 }

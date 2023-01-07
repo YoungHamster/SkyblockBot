@@ -1,22 +1,15 @@
 package com.viktorx.skyblockbot.keybinds;
 
-import baritone.api.BaritoneAPI;
 import com.viktorx.skyblockbot.NotBotCore;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
 import com.viktorx.skyblockbot.skyblock.SBPlayer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.system.CallbackI;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -24,12 +17,9 @@ import java.util.concurrent.TimeoutException;
 
 public class Keybinds {
     private static KeyBinding startStopBot;
-    private static KeyBinding collectCrafts;
     private static KeyBinding printTestInfo;
 
     private static final Queue<KeyBinding> tickKeyPressQueue = new LinkedBlockingQueue<>();
-
-    public static List<ItemStack> currentInventory = null;
 
     private static boolean wasPressed = false;
 
@@ -41,13 +31,6 @@ public class Keybinds {
                 InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
                 GLFW.GLFW_KEY_O, // The keycode of the key
                 "category.skyblockbot.toggle" // The translation key of the keybinding's category.
-        ));
-
-        collectCrafts = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.skyblockbot.spook2",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_C,
-                "category.skyblockbot.collectCrafts"
         ));
 
         printTestInfo = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -73,18 +56,14 @@ public class Keybinds {
                 wasPressed = !wasPressed;
             }
 
-            if(collectCrafts.wasPressed()) {
-                sbplayer.collectCrafts();
-            }
-
-            if (printTestInfo.isPressed()) {
-                if(sbplayer == null) {
+            if (printTestInfo.wasPressed()) {
+                if (sbplayer == null) {
                     sbplayer = new SBPlayer();
                 }
 
                 CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                     try {
-                        sbplayer.run();
+                        sbplayer.TESTFUNCTION();
                     } catch (TimeoutException e) {
                         SkyblockBot.LOGGER.error("bot couldn't run for some reason");
                         e.printStackTrace();
