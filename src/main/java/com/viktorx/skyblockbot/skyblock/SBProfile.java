@@ -14,9 +14,10 @@ public class SBProfile {
     private long bankBalance;
     private long purse;
 
-    public void loadData() {
+    public void loadData() throws TimeoutException {
         purse = SBUtils.getPurse();
         bankBalance = SBUtils.getBankBalance();
+        loadSkills();
     }
 
     private void loadSkills() throws TimeoutException {
@@ -27,5 +28,17 @@ public class SBProfile {
 
         int rmb = ((KeyBindingMixin) client.options.attackKey).getBoundKey().getCode();
         client.player.playerScreenHandler.onSlotClick(skillsSlot.id, rmb, SlotActionType.PICKUP, client.player);
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Bank balance: ").append(bankBalance);
+        sb.append("Purse: ").append(purse);
+        sb.append("Skills: {");
+        skills.forEach(sbSkill -> sb.append(sbSkill.getName())
+                .append(": exp-").append(sbSkill.getExp())
+                .append(", level-").append(sbSkill.getLevel()) );
+        sb.append("}");
+        return sb.toString();
     }
 }
