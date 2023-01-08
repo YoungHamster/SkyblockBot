@@ -161,23 +161,10 @@ public class SBUtils {
 
     // waits up to 5 seconds or until item in lower left corner of supposed big chest is loaded
     private static void waitForMenuToLoad() throws TimeoutException {
-        MinecraftClient client = MinecraftClient.getInstance();
-        ItemStack itemStack = null;
-        int numberOfTries = 100;
-        int i = 0;
-        do {
-            // basically waiting until last item(slot 53) loads to make sure everything loaded
-            itemStack = client.player.currentScreenHandler.slots.get(53).getStack();
-
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException ignored) {
-            }
-            i++;
-            if (i > numberOfTries) {
-                throw new TimeoutException();
-            }
-        } while (itemStack.getName().getString() == "Air");
+        try {
+            Thread.sleep(2500);
+        } catch (InterruptedException ignored) {
+        }
     }
 
     public static void waitForMenu() throws TimeoutException {

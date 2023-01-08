@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.skyblock;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.skyblock.movementstuff.SBGoal;
 import net.minecraft.client.MinecraftClient;
 
 import java.io.BufferedWriter;
@@ -43,7 +44,7 @@ public class SBPlayer {
 
     public void logPlayerInfo() {
 
-        String sb = "Player data:\n" + "Current server: " + currentServer +
+        String sb = "Player data:\n" + "Current server: " + currentServer + "\n" +
                 profile.toString();
 
         SkyblockBot.LOGGER.info(sb);

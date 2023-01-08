@@ -2,10 +2,14 @@ package com.viktorx.skyblockbot.skyblock;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
+import com.viktorx.skyblockbot.skyblock.flipping.SBRecipe;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,29 +51,35 @@ public class SBProfile {
         MinecraftClient client = MinecraftClient.getInstance();
         Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[8]); // selects hotbar slot 9(sb menu)
         Keybinds.asyncPressKeyAfterTick(client.options.useKey); // opens sb menu with rmb click
+        SBUtils.waitForMenu();
 
         SBUtils.leftClickOnSlot("Recipe Book");
+        SBUtils.waitForMenu();
         List<Slot> recipeSlots = new ArrayList<>();
-        recipeSlots.add(SBUtils.getSlot("Farming"));
-        recipeSlots.add(SBUtils.getSlot("Mining"));
-        recipeSlots.add(SBUtils.getSlot("Combat"));
-        recipeSlots.add(SBUtils.getSlot("Fishing"));
-        recipeSlots.add(SBUtils.getSlot("Foraging"));
-        recipeSlots.add(SBUtils.getSlot("Special"));
+        try {
+            recipeSlots.add(SBUtils.getSlot("Farming"));
+            recipeSlots.add(SBUtils.getSlot("Mining"));
+            recipeSlots.add(SBUtils.getSlot("Combat"));
+            recipeSlots.add(SBUtils.getSlot("Fishing"));
+            recipeSlots.add(SBUtils.getSlot("Foraging"));
+            recipeSlots.add(SBUtils.getSlot("Special"));
+        } catch (TimeoutException ignored) {}
         for (Slot slot : recipeSlots) {
-            SkyblockBot.LOGGER.info(slot.getStack().getName().getString());
             SBUtils.leftClickOnSlot(slot);
             SBUtils.waitForMenu();
             // check if there is 'next page' button
             while (SBUtils.anySlotsWithName("Next Page")) {
                 unlockedRecipes.addAll(parseRecipesMenuPage());
+                saveshit();
                 SBUtils.leftClickOnSlot("Next Page");
                 SBUtils.waitForMenu();
             }
             unlockedRecipes.addAll(parseRecipesMenuPage());
+            saveshit();
             SBUtils.leftClickOnSlot("Go Back");
             SBUtils.waitForMenu();
         }
+        SkyblockBot.LOGGER.info("Closing inventory");
         Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
     }
 
@@ -86,8 +96,6 @@ public class SBProfile {
                         || SBUtils.getSlotText(slotID).contains("Minion")
                         || SBUtils.getSlotText(slotID).contains("Air")
                         || SBUtils.getSlotText(slotID).contains(" Pet")) {
-
-                    SkyblockBot.LOGGER.info("Im a fucking dickhead retarded cunt");
                     continue;
                 }
                 SBUtils.leftClickOnSlot(slotID);
@@ -102,6 +110,7 @@ public class SBProfile {
 
     private SBRecipe parseSBRecipe() throws TimeoutException {
         String result = SBUtils.getSlotText(25);
+        SkyblockBot.LOGGER.info("Parsing recipe for: " + result);
         Map<String, Integer> ingredients = new HashMap<>();
         for (int i = 1; i < 4; i++) {
             for (int j = 1; j < 4; j++) {
@@ -128,12 +137,23 @@ public class SBProfile {
         sb.append("Purse: ").append(purse).append("\n");
         sb.append("Skills: {");
         skills.forEach(sbSkill -> sb.append(sbSkill.toString()).append(","));
-        sb.deleteCharAt(sb.lastIndexOf(","));
+        sb.deleteCharAt(sb.length() - 1);
         sb.append("}").append("\n");
         sb.append("Unlocked recipes: {");
         unlockedRecipes.forEach(sbRecipe -> sb.append(sbRecipe.toString()).append(","));
-        sb.deleteCharAt(sb.lastIndexOf(","));
+        sb.deleteCharAt(sb.length() - 1);
         sb.append("}").append("\n");
         return sb.toString();
+    }
+
+    private void saveshit() {
+        String sb = toString();
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\Nobody\\Desktop\\SBBotTestInfo.txt"));
+            writer.write(sb);
+            writer.close();
+        } catch (IOException ignored) {
+
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.skyblock;
+package com.viktorx.skyblockbot.skyblock.flipping;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -8,7 +8,7 @@ public class SBRecipe {
     Map<String, Integer> ingridients;
     String result;
 
-    SBRecipe(Map<String, Integer> ingridients, String result) {
+    public SBRecipe(Map<String, Integer> ingridients, String result) {
         this.ingridients = ingridients;
         this.result = result;
     }
@@ -18,7 +18,7 @@ public class SBRecipe {
         sb.append(result);
         sb.append(":{");
         ingridients.forEach((item, amount) -> sb.append(item).append(":").append(amount).append(","));
-        sb.deleteCharAt(sb.lastIndexOf(","));
+        sb.deleteCharAt(sb.length() - 1);
         sb.append("}");
         return sb.toString();
     }

@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.skyblock;
+package com.viktorx.skyblockbot.skyblock.movementstuff;
 
 public class SBGoal {
     private String island;
