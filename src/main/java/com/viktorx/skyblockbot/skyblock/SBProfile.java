@@ -108,7 +108,7 @@ public class SBProfile {
         return recipes;
     }
 
-    private SBRecipe parseSBRecipe() throws TimeoutException {
+    private SBRecipe parseSBRecipe() {
         String result = SBUtils.getSlotText(25);
         SkyblockBot.LOGGER.info("Parsing recipe for: " + result);
         Map<String, Integer> ingredients = new HashMap<>();

@@ -1,6 +1,7 @@
 plugins {
     id 'fabric-loom' version '0.12-SNAPSHOT'
     id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 version = project.mod_version
@@ -12,12 +13,17 @@ repositories {
     // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html
     // for more information about repositories.
+    mavenCentral()
     flatDir {
         dirs 'libs'
     }
 }
 
 dependencies {
+    // https://mvnrepository.com/artifact/mysql/mysql-connector-java
+    // ебал я в рот вашу джаву с еёйными блять системами сборки. сука почему нельзя как в питоне????? да потому что тупые джависты блять
+    shadow(implementation('mysql:mysql-connector-java:8.0.31'))
+
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -67,6 +73,16 @@ jar {
     from("LICENSE") {
         rename { "${it}_${project.archivesBaseName}" }
     }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    archiveClassifier.set("dev")
+}
+
+remapJar {
+    dependsOn(shadowJar)
+    inputFile = tasks.shadowJar.archiveFile
 }
 
 // configure the maven publication

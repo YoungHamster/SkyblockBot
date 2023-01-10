@@ -4,6 +4,8 @@ import com.viktorx.skyblockbot.NotBotCore;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
 import com.viktorx.skyblockbot.skyblock.SBPlayer;
+import com.viktorx.skyblockbot.skyblock.flipping.BZNameConverter;
+import com.viktorx.skyblockbot.skyblock.flipping.CraftPriceCalculator;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
@@ -57,19 +59,7 @@ public class Keybinds {
             }
 
             if (printTestInfo.wasPressed()) {
-                if (sbplayer == null) {
-                    sbplayer = new SBPlayer();
-                }
-
-                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-                    try {
-                        sbplayer.TESTFUNCTION();
-                    } catch (TimeoutException e) {
-                        SkyblockBot.LOGGER.error("bot couldn't run for some reason");
-                        e.printStackTrace();
-                    }
-                    sbplayer.logPlayerInfo();
-                });
+                CompletableFuture<Void> future = CompletableFuture.runAsync(CraftPriceCalculator::debugPrintRecipesPrices);
             }
         });
 

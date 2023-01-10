@@ -1,5 +1,13 @@
 package com.viktorx.skyblockbot;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.function.LongSupplier;
 
 public class Utils {
@@ -61,5 +69,45 @@ public class Utils {
         }
         //returns corresponding integer value
         return total;
+    }
+
+    public static String getSBApiPage(String URL) {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(URL))
+                .GET() // GET is default
+                .build();
+        String result = "";
+        do {
+            try {
+                HttpResponse<String> response = client.send(request,
+                        HttpResponse.BodyHandlers.ofString());
+                result = response.body();
+            } catch (IOException | InterruptedException bs) {
+                SkyblockBot.LOGGER.info("Some bs happened, no connection to hypixel api");
+            }
+        } while (!result.startsWith("{\"success\":true"));
+
+        return result;
+    }
+
+    // basically if you have "{"stuff":"stuff","otherstuff":420}"
+    // and give it "\"stuff\"" as an argument it will return
+    // ",\"otherstuff\":420}" and "\"stuff\""
+    // if you give it "\"otherstuff\"" it will return } and "420"
+    public static Pair<String, String> getJSONTokenAndCutItOut(String token, String json) {
+        // is this shitcode or was there really no better way of doing it?
+        // who knows
+        int index = json.indexOf(token);
+        if(index == -1) {
+            return new ImmutablePair<>(null, null);
+        }
+        json = json.substring(index);
+        int tokenValueStart = json.indexOf(":") + 1;
+        if(json.indexOf("}") < json.indexOf(",")) {
+            return new ImmutablePair<>(json.substring(json.indexOf("}") + 1), json.substring(tokenValueStart, json.indexOf("}")));
+        } else {
+            return new ImmutablePair<>(json.substring(json.indexOf(",") + 1), json.substring(tokenValueStart, json.indexOf(",")));
+        }
     }
 }
