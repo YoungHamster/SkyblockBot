@@ -10,10 +10,13 @@ CREATE TABLE `all_auctions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `average_item_prices`;
-CREATE TABLE `average_item_prices` (
+
+DROP TABLE IF EXISTS `compact_ah_no_enchants`;
+CREATE TABLE `compact_ah_no_enchants` (
   `id` int NOT NULL AUTO_INCREMENT,
+  `timestamp` bigint NOT NULL,
+  `price` int NOT NULL,
+  `bin` bit NOT NULL,
   `productId` varchar(100) NOT NULL,
-  `avg_normalized_price` int NOT NULL,
-  `number_of_auctions_in_calculation` int NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

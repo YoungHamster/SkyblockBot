@@ -1,29 +1,33 @@
 package com.viktorx.skyblockbot.skyblock.flipping;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CraftPriceCalculator {
-    private static final Map<String, SBRecipe> recipes = new HashMap<>();
-    private static boolean wereRecipesLoaded = false;
+    public static final CraftPriceCalculator instance = new CraftPriceCalculator();
 
-    public static Float getRecipePrice(String itemName) {
-        if (!wereRecipesLoaded) {
-            loadRecipes();
-            SkyblockBot.LOGGER.info("Loaded recipes");
-            wereRecipesLoaded = true;
-        }
+    private CraftPriceCalculator() {
+        loadRecipes();
+    }
+
+    private final Map<String, SBRecipe> recipes = new HashMap<>();
+
+    public Double getRecipePrice(String itemName) {
         SBRecipe recipe = recipes.get(itemName);
-        float price = 0.0f;
-        for(Map.Entry<String, Integer> ingredient : recipe.getIngredients().entrySet()) {
-            Float ingrPrice = PriceFetcher.fetchItemPrice(ingredient.getKey());
-            if(ingrPrice != null) {
+        double price = 0.0f;
+        for (Map.Entry<String, Integer> ingredient : recipe.getIngredients().entrySet()) {
+            Double ingrPrice = PriceDatabase.instance.fetchItemPrice(ingredient.getKey());
+            if (ingrPrice != null) {
                 price = ingrPrice * ingredient.getValue() + price;
             } else {
                 return null; // this is why i can't use map.forEach() here
@@ -32,7 +36,7 @@ public class CraftPriceCalculator {
         return price;
     }
 
-    private static void loadRecipes() {
+    private void loadRecipes() {
         String file;
         try {
             BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\Nobody\\Documents\\IJProjects\\SkyblockBot\\src\\main\\resources\\recipes.txt"));
@@ -64,30 +68,19 @@ public class CraftPriceCalculator {
         }
     }
 
-    public static void debugPrintRecipes() {
-        if (!wereRecipesLoaded) {
-            loadRecipes();
-            wereRecipesLoaded = true;
-        }
-        recipes.forEach((name, recipe) -> SkyblockBot.LOGGER.info(recipe.toString()));
-    }
-
-    public static void debugPrintRecipesPrices() {
-        if (!wereRecipesLoaded) {
-            loadRecipes();
-            wereRecipesLoaded = true;
-        }
-        Map<String, Float> profits = new HashMap<>();
+    public void debugPrintRecipesPrices() {
+        List<Pair<String, Double>> profits = new ArrayList<>();
         recipes.forEach((item, recipe) -> {
-            Float recipePrice = getRecipePrice(item);
-            if(recipePrice != null) {
-                Float itemPrice = PriceFetcher.fetchItemPrice(item);
-                if(itemPrice != null) {
-                    float price = itemPrice - recipePrice - itemPrice*0.01125f;
-                    profits.put(item, price); // account for tax
-                    SkyblockBot.LOGGER.info(item + ":" + String.format("%.2f", price));
+            Double recipePrice = getRecipePrice(item);
+            if (recipePrice != null) {
+                Double itemPrice = PriceDatabase.instance.fetchItemPrice(item);
+                if (itemPrice != null) {
+                    double price = itemPrice - recipePrice - itemPrice * 0.01125d;
+                    profits.add(new ImmutablePair<>(item, price)); // account for tax
                 }
             }
         });
+        profits.sort(Map.Entry.comparingByValue());
+        profits.forEach(entry -> SkyblockBot.LOGGER.info(entry.getKey() + ":" + String.format("%.2f", entry.getValue())));
     }
 }

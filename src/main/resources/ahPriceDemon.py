@@ -27,7 +27,7 @@ def unpack_nbt(tag):
     else:
         return tag.value
 
-def decodeItemBytes(RawBytes):
+def decodeItemBytes(RawBytes) -> dict:
     data = nbt.NBTFile(fileobj = BytesIO(b64decode(RawBytes)))
     unpacked = unpack_nbt(data)
     return unpacked
@@ -36,6 +36,13 @@ def sendAuctionToDB(timestamp, price, bin, productId, item_bytes, db_cursor):
     try:
         db_cursor.execute("INSERT INTO all_auctions (timestamp,price,bin,productId,item_bytes) VALUES "
         "({0},{1},{2},'{3}','{4}')".format(timestamp, price, int(bin), productId, item_bytes))
+    except (mysql.connector.errors.Error, TypeError) as exc:
+            print("Failed inserting {0}\nError: {1}\n".format(productId,exc))
+
+def sendCompactAhToDB(timestamp, price, bin, productId, db_cursor):
+    try:
+        db_cursor.execute("INSERT INTO compact_ah_no_enchants (timestamp,price,bin,productId) VALUES "
+        "({0},{1},{2},'{3}')".format(timestamp, price, int(bin), productId))
     except (mysql.connector.errors.Error, TypeError) as exc:
             print("Failed inserting {0}\nError: {1}\n".format(productId,exc))
 
@@ -52,8 +59,15 @@ while True:
         print("Something went wrong")
         exit()
 
+    counter = 0
     for item in ended['auctions']:
-        productId = decodeItemBytes(item['item_bytes'])['i'][0]['tag']['ExtraAttributes']['id']
-        sendAuctionToDB(item['timestamp'], item['price'], item['bin'],
-                        productId, item['item_bytes'], cursor)
+        itemBytes = decodeItemBytes(item['item_bytes'])['i'][0]
+        if 'ench' in itemBytes['tag'].keys() and len(itemBytes['tag']['ench']) == 0 or 'ench' not in itemBytes['tag'].keys():
+        # if no enchants-save it to db(cuz calculating item prices with enchants is too advanced for me for now)
+            productId = itemBytes['tag']['ExtraAttributes']['id']
+            sendCompactAhToDB(item['timestamp'], item['price'], item['bin'],
+                        productId, cursor)
+            counter += 1
+    print("Added " + str(counter) + " lines to database")
+
     time.sleep(60)

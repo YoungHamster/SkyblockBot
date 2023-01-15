@@ -8,18 +8,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.function.LongSupplier;
 
 public class Utils {
 
-    public static LongSupplier nanoTimeSupplier = System::nanoTime;
-
-    public static long getNanoTime() {
-        return nanoTimeSupplier.getAsLong();
-    }
-
-    private static int value(char r)
-    {
+    private static int value(char r) {
         if (r == 'I')
             return 1;
         if (r == 'V')
@@ -36,34 +28,27 @@ public class Utils {
             return 1000;
         return -1;
     }
+
     //function to convert roman to integer
-    public static int convertRomanToInt(String s)
-    {
+    public static int convertRomanToInt(String s) {
         //variable to store the sum
         int total = 0;
         //loop iterate over the string (given roman numeral)
         //getting value from symbol s1[i]
-        for (int i=0; i<s.length(); i++)
-        {
+        for (int i = 0; i < s.length(); i++) {
             int s1 = value(s.charAt(i));
             //getting value of symbol s2[i+1]
-            if (i+1 <s.length())
-            {
-                int s2 = value(s.charAt(i+1));
+            if (i + 1 < s.length()) {
+                int s2 = value(s.charAt(i + 1));
                 //comparing the current character from its right character
-                if (s1 >= s2)
-                {
-                //if the value of current character is greater or equal to the next symbol
+                if (s1 >= s2) {
+                    //if the value of current character is greater or equal to the next symbol
                     total = total + s1;
-                }
-                else
-                {
-                //if the value of the current character is less than the next symbol
+                } else {
+                    //if the value of the current character is less than the next symbol
                     total = total - s1;
                 }
-            }
-            else
-            {
+            } else {
                 total = total + s1;
             }
         }
@@ -99,12 +84,12 @@ public class Utils {
         // is this shitcode or was there really no better way of doing it?
         // who knows
         int index = json.indexOf(token);
-        if(index == -1) {
+        if (index == -1) {
             return new ImmutablePair<>(null, null);
         }
         json = json.substring(index);
         int tokenValueStart = json.indexOf(":") + 1;
-        if(json.indexOf("}") < json.indexOf(",")) {
+        if (json.indexOf("}") < json.indexOf(",")) {
             return new ImmutablePair<>(json.substring(json.indexOf("}") + 1), json.substring(tokenValueStart, json.indexOf("}")));
         } else {
             return new ImmutablePair<>(json.substring(json.indexOf(",") + 1), json.substring(tokenValueStart, json.indexOf(",")));

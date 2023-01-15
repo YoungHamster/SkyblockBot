@@ -1,0 +1,11 @@
+package com.viktorx.skyblockbot.skyblock.flipping.flips;
+
+public interface PotentialFlip {
+    String getItemName();
+
+    double getPotential24hProfit();
+
+    double get24hInvestment();
+
+    double getOneFlipInvestment();
+}
