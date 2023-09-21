@@ -36,7 +36,8 @@ public class NotBotCore {
             float targetPitch = playerRotation.getPitch();
 
             // this is where the magic happens
-            List<BetterBlockPos> loopAroundFarm = getPosListForCrop(baritone, "carrots");
+            List<BetterBlockPos> loopAroundFarm = getPosListForCrop(baritone, "Carrots");
+
             int nextPos = 1;
             while (runBotThread) {
                 if (!baritone.getCustomGoalProcess().isActive()) {
@@ -55,38 +56,40 @@ public class NotBotCore {
                 }
             }
             baritone.getInputOverrideHandler().clearAllKeys();
+            baritone.getPathingBehavior().cancelEverything();
         }
 
         // List of positions bot should go through to loop around whole farm and come back to the starting point
         private List<BetterBlockPos> getPosListForCrop(IBaritone baritone, String cropBlockName) {
             List<BetterBlockPos> nodes = new ArrayList<>();
-            nodes.add(baritone.getPlayerContext().playerFeet());
 
             Rotation playerRot = baritone.getPlayerContext().playerRotations();
-            BlockPos pos = nodes.get(0);
+            BlockPos pos = baritone.getPlayerContext().playerFeet();
             World world = baritone.getPlayerContext().world();
             List<Vec3i> directions = new ArrayList<>();
             if (playerRot.isReallyCloseTo(new Rotation(0.0f, playerRot.getPitch()))) {
-                directions.add(new Vec3i(0, 0, -1)); // north
-                directions.add(new Vec3i(1, 0, 0)); // east
                 directions.add(new Vec3i(0, 0, 1)); // south
+                directions.add(new Vec3i(1, 0, 0)); // east
+                directions.add(new Vec3i(0, 0, -1)); // north
             } else if (playerRot.isReallyCloseTo(new Rotation(90.0f, playerRot.getPitch()))) {
-                directions.add(new Vec3i(1, 0, 0)); // east
-                directions.add(new Vec3i(0, 0, 1)); // south
                 directions.add(new Vec3i(-1, 0, 0)); // west
+                directions.add(new Vec3i(0, 0, 1)); // south
+                directions.add(new Vec3i(1, 0, 0)); // east
             } else if (playerRot.isReallyCloseTo(new Rotation(180.0f, playerRot.getPitch()))) {
+                directions.add(new Vec3i(0, 0, -1)); // north
+                directions.add(new Vec3i(-1, 0, 0)); // west
                 directions.add(new Vec3i(0, 0, 1)); // south
-                directions.add(new Vec3i(-1, 0, 0)); // west
-                directions.add(new Vec3i(0, 0, -1)); // north
             } else {
-                directions.add(new Vec3i(-1, 0, 0)); // west
-                directions.add(new Vec3i(0, 0, -1)); // north
                 directions.add(new Vec3i(1, 0, 0)); // east
+                directions.add(new Vec3i(0, 0, -1)); // north
+                directions.add(new Vec3i(-1, 0, 0)); // west
             }
             int direction = 0; // for example - first we go north, then move one block, then go south. This 0 is for going north
             do {
                 nodes.add(new BetterBlockPos(pos));
-                while (world.getBlockState(pos.add(directions.get(direction))).getBlock().getName().asString().equals(cropBlockName)) {
+                BlockPos pos2 = pos.add(directions.get(direction));
+                String str = world.getBlockState(pos.add(directions.get(direction))).getBlock().getName().getString();
+                while (world.getBlockState(pos.add(directions.get(direction))).getBlock().getName().getString().equals(cropBlockName)) {
                     pos = pos.add(directions.get(direction));
                 }
                 nodes.add(new BetterBlockPos(pos));
@@ -103,6 +106,7 @@ public class NotBotCore {
 
     public static void run(ClientPlayerEntity client) {
         botThread.client = client;
+        runBotThread = true;
         Thread t = new Thread(botThread);
         t.start();
     }
