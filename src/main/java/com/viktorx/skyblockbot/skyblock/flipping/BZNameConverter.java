@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class BZNameConverter {
-    public static final BZNameConverter instance = new BZNameConverter();
+    private static BZNameConverter instance;
 
     private final Map<String, String> normalToBZ = new HashMap<>();
     private final Map<String, String> bzToNormal = new HashMap<>();
@@ -16,6 +16,13 @@ public class BZNameConverter {
     private BZNameConverter() {
         loadTable();
         SkyblockBot.LOGGER.info("Loaded name converter table");
+    }
+
+    public static synchronized BZNameConverter getInstance() {
+        if (instance == null) {
+            instance = new BZNameConverter();
+        }
+        return instance;
     }
 
     public String getBZName(String itemName) {
@@ -31,8 +38,9 @@ public class BZNameConverter {
 
         // Fine, i'll do simple parsing myself
         // It's easier than doing it properly with some json tool
+        Pair<String, String> pair;
         while (result.contains("\"name\"")) {
-            Pair<String, String> pair = Utils.getJSONTokenAndCutItOut("\"name\"", result);
+            pair = Utils.getJSONTokenAndCutItOut("\"name\"", result);
             result = pair.getLeft();
             String itemName = pair.getRight();
             itemName = itemName.substring(1, itemName.length() - 1);
@@ -43,7 +51,7 @@ public class BZNameConverter {
             productId = productId.substring(1, productId.length() - 1);
 
             normalToBZ.put(itemName, productId);
-            bzToNormal.put(productId, itemName);
         }
+        normalToBZ.forEach((key, value) -> bzToNormal.put(value, key));
     }
 }

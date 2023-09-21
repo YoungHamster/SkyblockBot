@@ -59,7 +59,7 @@ public class Keybinds {
             }
 
             if (printTestInfo.wasPressed()) {
-                CompletableFuture<Void> future = CompletableFuture.runAsync(CraftPriceCalculator.instance::debugPrintRecipesPrices);
+                CompletableFuture<Void> future = CompletableFuture.runAsync(CraftPriceCalculator.getInstance()::debugPrintRecipesPrices);
             }
         });
 

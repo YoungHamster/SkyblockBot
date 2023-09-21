@@ -49,7 +49,7 @@ def sendCompactAhToDB(timestamp, price, bin, productId, db_cursor):
 
 db = mysql.connector.Connect(user='root', password='8585623',
                               host='127.0.0.1',
-                              database='sb_ended_auctions')
+                              database='skyblock')
 db.autocommit = True
 cursor = db.cursor()
 
@@ -62,7 +62,7 @@ while True:
     counter = 0
     for item in ended['auctions']:
         itemBytes = decodeItemBytes(item['item_bytes'])['i'][0]
-        if 'ench' in itemBytes['tag'].keys() and len(itemBytes['tag']['ench']) == 0 or 'ench' not in itemBytes['tag'].keys():
+        if ('ench' in itemBytes['tag'].keys() and len(itemBytes['tag']['ench']) == 0) or 'ench' not in itemBytes['tag'].keys():
         # if no enchants-save it to db(cuz calculating item prices with enchants is too advanced for me for now)
             productId = itemBytes['tag']['ExtraAttributes']['id']
             sendCompactAhToDB(item['timestamp'], item['price'], item['bin'],

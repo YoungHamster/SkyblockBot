@@ -8,4 +8,8 @@ public interface PotentialFlip {
     double get24hInvestment();
 
     double getOneFlipInvestment();
+
+    double getOneFlipProfit();
+
+    int comparingBy24hProfit(PotentialFlip second);
 }

@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 public class PriceDatabase {
-    public static final PriceDatabase instance = new PriceDatabase();
+    private static PriceDatabase instance;
 
     // using normalized names instead of "id"'s here
     private final Map<String, Pair<Double, Integer>> pricesAnd24hVols = new HashMap<>(); // item:price,24h trade vol
@@ -24,7 +24,7 @@ public class PriceDatabase {
     private PriceDatabase() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            conn = DriverManager.getConnection("jdbc:mysql://localhost/sb_ended_auctions?" +
+            conn = DriverManager.getConnection("jdbc:mysql://localhost/skyblock?" +
                     "user=root&password=8585623");
         } catch (Exception ex) {
             SkyblockBot.LOGGER.info("Couldn't connect to database with ended auctions. Error when creating sql driver or smth.");
@@ -32,6 +32,13 @@ public class PriceDatabase {
         }
         loadBazaarPrices();
         SkyblockBot.LOGGER.info("Loaded bazaar prices");
+    }
+
+    public static synchronized PriceDatabase getInstance() {
+        if (instance == null) {
+            instance = new PriceDatabase();
+        }
+        return instance;
     }
 
     public Pair<Double, Integer> fetchPriceTradeVol(String itemName) {
@@ -43,27 +50,29 @@ public class PriceDatabase {
     }
 
     public Double fetchItemPrice(String itemName) {
-        Double price = pricesAnd24hVols.get(itemName).getLeft();
-        if (price == null) {
+        Pair<Double, Integer> priceVol = pricesAnd24hVols.get(itemName);
+        if (priceVol != null) {
+            return priceVol.getLeft();
+        } else {
             Pair<Double, Integer> pair = fetchAHPriceVol(itemName);
             if (pair != null) {
-                price = pair.getLeft();
+                return pair.getLeft();
             }
         }
-        return price;
+        return null;
     }
 
     // median of 20 recently ended auctions, but only ones which ended in the last 48 hours
     private Pair<Double, Integer> fetchAHPriceVol(String itemName) {
-        String productId = BZNameConverter.instance.getBZName(itemName);
+        String productId = BZNameConverter.getInstance().getBZName(itemName);
         List<Integer> prices = new ArrayList<>();
         try {
-            long start = System.currentTimeMillis();
+            // without index it takes like 300ms
+            // with index on productId column in db this request takes like 0-2ms on my pc
+            // even though there is a mil of rows in db
             ResultSet rs = conn.createStatement().executeQuery(
                     "SELECT price FROM compact_ah_no_enchants WHERE productId = '%s' AND timestamp > %s ORDER BY timestamp"
                             .formatted(productId, System.currentTimeMillis() - 24 * 60 * 60 * 1000)); // 24 hours
-            long end = System.currentTimeMillis();
-            SkyblockBot.LOGGER.info("Request to db took " + (end - start) + " ms");
             while (rs.next()) {
                 prices.add(rs.getInt(1));
             }
@@ -90,7 +99,7 @@ public class PriceDatabase {
 
             String itemName = pair.getRight();
             itemName = itemName.substring(1, itemName.length() - 1);
-            itemName = BZNameConverter.instance.getNormalName(itemName);
+            itemName = BZNameConverter.getInstance().getNormalName(itemName);
 
             pair = Utils.getJSONTokenAndCutItOut("\"sellPrice\"", bazaar);
             bazaar = pair.getLeft();

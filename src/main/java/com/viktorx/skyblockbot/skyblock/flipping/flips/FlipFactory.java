@@ -5,10 +5,10 @@ import com.viktorx.skyblockbot.skyblock.flipping.PriceDatabase;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class FlipFactory {
-    public PotentialFlip createFlip(String type, String itemName) {
+    public static PotentialFlip createFlip(String type, String itemName) {
         if (type.equals(CraftFlip.type)) {
-            Pair<Double, Integer> priceVol24h = PriceDatabase.instance.fetchPriceTradeVol(itemName);
-            Double recipePrice = CraftPriceCalculator.instance.getRecipePrice(itemName);
+            Pair<Double, Integer> priceVol24h = PriceDatabase.getInstance().fetchPriceTradeVol(itemName);
+            Double recipePrice = CraftPriceCalculator.getInstance().getRecipePrice(itemName);
             if (priceVol24h == null || recipePrice == null) {
                 return null;
             }

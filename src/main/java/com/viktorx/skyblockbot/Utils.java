@@ -85,14 +85,22 @@ public class Utils {
         // who knows
         int index = json.indexOf(token);
         if (index == -1) {
+            SkyblockBot.LOGGER.info("Wrong args for getJSONTokenAndCutItOut function in Utils\n" +
+                    "token: " + token + "\njson: " + json);
             return new ImmutablePair<>(null, null);
         }
         json = json.substring(index);
         int tokenValueStart = json.indexOf(":") + 1;
-        if (json.indexOf("}") < json.indexOf(",")) {
-            return new ImmutablePair<>(json.substring(json.indexOf("}") + 1), json.substring(tokenValueStart, json.indexOf("}")));
-        } else {
-            return new ImmutablePair<>(json.substring(json.indexOf(",") + 1), json.substring(tokenValueStart, json.indexOf(",")));
+        try {
+            if (json.indexOf("}") < json.indexOf(",") || !json.contains(",")) {
+                return new ImmutablePair<>(json.substring(json.indexOf("}") + 1), json.substring(tokenValueStart, json.indexOf("}")));
+            } else {
+                return new ImmutablePair<>(json.substring(json.indexOf(",") + 1), json.substring(tokenValueStart, json.indexOf(",")));
+            }
+        } catch (Exception e) {
+            SkyblockBot.LOGGER.info(e.getMessage());
+            e.printStackTrace();
+            return null;
         }
     }
 }

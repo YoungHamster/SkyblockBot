@@ -5,6 +5,7 @@ public class CraftFlip implements PotentialFlip {
 
     private final String itemName;
     private final int soldLast24h; // how many items were sold in last 24h
+    private final double median24hprice;
     private final double oneFlipProfit;
     private final double recipePrice;
 
@@ -16,7 +17,10 @@ public class CraftFlip implements PotentialFlip {
     public CraftFlip(String itemName, double median24hPrice, double recipePrice, int soldLast24h) {
         this.itemName = itemName;
         this.soldLast24h = soldLast24h;
-        this.oneFlipProfit = median24hPrice - recipePrice;
+        this.median24hprice = median24hPrice;
+
+        // accounting for 0.01 is ah tax, bazaar tax is slightly higher
+        this.oneFlipProfit = median24hPrice - recipePrice - median24hPrice * 0.01d;
         this.recipePrice = recipePrice;
     }
 
@@ -34,5 +38,13 @@ public class CraftFlip implements PotentialFlip {
 
     public double getOneFlipInvestment() {
         return recipePrice;
+    }
+
+    public double getOneFlipProfit() {
+        return oneFlipProfit;
+    }
+
+    public int comparingBy24hProfit(PotentialFlip second) {
+        return Double.compare(getPotential24hProfit(), second.getPotential24hProfit());
     }
 }

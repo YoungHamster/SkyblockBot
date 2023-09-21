@@ -1,6 +1,9 @@
 package com.viktorx.skyblockbot.skyblock.flipping;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.skyblock.flipping.flips.CraftFlip;
+import com.viktorx.skyblockbot.skyblock.flipping.flips.FlipFactory;
+import com.viktorx.skyblockbot.skyblock.flipping.flips.PotentialFlip;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -14,19 +17,27 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CraftPriceCalculator {
-    public static final CraftPriceCalculator instance = new CraftPriceCalculator();
+    private static CraftPriceCalculator instance;
+
+    private final Map<String, SBRecipe> recipes = new HashMap<>();
 
     private CraftPriceCalculator() {
         loadRecipes();
+        SkyblockBot.LOGGER.info("Loaded recipes");
     }
 
-    private final Map<String, SBRecipe> recipes = new HashMap<>();
+    public static synchronized CraftPriceCalculator getInstance() {
+        if (instance == null) {
+            instance = new CraftPriceCalculator();
+        }
+        return instance;
+    }
 
     public Double getRecipePrice(String itemName) {
         SBRecipe recipe = recipes.get(itemName);
         double price = 0.0f;
         for (Map.Entry<String, Integer> ingredient : recipe.getIngredients().entrySet()) {
-            Double ingrPrice = PriceDatabase.instance.fetchItemPrice(ingredient.getKey());
+            Double ingrPrice = PriceDatabase.getInstance().fetchItemPrice(ingredient.getKey());
             if (ingrPrice != null) {
                 price = ingrPrice * ingredient.getValue() + price;
             } else {
@@ -69,18 +80,20 @@ public class CraftPriceCalculator {
     }
 
     public void debugPrintRecipesPrices() {
-        List<Pair<String, Double>> profits = new ArrayList<>();
+        List<PotentialFlip> flips = new ArrayList<>();
         recipes.forEach((item, recipe) -> {
-            Double recipePrice = getRecipePrice(item);
-            if (recipePrice != null) {
-                Double itemPrice = PriceDatabase.instance.fetchItemPrice(item);
-                if (itemPrice != null) {
-                    double price = itemPrice - recipePrice - itemPrice * 0.01125d;
-                    profits.add(new ImmutablePair<>(item, price)); // account for tax
-                }
+            PotentialFlip pf = FlipFactory.createFlip(CraftFlip.type, item);
+            if(pf != null && pf.getOneFlipInvestment() > 10000.0d) {
+                flips.add(pf);
             }
         });
-        profits.sort(Map.Entry.comparingByValue());
-        profits.forEach(entry -> SkyblockBot.LOGGER.info(entry.getKey() + ":" + String.format("%.2f", entry.getValue())));
+        flips.sort(PotentialFlip::comparingBy24hProfit);
+        flips.forEach(flip -> SkyblockBot.LOGGER.info(
+                String.format("%s:{ 24h profit: %.1f, 24h investment: %.1f, one flip profit: %.1f, one flip investment: %.1f",
+                        flip.getItemName(),
+                        flip.getPotential24hProfit(),
+                        flip.get24hInvestment(),
+                        flip.getOneFlipProfit(),
+                        flip.getOneFlipInvestment())));
     }
 }
