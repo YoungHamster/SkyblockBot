@@ -12,6 +12,8 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -22,6 +24,7 @@ public class Keybinds {
     private static KeyBinding printTestInfo;
 
     private static final Queue<KeyBinding> tickKeyPressQueue = new LinkedBlockingQueue<>();
+    private static final List<KeyBinding> pressedKeys = new ArrayList<>();
 
     private static boolean wasPressed = false;
 
@@ -63,6 +66,18 @@ public class Keybinds {
             }
         });
 
+    }
+
+    public static void keepKeyPressed(KeyBinding key) {
+        key.setPressed(true);
+        pressedKeys.add(key);
+    }
+
+    public static void clearPressedKeys() {
+        for(KeyBinding key : pressedKeys) {
+            key.setPressed(false);
+        }
+        pressedKeys.clear();
     }
 
     // puts keybinds in a queue where no more than one key gets pressed every tick
