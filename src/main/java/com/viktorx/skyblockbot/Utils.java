@@ -1,5 +1,7 @@
 package com.viktorx.skyblockbot;
 
+import baritone.api.utils.Rotation;
+import net.minecraft.client.MinecraftClient;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -102,5 +104,13 @@ public class Utils {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public static boolean isYawRoughlyClose(float yaw1, float yaw2) {
+        return Math.abs(yaw1 - yaw2) < 5.0F || Math.abs(Math.abs(yaw1 - yaw2) - 360) < 5.0F;
+    }
+
+    public static float getYaw() {
+        return Rotation.normalizeYaw(MinecraftClient.getInstance().player.getYaw());
     }
 }
