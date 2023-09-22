@@ -73,6 +73,15 @@ public class Keybinds {
         pressedKeys.add(key);
     }
 
+    public static void unpressKey(KeyBinding key) {
+        key.setPressed(false);
+        pressedKeys.remove(key);
+    }
+
+    public static boolean isKeyPressed(KeyBinding key) {
+        return pressedKeys.contains(key);
+    }
+
     public static void clearPressedKeys() {
         for(KeyBinding key : pressedKeys) {
             key.setPressed(false);

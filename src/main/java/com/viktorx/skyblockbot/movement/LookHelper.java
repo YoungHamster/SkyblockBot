@@ -2,7 +2,6 @@ package com.viktorx.skyblockbot.movement;
 
 import baritone.api.utils.Rotation;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.keybinds.Keybinds;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 
@@ -18,52 +17,55 @@ public class LookHelper {
         return Rotation.normalizeYaw(MinecraftClient.getInstance().player.getYaw());
     }
 
-    public static void turnHeadSmooth(float targetYaw, float targetPitch) {
-        turnHeadSmooth(targetYaw, targetPitch, 360.0F);
-    }
-
-    public static void turnHeadSmoothAsync(float targetYaw, float targetPitch) {
-        turnHeadSmoothAsync(targetYaw, targetPitch, 360.0F);
-    }
-
-    public static void turnHeadSmoothAsync(float targetYaw, float targetPitch, float degreesPerSecond) {
+    public static void changeYawSmoothAsync(float targetYaw, float degreesPerSecond) {
         CompletableFuture<Void> turnHead =
-                CompletableFuture.runAsync(() -> turnHeadSmooth(targetYaw, targetPitch, degreesPerSecond));
+                CompletableFuture.runAsync(() -> changeYawSmooth(targetYaw, degreesPerSecond));
     }
 
-    public static void turnHeadSmooth(float targetYaw, float targetPitch, float degreesPerSecond) {
+    public static void changePitchSmoothAsync(float targetPitch, float degreesPerSecond) {
+        CompletableFuture<Void> turnHead =
+                CompletableFuture.runAsync(() -> changePitchSmooth(targetPitch, degreesPerSecond));
+    }
+
+    public static void changeYawSmooth(float targetYaw, float degreesPerSecond) {
         float degreesPerMs = degreesPerSecond / 1000.0F;
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
         float yawDirection = (targetYaw - LookHelper.getYaw()) / Math.abs(targetYaw - getYaw());
+
+        long time = System.currentTimeMillis();
+        while (!LookHelper.isYawRoughlyClose(LookHelper.getYaw(), targetYaw)) {
+            long delta = System.currentTimeMillis() - time;
+            time += delta;
+            player.setYaw(LookHelper.getYaw() + delta * degreesPerMs * yawDirection);
+            try {
+                Thread.sleep(5);
+            } catch (InterruptedException e) {
+                SkyblockBot.LOGGER.info("Exception in runBotThread, don't care");
+            }
+        }
+        player.setYaw(targetYaw);
+    }
+
+    public static void changePitchSmooth(float targetPitch, float degreesPerSecond) {
+        float degreesPerMs = degreesPerSecond / 1000.0F;
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+
         float pitchDirection;
         assert player != null;
         if (targetPitch > player.getPitch()) pitchDirection = 1;
         else pitchDirection = -1;
 
         long time = System.currentTimeMillis();
-        boolean yawDone = false;
-        boolean pitchDone = false;
-        while (!yawDone || !pitchDone) {
+        while(!(Math.abs(player.getPitch() - targetPitch) > degreesPerMs * 50)) {
             long delta = System.currentTimeMillis() - time;
             time += delta;
-            if (!LookHelper.isYawRoughlyClose(LookHelper.getYaw(), targetYaw))
-                player.setYaw(LookHelper.getYaw() + delta * degreesPerMs * yawDirection);
-            else {
-                player.setYaw(targetYaw);
-                yawDone = true;
-            }
-
-            if (Math.abs(player.getPitch() - targetPitch) > 5.0F)
-                player.setPitch(player.getPitch() + delta * degreesPerMs * pitchDirection);
-            else {
-                player.setPitch(targetPitch);
-                pitchDone = true;
-            }
+            player.setPitch(player.getPitch() + delta * degreesPerMs * pitchDirection);
             try {
-                Thread.sleep(2);
+                Thread.sleep(5);
             } catch (InterruptedException e) {
                 SkyblockBot.LOGGER.info("Exception in runBotThread, don't care");
             }
         }
+        player.setPitch(targetPitch);
     }
 }

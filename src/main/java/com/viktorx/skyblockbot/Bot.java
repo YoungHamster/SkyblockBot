@@ -1,14 +1,12 @@
 package com.viktorx.skyblockbot;
 
-import baritone.api.BaritoneAPI;
-import baritone.api.IBaritone;
-import baritone.api.utils.BetterBlockPos;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.movement.MovementProcessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 
@@ -16,15 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Bot implements Runnable {
-    private ClientPlayerEntity client = MinecraftClient.getInstance().player;
-    private MovementProcessor movementProcessor = new MovementProcessor();
+    private final MovementProcessor movementProcessor = new MovementProcessor();
 
     @Override
     public void run() {
-        IBaritone baritone = BaritoneAPI.getProvider().getBaritoneForPlayer(client);
-        BaritoneAPI.getSettings().randomLooking.value = 0.0D;
-        BaritoneAPI.getSettings().randomLooking113.value = 0.0D;
-        BaritoneAPI.getSettings().antiCheatCompatibility.value = true;
 
         // assume player starts the process looking roughly in the direction of first carrot row
         // and standing at the starting position
@@ -39,55 +32,29 @@ public class Bot implements Runnable {
         assert MinecraftClient.getInstance().player != null;
         float targetPitch = MinecraftClient.getInstance().player.getPitch();
 
-        LookHelper.turnHeadSmooth(newYaw, targetPitch);
+        LookHelper.changeYawSmooth(newYaw, 180.0F);
 
         // this is where the magic happens
-        List<BetterBlockPos> checkpoints = createPathAroundField(baritone, "Carrots");
+        List<Vec2f> checkpoints = createPathAroundField("Carrots");
         int turnHeadIterations = 0;
 
         int nextPos = 1;
         boolean loop = false;
         while (NotBotCore.runBotThread) {
-            if (nextPos == checkpoints.size()) { // if we did the loop-go through it again
-                nextPos = 0;
-                Keybinds.clearPressedKeys(); // and don't break anything while going to the starting point
-                LookHelper.turnHeadSmooth(LookHelper.getYaw() + 90.0F, targetPitch);
-                loop = true;
-            } else if (nextPos == 1) {
-                if (loop) {
-                    LookHelper.turnHeadSmooth(LookHelper.getYaw() + 90.0F, targetPitch);
-                    loop = false;
-                    turnHeadIterations = 0;
-                }
-                Keybinds.keepKeyPressed(MinecraftClient.getInstance().options.attackKey); // if we're going to start the loop-start breaking
-            }
+            movementProcessor.doALoop(checkpoints);
 
-            if (nextPos != 1 && !loop) {
-                switch (turnHeadIterations++) {
-                    case 0 -> LookHelper.turnHeadSmooth(LookHelper.getYaw() + 90.0F, 60.0F);
-                    case 1 -> LookHelper.turnHeadSmooth(LookHelper.getYaw() + 90.0F, targetPitch);
-                    case 2 -> LookHelper.turnHeadSmooth(LookHelper.getYaw() - 90.0F, 60.0F);
-                    case 3 -> {
-                        LookHelper.turnHeadSmooth(LookHelper.getYaw() - 90.0F, targetPitch);
-                        turnHeadIterations = 0;
-                    }
-                }
-            }
-            // go go go
-            movementProcessor.goForwardUntilXZ(checkpoints.get(nextPos++));
         }
-        Keybinds.clearPressedKeys();
-        baritone.getPathingBehavior().cancelEverything();
+        Keybinds.unpressKey(MinecraftClient.getInstance().options.attackKey);
     }
 
     // List of positions bot should go through to loop around whole farm and come back to the starting point
-    private List<BetterBlockPos> createPathAroundField(IBaritone baritone, String cropBlockName) { // field as in "corn field"
-        List<BetterBlockPos> nodes = new ArrayList<>();
+    private List<Vec2f> createPathAroundField(String cropBlockName) { // field as in "corn field"
+        List<Vec2f> nodes = new ArrayList<>();
 
         assert MinecraftClient.getInstance().player != null;
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        BlockPos pos = baritone.getPlayerContext().playerFeet();
-        World world = baritone.getPlayerContext().world();
+        BlockPos pos = MinecraftClient.getInstance().player.getBlockPos();
+        World world = MinecraftClient.getInstance().world;
         List<Vec3i> directions = new ArrayList<>();
         directions.add(player.getMovementDirection().getVector()); // go forward
         directions.add(player.getMovementDirection().rotateYClockwise().getVector()); // go to the side
@@ -99,18 +66,20 @@ public class Bot implements Runnable {
         pos = pos.add(directions.get(direction));
         do {
             if (direction == 0) {
-                nodes.add(new BetterBlockPos(pos.add(directions.get(2)))); // it's hard to explain, but easy in principle, figure it out
+                BlockPos newNode = pos.add(directions.get(2));// it's hard to explain, but easy in principle, figure it out
+                nodes.add(new Vec2f(newNode.getX(), newNode.getZ()));
             } else {
-                nodes.add(new BetterBlockPos(pos));
+                nodes.add(new Vec2f(pos.getX(), pos.getY()));
             }
             while (world.getBlockState(pos.add(directions.get(direction))).getBlock().getName().getString().equals(cropBlockName)) {
                 pos = pos.add(directions.get(direction));
             }
             if (direction == 2) {
                 // move 1 more block when going back for more square-like pathing(should also look more human)
-                nodes.add(new BetterBlockPos(pos.add(directions.get(direction))));
+                BlockPos newNode = pos.add(directions.get(direction));
+                nodes.add(new Vec2f(newNode.getX(), newNode.getZ()));
             } else {
-                nodes.add(new BetterBlockPos(pos));
+                nodes.add(new Vec2f(pos.getX(), pos.getY()));
             }
             pos = pos.add(directions.get(1)); // this 1 is for going east in the example
             // for example - we went north for the whole row, then we move 1 block east, if there is no crops
@@ -121,6 +90,11 @@ public class Bot implements Runnable {
             if (direction == 0) direction = 2; // this 2 is for going south in the example
             else direction = 0;
         } while (world.getBlockState(pos).getBlock().getName().getString().equals(cropBlockName));
+
+        for(Vec2f node : nodes) {
+            node.add(new Vec2f(0.5f, 0.5f))
+        }
+
         return nodes;
     }
 }

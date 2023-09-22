@@ -106,6 +106,9 @@ public class Utils {
     }
 
     public static float angleBetweenVecs(Vec2f a, Vec2f b) {
-        return (float)Math.acos((a.x*b.x+a.x*b.y) / (a.length()*b.length()));
+        float val1 = a.x*b.x+a.y*b.y;
+        float val2 = a.length()*b.length();
+        float val3 = val1 / val2;
+        return (float)(Math.acos(val3 * 0.0174533D) * 57.2958D); // to radians and back
     }
 }
