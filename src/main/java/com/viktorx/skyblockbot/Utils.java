@@ -105,10 +105,12 @@ public class Utils {
         }
     }
 
-    public static float angleBetweenVecs(Vec2f a, Vec2f b) {
-        float val1 = a.x*b.x+a.y*b.y;
-        float val2 = a.length()*b.length();
-        float val3 = val1 / val2;
-        return (float)(Math.acos(val3 * 0.0174533D) * 57.2958D); // to radians and back
+    public static float normalize( float value, float start, float end )
+    {
+        float width       = end - start   ;   //
+        float offsetValue = value - start ;   // value relative to 0
+
+        return ( offsetValue - ( (float)Math.floor( offsetValue / width ) * width ) ) + start ;
+        // + start to reset back to start of original range
     }
 }

@@ -22,17 +22,10 @@ public class Bot implements Runnable {
         // assume player starts the process looking roughly in the direction of first carrot row
         // and standing at the starting position
 
-        // all this stuff just aligns the camera
-        float oldYaw = LookHelper.getYaw();
-        float newYaw = oldYaw + 180.0F;
-        if (newYaw % 90.0F > 45.0F) newYaw = oldYaw + (90.0F - newYaw % 90.0F);
-        else newYaw = oldYaw - newYaw % 90.0F;
-
         // Player sets the pitch, bot obliges
         assert MinecraftClient.getInstance().player != null;
-        float targetPitch = MinecraftClient.getInstance().player.getPitch();
 
-        LookHelper.changeYawSmooth(newYaw, 180.0F);
+        LookHelper.changeYawSmooth(MinecraftClient.getInstance().player.getMovementDirection().asRotation(), 180.0F);
 
         // this is where the magic happens
         List<Vec2f> checkpoints = createPathAroundField("Carrots");
@@ -42,7 +35,6 @@ public class Bot implements Runnable {
         boolean loop = false;
         while (NotBotCore.runBotThread) {
             movementProcessor.doALoop(checkpoints);
-
         }
         Keybinds.unpressKey(MinecraftClient.getInstance().options.attackKey);
     }
@@ -69,7 +61,7 @@ public class Bot implements Runnable {
                 BlockPos newNode = pos.add(directions.get(2));// it's hard to explain, but easy in principle, figure it out
                 nodes.add(new Vec2f(newNode.getX(), newNode.getZ()));
             } else {
-                nodes.add(new Vec2f(pos.getX(), pos.getY()));
+                nodes.add(new Vec2f(pos.getX(), pos.getZ()));
             }
             while (world.getBlockState(pos.add(directions.get(direction))).getBlock().getName().getString().equals(cropBlockName)) {
                 pos = pos.add(directions.get(direction));
@@ -79,7 +71,7 @@ public class Bot implements Runnable {
                 BlockPos newNode = pos.add(directions.get(direction));
                 nodes.add(new Vec2f(newNode.getX(), newNode.getZ()));
             } else {
-                nodes.add(new Vec2f(pos.getX(), pos.getY()));
+                nodes.add(new Vec2f(pos.getX(), pos.getZ()));
             }
             pos = pos.add(directions.get(1)); // this 1 is for going east in the example
             // for example - we went north for the whole row, then we move 1 block east, if there is no crops
@@ -92,7 +84,7 @@ public class Bot implements Runnable {
         } while (world.getBlockState(pos).getBlock().getName().getString().equals(cropBlockName));
 
         for(Vec2f node : nodes) {
-            node.add(new Vec2f(0.5f, 0.5f))
+            node.add(new Vec2f(0.5f, 0.5f));
         }
 
         return nodes;

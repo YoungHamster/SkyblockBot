@@ -1,7 +1,7 @@
 package com.viktorx.skyblockbot.movement;
 
-import baritone.api.utils.Rotation;
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.Utils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 
@@ -14,7 +14,7 @@ public class LookHelper {
 
     public static float getYaw() {
         assert MinecraftClient.getInstance().player != null;
-        return Rotation.normalizeYaw(MinecraftClient.getInstance().player.getYaw());
+        return Utils.normalize(MinecraftClient.getInstance().player.getYaw(), -180.0f, 180.0f);
     }
 
     public static void changeYawSmoothAsync(float targetYaw, float degreesPerSecond) {

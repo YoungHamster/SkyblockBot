@@ -29,9 +29,6 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    // СУКА ВЕСЬ ДЕНЬ ЕБАЛСЯ ЧТОБЫ В ИТОГЕ УВИДЕТЬ ПРИМЕР И СДЕЛАТЬ ВЫВОД ЧТО ТУТ НУЖНО ТАК, А НЕ implementation file("zalupa.jar")
-    modImplementation "baritone-api-fabric:baritone-api-fabric:1.8.5"
-
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
