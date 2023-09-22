@@ -24,7 +24,7 @@ public class CurrentInventory {
     }
 
     public static void setSyncID(int syncID) {
-        if(CurrentInventory.syncID != syncID) {
+        if (CurrentInventory.syncID != syncID) {
             syncIDChanged = true;
         }
         CurrentInventory.syncID = syncID;

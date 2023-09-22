@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot;
 
+import net.minecraft.util.math.Vec2f;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -102,5 +103,9 @@ public class Utils {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public static float angleBetweenVecs(Vec2f a, Vec2f b) {
+        return (float)Math.acos((a.x*b.x+a.x*b.y) / (a.length()*b.length()));
     }
 }
