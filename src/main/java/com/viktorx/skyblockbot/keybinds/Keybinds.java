@@ -56,7 +56,7 @@ public class Keybinds {
                 if (!wasPressed) {
                     NotBotCore.run(client.player);
                 } else {
-                    NotBotCore.stop(client.player);
+                    NotBotCore.stop();
                 }
                 wasPressed = !wasPressed;
             }

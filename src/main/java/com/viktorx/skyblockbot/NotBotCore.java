@@ -5,9 +5,11 @@ import baritone.api.IBaritone;
 import baritone.api.pathing.goals.GoalXZ;
 import baritone.api.utils.BetterBlockPos;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
+import com.viktorx.skyblockbot.movement.LookHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 
@@ -29,15 +31,16 @@ public class NotBotCore {
             // and standing at the starting position
 
             // all this stuff just aligns the camera
-            float oldYaw = Utils.getYaw();
+            float oldYaw = LookHelper.getYaw();
             float newYaw = oldYaw + 180.0F;
             if (newYaw % 90.0F > 45.0F) newYaw = oldYaw + (90.0F - newYaw % 90.0F);
             else newYaw = oldYaw - newYaw % 90.0F;
 
             // Player sets the pitch, bot obliges
+            assert MinecraftClient.getInstance().player != null;
             float targetPitch = MinecraftClient.getInstance().player.getPitch();
 
-            turnHeadSmooth(newYaw, targetPitch);
+            LookHelper.turnHeadSmooth(newYaw, targetPitch);
 
             // this is where the magic happens
             List<BetterBlockPos> checkpoints = createPathAroundField(baritone, "Carrots");
@@ -50,11 +53,11 @@ public class NotBotCore {
                     if (nextPos == checkpoints.size()) { // if we did the loop-go through it again
                         nextPos = 0;
                         Keybinds.clearPressedKeys(); // and don't break anything while going to the starting point
-                        turnHeadSmooth(Utils.getYaw() + 90.0F, targetPitch);
+                        LookHelper.turnHeadSmooth(LookHelper.getYaw() + 90.0F, targetPitch);
                         loop = true;
                     } else if (nextPos == 1) {
                         if(loop) {
-                            turnHeadSmooth(Utils.getYaw() + 90.0F, targetPitch);
+                            LookHelper.turnHeadSmooth(LookHelper.getYaw() + 90.0F, targetPitch);
                             loop = false;
                             turnHeadIterations = 0;
                         }
@@ -63,11 +66,11 @@ public class NotBotCore {
 
                     if(nextPos != 1 && !loop) {
                         switch (turnHeadIterations++) {
-                            case 0 -> turnHeadSmooth(Utils.getYaw() + 90.0F, 60.0F);
-                            case 1 -> turnHeadSmooth(Utils.getYaw() + 90.0F, targetPitch);
-                            case 2 -> turnHeadSmooth(Utils.getYaw() - 90.0F, 60.0F);
+                            case 0 -> LookHelper.turnHeadSmooth(LookHelper.getYaw() + 90.0F, 60.0F);
+                            case 1 -> LookHelper.turnHeadSmooth(LookHelper.getYaw() + 90.0F, targetPitch);
+                            case 2 -> LookHelper.turnHeadSmooth(LookHelper.getYaw() - 90.0F, 60.0F);
                             case 3 -> {
-                                turnHeadSmooth(Utils.getYaw() - 90.0F, targetPitch);
+                                LookHelper.turnHeadSmooth(LookHelper.getYaw() - 90.0F, targetPitch);
                                 turnHeadIterations = 0;
                             }
                         }
@@ -85,66 +88,21 @@ public class NotBotCore {
             baritone.getPathingBehavior().cancelEverything();
         }
 
-        private void turnHeadSmooth(float targetYaw, float targetPitch) {
-            float degreesPerMs = 360.0F / 1000.0F;
-            ClientPlayerEntity player = MinecraftClient.getInstance().player;
-            float yawDirection = (targetYaw - Utils.getYaw()) / Math.abs(targetYaw - Utils.getYaw());
-            float pitchDirection;
-            if (targetPitch > player.getPitch()) pitchDirection = 1;
-            else pitchDirection = -1;
-
-            long time = System.currentTimeMillis();
-            boolean yawDone = false;
-            boolean pitchDone = false;
-            while(!yawDone || !pitchDone) {
-                long delta = System.currentTimeMillis() - time;
-                time += delta;
-                if(!Utils.isYawRoughlyClose(Utils.getYaw(), targetYaw))
-                    player.setYaw(Utils.getYaw() + delta * degreesPerMs * yawDirection);
-                else {
-                    player.setYaw(targetYaw);
-                    yawDone = true;
-                }
-
-                if(Math.abs(player.getPitch() - targetPitch) > 5.0F)
-                    player.setPitch(player.getPitch() + delta * degreesPerMs * pitchDirection);
-                else {
-                    player.setPitch(targetPitch);
-                    pitchDone = true;
-                }
-                try {
-                    Thread.sleep(2);
-                } catch (InterruptedException e) {
-                    SkyblockBot.LOGGER.info("Exception in runBotThread, don't care");
-                }
-            }
-        }
-
         // List of positions bot should go through to loop around whole farm and come back to the starting point
         private List<BetterBlockPos> createPathAroundField(IBaritone baritone, String cropBlockName) { // field as in "corn field"
             List<BetterBlockPos> nodes = new ArrayList<>();
 
-            float clientYaw = MinecraftClient.getInstance().player.getYaw();
+            assert MinecraftClient.getInstance().player != null;
+            ClientPlayerEntity player = MinecraftClient.getInstance().player;
             BlockPos pos = baritone.getPlayerContext().playerFeet();
             World world = baritone.getPlayerContext().world();
             List<Vec3i> directions = new ArrayList<>();
-            if (Utils.isYawRoughlyClose(clientYaw, 0.0F)) {
-                directions.add(new Vec3i(0, 0, 1)); // south
-                directions.add(new Vec3i(-1, 0, 0)); // west
-                directions.add(new Vec3i(0, 0, -1)); // north
-            } else if (Utils.isYawRoughlyClose(clientYaw, 90.0F)) {
-                directions.add(new Vec3i(-1, 0, 0)); // west
-                directions.add(new Vec3i(0, 0, -1)); // north
-                directions.add(new Vec3i(1, 0, 0)); // east
-            } else if (Utils.isYawRoughlyClose(clientYaw, 180.0F)) {
-                directions.add(new Vec3i(0, 0, -1)); // north
-                directions.add(new Vec3i(1, 0, 0)); // east
-                directions.add(new Vec3i(0, 0, 1)); // south
-            } else {
-                directions.add(new Vec3i(1, 0, 0)); // east
-                directions.add(new Vec3i(0, 0, 1)); // south
-                directions.add(new Vec3i(-1, 0, 0)); // west
-            }
+            directions.add(player.getMovementDirection().getVector()); // go forward
+            directions.add(player.getMovementDirection().rotateYClockwise().getVector()); // go to the side
+            directions.add(player.getMovementDirection().rotateYClockwise().rotateYClockwise().getVector()); // go backward
+
+            // if not the whole farm is loaded this algorithm may fuck up. Best case scenario-it just stops the loop where loaded part ends
+            // TODO: right now it won't work correctly if there is an uneven number of rows of crops, should be an easy fix for later
             int direction = 0; // for example - first we go north, then move one block, then go south. This 0 is for going north
             pos = pos.add(directions.get(direction));
             do {
@@ -153,8 +111,6 @@ public class NotBotCore {
                 } else {
                     nodes.add(new BetterBlockPos(pos));
                 }
-                BlockPos pos2 = pos.add(directions.get(direction));
-                String str = world.getBlockState(pos.add(directions.get(direction))).getBlock().getName().getString();
                 while (world.getBlockState(pos.add(directions.get(direction))).getBlock().getName().getString().equals(cropBlockName)) {
                     pos = pos.add(directions.get(direction));
                 }
@@ -187,7 +143,7 @@ public class NotBotCore {
         t.start();
     }
 
-    public static void stop(ClientPlayerEntity client) {
+    public static void stop() {
         runBotThread = false;
     }
 }
