@@ -3,39 +3,26 @@ package com.viktorx.skyblockbot.keybinds;
 import com.viktorx.skyblockbot.NotBotCore;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
-import com.viktorx.skyblockbot.skyblock.SBPlayer;
-import com.viktorx.skyblockbot.skyblock.flipping.BZNameConverter;
+import com.viktorx.skyblockbot.replay.ReplayBot;
 import com.viktorx.skyblockbot.skyblock.flipping.CraftPriceCalculator;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeoutException;
 
 public class Keybinds {
     private static KeyBinding startStopBot;
+    private static boolean botStarted = false;
     private static KeyBinding printTestInfo;
+    private static KeyBinding startStopRecording;
+    private static boolean recordingStarted;
 
     private static final Queue<KeyBinding> tickKeyPressQueue = new LinkedBlockingQueue<>();
-    private static final List<KeyBinding> pressedKeys = new ArrayList<>();
-
-    private static boolean wasPressed = false;
-
-    private static SBPlayer sbplayer = null;
-
-    // TODO move this to a proper class
-    private static double speed = 0;
-    private static int speedIterator = 0;
-    private static Vec3d startPos;
 
     public static void Init() {
         startStopBot = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -45,26 +32,19 @@ public class Keybinds {
                 "category.skyblockbot.toggle" // The translation key of the keybinding's category.
         ));
 
+        startStopRecording = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.skyblockbot.spook2", // The translation key of the keybinding's name
+                InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
+                GLFW.GLFW_KEY_R, // The keycode of the key
+                "category.skyblockbot.record" // The translation key of the keybinding's category.
+        ));
+
         printTestInfo = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.skyblockbot.spook3", // The translation key of the keybinding's name
                 InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
                 GLFW.GLFW_KEY_I, // The keycode of the key
                 "category.skyblockbot.getInfo" // The translation key of the keybinding's category.
         ));
-
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-        });
-
-        ClientTickEvents.START_WORLD_TICK.register(world -> {
-            // this retrieves the speed of a player
-            if(speedIterator++ == 0 ) {
-                startPos = MinecraftClient.getInstance().player.getPos();
-            }
-            if(speedIterator == 20 && MinecraftClient.getInstance().player != null) {
-                speedIterator = 0;
-                speed = MinecraftClient.getInstance().player.getPos().add(startPos.multiply(-1.0d)).length();
-            }
-        });
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
 
@@ -73,12 +53,21 @@ public class Keybinds {
                     CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
 
             if (startStopBot.wasPressed()) {
-                if (!wasPressed) {
-                    NotBotCore.run(client.player);
+                if (!botStarted) {
+                    ReplayBot.playRecording();
                 } else {
-                    NotBotCore.stop();
+                    ReplayBot.stopPlaying();
                 }
-                wasPressed = !wasPressed;
+                botStarted = !botStarted;
+            }
+
+            if (startStopRecording.wasPressed()) {
+                if (!recordingStarted) {
+                    ReplayBot.startRecording();
+                } else {
+                    ReplayBot.stopRecording();
+                }
+                recordingStarted = !recordingStarted;
             }
 
             if (printTestInfo.wasPressed()) {
@@ -86,31 +75,6 @@ public class Keybinds {
             }
         });
 
-    }
-
-    public static double getSpeed() {
-        return speed;
-    }
-
-    public static void keepKeyPressed(KeyBinding key) {
-        key.setPressed(true);
-        pressedKeys.add(key);
-    }
-
-    public static void unpressKey(KeyBinding key) {
-        key.setPressed(false);
-        pressedKeys.remove(key);
-    }
-
-    public static boolean isKeyPressed(KeyBinding key) {
-        return pressedKeys.contains(key);
-    }
-
-    public static void clearPressedKeys() {
-        for(KeyBinding key : pressedKeys) {
-            key.setPressed(false);
-        }
-        pressedKeys.clear();
     }
 
     // puts keybinds in a queue where no more than one key gets pressed every tick

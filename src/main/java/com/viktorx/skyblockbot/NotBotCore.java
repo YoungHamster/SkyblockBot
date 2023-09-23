@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot;
 
+import com.viktorx.skyblockbot.movement.Bot;
 import net.minecraft.client.network.ClientPlayerEntity;
 
 public class NotBotCore {

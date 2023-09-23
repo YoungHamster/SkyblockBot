@@ -1,5 +1,6 @@
-package com.viktorx.skyblockbot;
+package com.viktorx.skyblockbot.movement;
 
+import com.viktorx.skyblockbot.NotBotCore;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.movement.MovementProcessor;
@@ -36,7 +37,6 @@ public class Bot implements Runnable {
         while (NotBotCore.runBotThread) {
             movementProcessor.doALoop(checkpoints);
         }
-        Keybinds.unpressKey(MinecraftClient.getInstance().options.attackKey);
     }
 
     // List of positions bot should go through to loop around whole farm and come back to the starting point

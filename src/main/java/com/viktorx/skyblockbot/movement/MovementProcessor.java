@@ -50,12 +50,12 @@ public class MovementProcessor {
                 return;
             }
         }
-        Keybinds.unpressKey(instance.options.forwardKey);
-        Keybinds.unpressKey(instance.options.sprintKey);
+        instance.options.forwardKey.setPressed(false);
+        instance.options.sprintKey.setPressed(false);
     }
 
     private CompletableFuture<Void> doTurn(List<Vec2f> loop, int loopIterator) {
-        long millisecondsToTurn = (long) (1000.0f * 2.8f / (float) Keybinds.getSpeed());
+        long millisecondsToTurn = (long) (1000.0f * 2.8f / 5.0f);// TODO (float) Someclass.getSpeed());
         Vec2f v1 = loop.get(loopIterator - 1).add(loop.get(loopIterator).multiply(-1.0f)).normalize();
         Vec2f v2 = loop.get(loopIterator).add(loop.get(loopIterator + 1).multiply(-1.0f)).normalize();
         float angleBetween = (float) Math.acos(v1.dot(v2)); // in radians

@@ -17,14 +17,12 @@ public class LookHelper {
         return Utils.normalize(MinecraftClient.getInstance().player.getYaw(), -180.0f, 180.0f);
     }
 
-    public static void changeYawSmoothAsync(float targetYaw, float degreesPerSecond) {
-        CompletableFuture<Void> turnHead =
-                CompletableFuture.runAsync(() -> changeYawSmooth(targetYaw, degreesPerSecond));
+    public static CompletableFuture<Void> changeYawSmoothAsync(float targetYaw, float degreesPerSecond) {
+        return CompletableFuture.runAsync(() -> changeYawSmooth(targetYaw, degreesPerSecond));
     }
 
-    public static void changePitchSmoothAsync(float targetPitch, float degreesPerSecond) {
-        CompletableFuture<Void> turnHead =
-                CompletableFuture.runAsync(() -> changePitchSmooth(targetPitch, degreesPerSecond));
+    public static CompletableFuture<Void> changePitchSmoothAsync(float targetPitch, float degreesPerSecond) {
+        return CompletableFuture.runAsync(() -> changePitchSmooth(targetPitch, degreesPerSecond));
     }
 
     public static void changeYawSmooth(float targetYaw, float degreesPerSecond) {
@@ -36,6 +34,7 @@ public class LookHelper {
         while (!LookHelper.isYawRoughlyClose(LookHelper.getYaw(), targetYaw)) {
             long delta = System.currentTimeMillis() - time;
             time += delta;
+            assert player != null;
             player.setYaw(LookHelper.getYaw() + delta * degreesPerMs * yawDirection);
             try {
                 Thread.sleep(5);
@@ -43,6 +42,7 @@ public class LookHelper {
                 SkyblockBot.LOGGER.info("Exception in runBotThread, don't care");
             }
         }
+        assert player != null;
         player.setYaw(targetYaw);
     }
 
