@@ -8,8 +8,10 @@ import com.viktorx.skyblockbot.skyblock.flipping.BZNameConverter;
 import com.viktorx.skyblockbot.skyblock.flipping.CraftPriceCalculator;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -30,6 +32,11 @@ public class Keybinds {
 
     private static SBPlayer sbplayer = null;
 
+    // TODO move this to a proper class
+    private static double speed = 0;
+    private static int speedIterator = 0;
+    private static Vec3d startPos;
+
     public static void Init() {
         startStopBot = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.skyblockbot.spook", // The translation key of the keybinding's name
@@ -48,7 +55,20 @@ public class Keybinds {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
         });
 
+        ClientTickEvents.START_WORLD_TICK.register(world -> {
+            // this retrieves the speed of a player
+            if(speedIterator++ == 0 ) {
+                startPos = MinecraftClient.getInstance().player.getPos();
+            }
+            if(speedIterator == 20 && MinecraftClient.getInstance().player != null) {
+                speedIterator = 0;
+                speed = MinecraftClient.getInstance().player.getPos().add(startPos.multiply(-1.0d)).length();
+            }
+        });
+
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
+
+            // this does the clicking
             CompletableFuture<Void> clickTick =
                     CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
 
@@ -66,6 +86,10 @@ public class Keybinds {
             }
         });
 
+    }
+
+    public static double getSpeed() {
+        return speed;
     }
 
     public static void keepKeyPressed(KeyBinding key) {
