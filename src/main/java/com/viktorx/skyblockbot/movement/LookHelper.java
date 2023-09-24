@@ -26,6 +26,7 @@ public class LookHelper {
     }
 
     public static void changeYawSmooth(float targetYaw, float degreesPerSecond) {
+        targetYaw = Utils.normalize(targetYaw, -180.0f, 180.0f);
         float degreesPerMs = degreesPerSecond / 1000.0F;
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
         float yawDirection = (targetYaw - LookHelper.getYaw()) / Math.abs(targetYaw - getYaw());

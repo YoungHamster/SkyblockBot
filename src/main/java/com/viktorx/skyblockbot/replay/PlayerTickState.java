@@ -4,6 +4,7 @@ import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 
 public class PlayerTickState {
+    private static final int tickStateSize = 8 + 8 + 8 + 4 + 4 + 1; // in bytes
     private final Vec3d position;
     private final Vec2f rotation;
     private final boolean isAttacking;
@@ -28,5 +29,9 @@ public class PlayerTickState {
 
     public boolean getAttacking() {
         return isAttacking;
+    }
+
+    public static int getTickStateSize() {
+        return tickStateSize;
     }
 }
