@@ -4,8 +4,11 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 
-public class PlayerTickStateAdvanced extends PlayerTickState {
-    private static final int tickStateSize = 8*3+4*2+1+1*7;
+public class FullTickState {
+    private static final int tickStateSize = 8*3+4*2+1+7;
+    private final Vec3d position;
+    private Vec2f rotation;
+    private final boolean attack;
     private final boolean forward;
     private final boolean backward;
     private final boolean right;
@@ -14,10 +17,12 @@ public class PlayerTickStateAdvanced extends PlayerTickState {
     private final boolean sprint;
     private final boolean jump;
 
-    PlayerTickStateAdvanced(Vec3d pos, Vec2f rot, boolean attack,
-                            boolean forward, boolean backward, boolean right, boolean left,
-                            boolean sneak, boolean sprint, boolean jump) {
-        super(pos, rot, attack);
+    FullTickState(Vec3d pos, Vec2f rot, boolean attack,
+                  boolean forward, boolean backward, boolean right, boolean left,
+                  boolean sneak, boolean sprint, boolean jump) {
+        this.position = pos;
+        this.rotation = rot;
+        this.attack = attack;
         this.forward = forward;
         this.backward = backward;
         this.right = right;
@@ -29,17 +34,17 @@ public class PlayerTickStateAdvanced extends PlayerTickState {
 
     public void setRotationForClient(MinecraftClient client) {
         assert client.player != null;
-        client.player.setYaw(super.getYaw());
-        client.player.setPitch(super.getPitch());
+        client.player.setYaw(getYaw());
+        client.player.setPitch(getPitch());
     }
 
     public void setPositionForClient(MinecraftClient client) {
         assert client.player != null;
-        client.player.setPosition(super.getPosition());
+        client.player.setPosition(getPosition());
     }
 
     public void setButtonsForClient(MinecraftClient client) {
-        client.options.attackKey.setPressed(super.isAttacking());
+        client.options.attackKey.setPressed(isAttack());
         client.options.forwardKey.setPressed(forward);
         client.options.backKey.setPressed(backward);
         client.options.rightKey.setPressed(right);
@@ -51,6 +56,30 @@ public class PlayerTickStateAdvanced extends PlayerTickState {
 
     public static int getTickStateSize() {
         return tickStateSize;
+    }
+
+    public float getYaw() {
+        return rotation.x;
+    }
+
+    public float getPitch() {
+        return rotation.y;
+    }
+
+    public Vec3d getPosition() {
+        return position;
+    }
+
+    public boolean isAttack() {
+        return attack;
+    }
+
+    public void setRotation(Vec2f rotation) {
+        this.rotation = rotation;
+    }
+
+    public Vec2f getRotation() {
+        return rotation;
     }
 
     public boolean isForward() {

@@ -19,14 +19,21 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class ReplayBot {
-    private static final List<PlayerTickStateAdvanced> advancedTickData = new ArrayList<>();
+    private static final List<FullTickState> fullTickData = new ArrayList<>();
+    private static int tickIterator;
+    private static boolean positionCorrectedThisTick = false;
+
     private static boolean recording = false;
     private static boolean playing = false;
-    private static int playIterator;
+
+
+    private static final List<BetweenTickState> betweenTickData = new ArrayList<>();
+    private static int betweenTickIterator = 0;
+    private static boolean tickStarted = false;
+
     private static CompletableFuture<Void> yawTask = null;
     private static CompletableFuture<Void> pitchTask = null;
 
-    private static boolean positionCorrectedThisTick = false;
     private static String itemWhenStarted;
     private static boolean antiDetectTrigger = false;
     private static int antiDetectCounter = 0;
@@ -38,19 +45,21 @@ public class ReplayBot {
     public static int debugPlayingPacketCounter = 0;
 
     public static void Init() {
-        ClientTickEvents.END_CLIENT_TICK.register(ReplayBot::advancedRecordTick);
-        ClientTickEvents.START_CLIENT_TICK.register(ReplayBot::advancedPlayTick);
+        ClientTickEvents.START_CLIENT_TICK.register(ReplayBot::onTickRecord);
+        ClientTickEvents.START_CLIENT_TICK.register(ReplayBot::onTickPlay);
+        new Thread(ReplayBot::betweenTicksPlay).start();
+        new Thread(ReplayBot::betweenTicksRecord).start();
     }
 
-    // TODO correct for lagbacks when recording
-    private static void advancedRecordTick(MinecraftClient client) {
+    private static void onTickRecord(MinecraftClient client) {
         if (recording) {
+            tickStarted = true;
             assert client.player != null;
 
             detectAndCorrectLagBack(client);
 
-            advancedTickData.add(
-                    new PlayerTickStateAdvanced(
+            fullTickData.add(
+                    new FullTickState(
                             client.player.getPos(),
                             new Vec2f(client.player.getYaw(), client.player.getPitch()),
                             client.options.attackKey.isPressed(),
@@ -61,6 +70,46 @@ public class ReplayBot {
                             client.options.sneakKey.isPressed(),
                             client.options.sprintKey.isPressed(),
                             client.options.jumpKey.isPressed()));
+        }
+    }
+
+    private static void betweenTicksRecord() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        while(true) {
+            if(!recording) {
+                try {
+                    Thread.sleep(3);
+                } catch (InterruptedException e) {
+                    SkyblockBot.LOGGER.info("Interrupted \"between ticks\" thread");
+                }
+                continue;
+            }
+            if(!tickStarted) {
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    SkyblockBot.LOGGER.info("Interrupted \"between ticks\" thread");
+                }
+                continue;
+            }
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                SkyblockBot.LOGGER.info("Interrupted \"between ticks\" thread");
+            }
+
+            assert client.player != null;
+            betweenTickData.add(new BetweenTickState(
+                    new Vec2f(client.player.getYaw(), client.player.getPitch()),
+                    client.options.attackKey.isPressed(),
+                    client.options.forwardKey.isPressed(),
+                    client.options.backKey.isPressed(),
+                    client.options.rightKey.isPressed(),
+                    client.options.leftKey.isPressed(),
+                    client.options.sneakKey.isPressed(),
+                    client.options.sprintKey.isPressed(),
+                    client.options.jumpKey.isPressed()));
+            tickStarted = false;
         }
     }
 
@@ -75,7 +124,7 @@ public class ReplayBot {
         }
 
         SkyblockBot.LOGGER.info("started recording");
-        advancedTickData.clear();
+        fullTickData.clear();
 
         recording = true;
     }
@@ -86,14 +135,14 @@ public class ReplayBot {
         SkyblockBot.LOGGER.info("recording packet counter = " + debugRecordingPacketCounter);
 
         // Rotation shift so that bots look where they go and don't teleport around like idiots
-        for(int i = 0; i < advancedTickData.size() - 1; i++) {
-            advancedTickData.get(i).setRotation(advancedTickData.get(i + 1).getRotation());
+        for(int i = 0; i < fullTickData.size() - 1; i++) {
+            fullTickData.get(i).setRotation(fullTickData.get(i + 1).getRotation());
         }
 
         saveRecordingAsync();
     }
 
-    private static void advancedPlayTick(MinecraftClient client) {
+    private static void onTickPlay(MinecraftClient client) {
         if (!playing) {
             return;
         }
@@ -105,15 +154,15 @@ public class ReplayBot {
                 pitchTask = null;
             }
         }
-        if (playIterator >= advancedTickData.size()) {
-            playIterator = 0;
+        if (tickIterator >= fullTickData.size()) {
+            tickIterator = 0;
             playing = false;
             SkyblockBot.LOGGER.warn("Entered advanced play tick with playIterator above tick data size, this SHOULDNT HAPPEN");
             return;
         }
+        tickStarted = true;
 
-        /* Get state for further use and increment iterator */
-        PlayerTickStateAdvanced state = advancedTickData.get(playIterator++);
+        FullTickState state = fullTickData.get(tickIterator);
 
         /*
          * call anti detect first
@@ -132,22 +181,22 @@ public class ReplayBot {
             antiDetectTrigger = false;
             antiDetectCounter = 0;
             // unpress all buttons
-            PlayerTickStateAdvanced unpressed = new PlayerTickStateAdvanced(new Vec3d(0, 0, 0), new Vec2f(0, 0),
+            FullTickState unpressed = new FullTickState(new Vec3d(0, 0, 0), new Vec2f(0, 0),
                     false, false, false, false, false, false, false, false);
             unpressed.setButtonsForClient(client);
             return;
         } else {
             asyncPlayAlarmSound();
 
-            if(playIterator < advancedTickData.size()) {
-                // TODO make these 3 lines better
-                Vec2f deltaRotation = advancedTickData.get(playIterator).getRotation().add(state.getRotation().multiply(-1.0f));
+            if(tickIterator <= fullTickData.size()) {
+                Vec2f deltaRotation = fullTickData.get(tickIterator - 1).getRotation().add(state.getRotation().multiply(-1.0f));
                 client.player.setYaw(deltaRotation.x + client.player.getYaw());
                 client.player.setPitch(deltaRotation.y + client.player.getPitch());
             }
 
             state.setButtonsForClient(client);
             antiDetectCounter++;
+            tickIterator++;
             return;
         }
         // move rotate etc.
@@ -161,14 +210,14 @@ public class ReplayBot {
             }
         }
 
-
+        tickIterator++;
         // loop if it's a closed loop and stop if not
-        if (playIterator == advancedTickData.size()) {
+        if (tickIterator == fullTickData.size()) {
             // if last point is very close to the first we don't have to stop playing, instead can just loop
-            if (Utils.distanceBetween(state.getPosition(), advancedTickData.get(0).getPosition())
+            if (Utils.distanceBetween(state.getPosition(), fullTickData.get(0).getPosition())
                     <= ReplayBotSettings.maxDistanceToFirstPoint) {
                 SkyblockBot.LOGGER.info("looped");
-                playIterator = 0;
+                tickIterator = 0;
                 adjustHeadWhenDoneLoop();
             } else {
                 SkyblockBot.LOGGER.info("stopped playing because can't do a loop");
@@ -178,8 +227,39 @@ public class ReplayBot {
         }
     }
 
+    private static void betweenTicksPlay() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        while(true) {
+            if(!playing) {
+                try {
+                    Thread.sleep(3);
+                } catch (InterruptedException e) {
+                    SkyblockBot.LOGGER.info("Interrupted \"between ticks\" thread");
+                }
+                continue;
+            }
+            if(!tickStarted) {
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    SkyblockBot.LOGGER.info("Interrupted \"between ticks\" thread");
+                }
+                continue;
+            }
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                SkyblockBot.LOGGER.info("Interrupted \"between ticks\" thread");
+            }
+
+            betweenTickData.get(betweenTickIterator).setRotationForClient(client);
+            betweenTickData.get(betweenTickIterator++).setButtonsForClient(client);
+            tickStarted = false;
+        }
+    }
+
     public static void play() {
-        if (advancedTickData.size() == 0) {
+        if (fullTickData.size() == 0) {
             SkyblockBot.LOGGER.warn("can't start playing, nothing to play");
             loadRecordingAsync();
             return;
@@ -195,7 +275,7 @@ public class ReplayBot {
         assert MinecraftClient.getInstance().player != null;
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
 
-        double distanceToStartPoint = player.getPos().add(advancedTickData.get(0).getPosition().multiply(-1.0d)).length();
+        double distanceToStartPoint = player.getPos().add(fullTickData.get(0).getPosition().multiply(-1.0d)).length();
         if(distanceToStartPoint > ReplayBotSettings.maxDistanceToFirstPoint) {
             SkyblockBot.LOGGER.warn("Can't start so far from first point");
             return;
@@ -203,7 +283,8 @@ public class ReplayBot {
 
         SkyblockBot.LOGGER.info("Starting playing");
         itemWhenStarted = player.getStackInHand(player.getActiveHand()).getName().getString();
-        playIterator = 0;
+        tickIterator = 0;
+        betweenTickIterator = 0;
         antiDetectTrigger = false;
 
         adjustHeadBeforeStarting();
@@ -227,9 +308,9 @@ public class ReplayBot {
             serverChangedItem = false;
             return true;
         }
-        if(playIterator > 1) {
-            float dPitch = Math.abs(advancedTickData.get(playIterator - 2).getPitch() - client.player.getPitch());
-            float dYaw = Math.abs(advancedTickData.get(playIterator - 2).getYaw() - client.player.getYaw());
+        if(tickIterator > 0) {
+            float dPitch = Math.abs(fullTickData.get(tickIterator - 1).getPitch() - client.player.getPitch());
+            float dYaw = Math.abs(fullTickData.get(tickIterator - 1).getYaw() - client.player.getYaw());
             if (dPitch > ReplayBotSettings.antiDetectDeltaAngleThreshold
                     || dYaw > ReplayBotSettings.antiDetectDeltaAngleThreshold) {
                 SkyblockBot.LOGGER.warn("Anti-detection alg: rotation changed, but no packet was detect, wtf?");
@@ -262,16 +343,16 @@ public class ReplayBot {
         if(serverChangedPositionRotation) {
             int bestFit = -1;
             double bestFitDistance = ReplayBotSettings.maxDeltaToAdjust;
-            for(int i = 0; i < ReplayBotSettings.maxLagbackTicksWhenRecording && advancedTickData.size() > i; i++) {
-                int index = advancedTickData.size() - i - 1;
-                double distance = Utils.distanceBetween(client.player.getPos(), advancedTickData.get(index).getPosition());
+            for(int i = 0; i < ReplayBotSettings.maxLagbackTicksWhenRecording && fullTickData.size() > i; i++) {
+                int index = fullTickData.size() - i - 1;
+                double distance = Utils.distanceBetween(client.player.getPos(), fullTickData.get(index).getPosition());
                 if(distance < bestFitDistance) {
                     bestFit = index;
                     bestFitDistance = distance;
                 }
             }
             if(bestFit != -1) {
-                advancedTickData.subList(bestFit + 1, advancedTickData.size()).clear();
+                fullTickData.subList(bestFit + 1, fullTickData.size()).clear();
                 SkyblockBot.LOGGER.info("Lagged back when recording, corrected! Best fit distance = " + bestFitDistance);
             } else {
                 SkyblockBot.LOGGER.warn("Lagged back when recording, can't correct, stopping the recording");
@@ -290,7 +371,7 @@ public class ReplayBot {
     private static boolean correctPosition(@NotNull MinecraftClient client) {
         positionCorrectedThisTick = true;
 
-        PlayerTickStateAdvanced state = advancedTickData.get(playIterator);
+        FullTickState state = fullTickData.get(tickIterator);
         double deltaExpectedPos = Utils.distanceBetween(client.player.getPos(), state.getPosition());
         if (deltaExpectedPos > ReplayBotSettings.minDeltaToAdjust && deltaExpectedPos <= ReplayBotSettings.maxDeltaToAdjust) {
             state.setPositionForClient(client);
@@ -298,8 +379,8 @@ public class ReplayBot {
             return true;
         } else if (deltaExpectedPos > ReplayBotSettings.maxDeltaToAdjust) {
             // if delta is too big something is wrong, check if we were simply lagged back and if not-stop
-            for (int i = 1; i <= ReplayBotSettings.maxLagbackTicks && playIterator >= i; i++) {
-                double delta = Utils.distanceBetween(client.player.getPos(), advancedTickData.get(playIterator - i).getPosition());
+            for (int i = 1; i <= ReplayBotSettings.maxLagbackTicks && tickIterator >= i; i++) {
+                double delta = Utils.distanceBetween(client.player.getPos(), fullTickData.get(tickIterator - i).getPosition());
 
                 /*
                  * If delta is < max then we're roughly at the correct tick
@@ -307,8 +388,8 @@ public class ReplayBot {
                  * If delta is < min then we don't have to correct position, otherwise correct it
                  */
                 if (delta < ReplayBotSettings.maxDeltaToAdjust) {
-                    playIterator = playIterator - i;
-                    PlayerTickStateAdvanced newState = advancedTickData.get(playIterator);
+                    tickIterator = tickIterator - i;
+                    FullTickState newState = fullTickData.get(tickIterator);
                     newState.setButtonsForClient(client);
                     newState.setRotationForClient(client);
                     if (delta > ReplayBotSettings.minDeltaToAdjust) {
@@ -326,20 +407,20 @@ public class ReplayBot {
     }
 
     private static void adjustHeadBeforeStarting() {
-        pitchTask = LookHelper.changePitchSmoothAsync(advancedTickData.get(0).getPitch(), 90.0f);
-        yawTask = LookHelper.changeYawSmoothAsync(advancedTickData.get(0).getYaw(), 90.0f);
+        pitchTask = LookHelper.changePitchSmoothAsync(fullTickData.get(0).getPitch(), 90.0f);
+        yawTask = LookHelper.changeYawSmoothAsync(fullTickData.get(0).getYaw(), 90.0f);
     }
 
     private static void adjustHeadWhenDoneLoop() {
-        pitchTask = LookHelper.changePitchSmoothAsync(advancedTickData.get(0).getPitch(), 90.0f);
-        yawTask = LookHelper.changeYawSmoothAsync(advancedTickData.get(0).getYaw(), 90.0f);
+        pitchTask = LookHelper.changePitchSmoothAsync(fullTickData.get(0).getPitch(), 90.0f);
+        yawTask = LookHelper.changeYawSmoothAsync(fullTickData.get(0).getYaw(), 90.0f);
     }
 
     private static void asyncPlayAlarmSound() {
         CompletableFuture.runAsync(() -> {
             MinecraftClient client = MinecraftClient.getInstance();
             client.world.playSound(client.player.getX(), client.player.getY(), client.player.getZ(),
-                    SoundEvents.BLOCK_ANVIL_LAND, SoundCategory.BLOCKS,
+                    SoundEvents.BLOCK_ANVIL_LAND, SoundCategory.PLAYERS,
                     100.0f, 10.0f,false);
         });
     }
@@ -368,7 +449,7 @@ public class ReplayBot {
                 boolean sneak = file.get() == 1;
                 boolean sprint = file.get() == 1;
                 boolean jump = file.get() == 1;
-                advancedTickData.add(new PlayerTickStateAdvanced(pos, rot, isAttacking,
+                fullTickData.add(new FullTickState(pos, rot, isAttacking,
                                                                  forward, backward, right, left,
                                                                  sneak, sprint, jump));
             }
@@ -377,14 +458,14 @@ public class ReplayBot {
 
     private static void saveRecordingAsync() {
         CompletableFuture.runAsync(() -> {
-            ByteBuffer bb = ByteBuffer.allocate(advancedTickData.size() * (PlayerTickStateAdvanced.getTickStateSize()));
-            for (PlayerTickStateAdvanced state : advancedTickData) {
+            ByteBuffer bb = ByteBuffer.allocate(fullTickData.size() * (FullTickState.getTickStateSize()));
+            for (FullTickState state : fullTickData) {
                 bb.putDouble(state.getPosition().getX());
                 bb.putDouble(state.getPosition().getY());
                 bb.putDouble(state.getPosition().getZ());
                 bb.putFloat(state.getYaw());
                 bb.putFloat(state.getPitch());
-                bb.put((byte) (state.isAttacking() ? 1 : 0));
+                bb.put((byte) (state.isAttack() ? 1 : 0));
                 bb.put((byte) (state.isForward() ? 1 : 0));
                 bb.put((byte) (state.isBackward() ? 1 : 0));
                 bb.put((byte) (state.isRight() ? 1 : 0));
