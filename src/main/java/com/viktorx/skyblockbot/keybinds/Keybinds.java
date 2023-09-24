@@ -1,6 +1,5 @@
 package com.viktorx.skyblockbot.keybinds;
 
-import com.viktorx.skyblockbot.NotBotCore;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
 import com.viktorx.skyblockbot.replay.ReplayBot;
@@ -17,10 +16,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Keybinds {
     private static KeyBinding startStopBot;
-    private static boolean botStarted = false;
     private static KeyBinding printTestInfo;
     private static KeyBinding startStopRecording;
-    private static boolean recordingStarted;
 
     private static final Queue<KeyBinding> tickKeyPressQueue = new LinkedBlockingQueue<>();
 
@@ -53,21 +50,19 @@ public class Keybinds {
                     CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
 
             if (startStopBot.wasPressed()) {
-                if (!botStarted) {
-                    ReplayBot.playRecording();
+                if (!ReplayBot.isPlaying()) {
+                    ReplayBot.play();
                 } else {
                     ReplayBot.stopPlaying();
                 }
-                botStarted = !botStarted;
             }
 
             if (startStopRecording.wasPressed()) {
-                if (!recordingStarted) {
+                if (!ReplayBot.isRecording()) {
                     ReplayBot.startRecording();
                 } else {
                     ReplayBot.stopRecording();
                 }
-                recordingStarted = !recordingStarted;
             }
 
             if (printTestInfo.wasPressed()) {

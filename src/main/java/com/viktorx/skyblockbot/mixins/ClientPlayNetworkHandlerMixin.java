@@ -22,15 +22,15 @@ public class ClientPlayNetworkHandlerMixin {
     */
     @Inject(method = "onPlayerPositionLook", at = @At("HEAD"))
     public void detectServerChangingPosRot(PlayerPositionLookS2CPacket packet, CallbackInfo ci) {
-        if(ReplayBot.isPlaying()) {
-            ReplayBot.serverChangedRotation = true;
+        if(ReplayBot.isPlaying() || ReplayBot.isRecording()) {
+            ReplayBot.serverChangedPositionRotation = true;
         }
     }
 
     @Inject(method = "onLookAt", at = @At("HEAD"))
     public void detectServerChangingMyRotation(LookAtS2CPacket packet, CallbackInfo ci) {
         if(ReplayBot.isPlaying()) {
-            ReplayBot.serverChangedRotation = true;
+            ReplayBot.serverChangedPositionRotation = true;
         }
     }
 
