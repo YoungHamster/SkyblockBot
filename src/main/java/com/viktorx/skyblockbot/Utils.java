@@ -1,6 +1,6 @@
 package com.viktorx.skyblockbot;
 
-import net.minecraft.util.math.Vec2f;
+import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -112,5 +112,9 @@ public class Utils {
 
         return ( offsetValue - ( (float)Math.floor( offsetValue / width ) * width ) ) + start ;
         // + start to reset back to start of original range
+    }
+
+    public static double distanceBetween(Vec3d v1, Vec3d v2) {
+        return v1.add(v2.multiply(-1.0d)).length();
     }
 }

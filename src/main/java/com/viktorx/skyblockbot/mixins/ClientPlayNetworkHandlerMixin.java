@@ -3,8 +3,7 @@ package com.viktorx.skyblockbot.mixins;
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.replay.ReplayBot;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.network.packet.s2c.play.InventoryS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
+import net.minecraft.network.packet.s2c.play.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -22,11 +21,30 @@ public class ClientPlayNetworkHandlerMixin {
      * if there is no difference then hypixel most likely won't auto-detect the bot
     */
     @Inject(method = "onPlayerPositionLook", at = @At("HEAD"))
-    public void countPosLookPacket(PlayerPositionLookS2CPacket packet, CallbackInfo ci) {
+    public void detectServerChangingPosRot(PlayerPositionLookS2CPacket packet, CallbackInfo ci) {
         if(ReplayBot.isPlaying()) {
-            ReplayBot.debugPlayingPacketCounter += 1;
-        } else if(ReplayBot.isRecording()) {
-            ReplayBot.debugRecordingPacketCounter += 1;
+            ReplayBot.serverChangedRotation = true;
+        }
+    }
+
+    @Inject(method = "onLookAt", at = @At("HEAD"))
+    public void detectServerChangingMyRotation(LookAtS2CPacket packet, CallbackInfo ci) {
+        if(ReplayBot.isPlaying()) {
+            ReplayBot.serverChangedRotation = true;
+        }
+    }
+
+    @Inject(method = "onScreenHandlerSlotUpdate", at = @At("HEAD"))
+    public void detectServerChangingSlot(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci){
+        if(ReplayBot.isPlaying()) {
+            ReplayBot.serverChangedSlot = true;
+        }
+    }
+
+    @Inject(method = "onUpdateSelectedSlot", at = @At("HEAD"))
+    public void detectServerChangingItem(UpdateSelectedSlotS2CPacket packet, CallbackInfo ci){
+        if(ReplayBot.isPlaying()) {
+            ReplayBot.serverChangedItem = true;
         }
     }
 }
