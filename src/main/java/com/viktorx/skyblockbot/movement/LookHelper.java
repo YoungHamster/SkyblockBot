@@ -14,7 +14,7 @@ public class LookHelper {
 
     public static float getYaw() {
         assert MinecraftClient.getInstance().player != null;
-        return Utils.normalize(MinecraftClient.getInstance().player.getYaw(), -180.0f, 180.0f);
+        return Utils.normalize(MinecraftClient.getInstance().player.getYaw(), 0, 360);
     }
 
     public static CompletableFuture<Void> changeYawSmoothAsync(float targetYaw, float degreesPerSecond) {
@@ -26,7 +26,7 @@ public class LookHelper {
     }
 
     public static void changeYawSmooth(float targetYaw, float degreesPerSecond) {
-        targetYaw = Utils.normalize(targetYaw, -180.0f, 180.0f);
+        targetYaw = Utils.normalize(targetYaw, 0, 360);
         float degreesPerMs = degreesPerSecond / 1000.0F;
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
         float yawDirection = (targetYaw - LookHelper.getYaw()) / Math.abs(targetYaw - getYaw());

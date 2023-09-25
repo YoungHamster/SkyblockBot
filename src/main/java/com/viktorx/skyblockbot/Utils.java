@@ -114,6 +114,11 @@ public class Utils {
         // + start to reset back to start of original range
     }
 
+    // default range from -180 to 180
+    public static float normalize(float value) {
+        return normalize(value, -180.0f, 180.0f);
+    }
+
     public static double distanceBetween(Vec3d v1, Vec3d v2) {
         return v1.add(v2.multiply(-1.0d)).length();
     }

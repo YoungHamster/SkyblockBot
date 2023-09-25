@@ -51,7 +51,7 @@ public class Keybinds {
 
             if (startStopBot.wasPressed()) {
                 if (!ReplayBot.isPlaying()) {
-                    ReplayBot.play();
+                    ReplayBot.startPlaying();
                 } else {
                     ReplayBot.stopPlaying();
                 }

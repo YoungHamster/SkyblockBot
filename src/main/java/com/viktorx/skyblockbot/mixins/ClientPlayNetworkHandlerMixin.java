@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.mixins;
 
 import com.viktorx.skyblockbot.CurrentInventory;
+import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.replay.ReplayBot;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.*;

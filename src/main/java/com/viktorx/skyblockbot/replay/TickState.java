@@ -1,13 +1,15 @@
 package com.viktorx.skyblockbot.replay;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 
-public class FullTickState {
+public class TickState {
     private static final int tickStateSize = 8*3+4*2+1+7;
+
     private final Vec3d position;
-    private Vec2f rotation;
+    private final Vec2f rotation;
     private final boolean attack;
     private final boolean forward;
     private final boolean backward;
@@ -17,9 +19,9 @@ public class FullTickState {
     private final boolean sprint;
     private final boolean jump;
 
-    FullTickState(Vec3d pos, Vec2f rot, boolean attack,
-                  boolean forward, boolean backward, boolean right, boolean left,
-                  boolean sneak, boolean sprint, boolean jump) {
+    TickState(Vec3d pos, Vec2f rot, boolean attack,
+              boolean forward, boolean backward, boolean right, boolean left,
+              boolean sneak, boolean sprint, boolean jump) {
         this.position = pos;
         this.rotation = rot;
         this.attack = attack;
@@ -44,7 +46,7 @@ public class FullTickState {
     }
 
     public void setButtonsForClient(MinecraftClient client) {
-        client.options.attackKey.setPressed(isAttack());
+        client.options.attackKey.setPressed(attack);
         client.options.forwardKey.setPressed(forward);
         client.options.backKey.setPressed(backward);
         client.options.rightKey.setPressed(right);
@@ -72,14 +74,6 @@ public class FullTickState {
 
     public boolean isAttack() {
         return attack;
-    }
-
-    public void setRotation(Vec2f rotation) {
-        this.rotation = rotation;
-    }
-
-    public Vec2f getRotation() {
-        return rotation;
     }
 
     public boolean isForward() {
