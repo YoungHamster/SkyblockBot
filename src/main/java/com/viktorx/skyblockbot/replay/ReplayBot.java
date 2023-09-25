@@ -178,7 +178,7 @@ public class ReplayBot {
         }
 
         SkyblockBot.LOGGER.info("Starting playing");
-        itemWhenStarted = player.getStackInHand(player.getActiveHand()).getName().getString();
+        itemWhenStarted = player.getActiveItem().getName().getString();
         tickIterator = 0;
         debugPlayingPacketCounter = 0;
 
@@ -195,6 +195,10 @@ public class ReplayBot {
     public static void stopPlaying() {
         SkyblockBot.LOGGER.info("stopped playing");
         SkyblockBot.LOGGER.info("playing packet counter = " + debugPlayingPacketCounter);
+        SkyblockBot.LOGGER.info("on ground only counter = " + debugOnGroundOnlyCounter);
+        SkyblockBot.LOGGER.info("look and on ground counter = " + debugLookAndOnGroundCounter);
+        SkyblockBot.LOGGER.info("position and on ground counter = " + debugPositionAndOnGroundCounter);
+        SkyblockBot.LOGGER.info("full counter = " + debugFullCounter);
         unpressButtons();
         playing = false;
     }
@@ -225,9 +229,11 @@ public class ReplayBot {
             }
         }
         if(serverChangedSlot) {
-            SkyblockBot.LOGGER.warn("Anti-detection alg: server changed hotbar slot");
-            serverChangedSlot = false;
-            return true;
+            if(!client.player.getActiveItem().getName().getString().equals(itemWhenStarted)) {
+                SkyblockBot.LOGGER.warn("Anti-detection alg: server changed hotbar slot");
+                serverChangedSlot = false;
+                return true;
+            }
         }
         return false;
     }

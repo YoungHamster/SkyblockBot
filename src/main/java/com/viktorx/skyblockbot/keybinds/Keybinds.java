@@ -16,32 +16,32 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Keybinds {
     private static KeyBinding startStopBot;
-    private static KeyBinding printTestInfo;
+    //private static KeyBinding printTestInfo;
     private static KeyBinding startStopRecording;
 
     private static final Queue<KeyBinding> tickKeyPressQueue = new LinkedBlockingQueue<>();
 
     public static void Init() {
         startStopBot = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.skyblockbot.spook", // The translation key of the keybinding's name
+                "Start/stop moving", // The translation key of the keybinding's name
                 InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
                 GLFW.GLFW_KEY_O, // The keycode of the key
-                "category.skyblockbot.toggle" // The translation key of the keybinding's category.
+                "Replay bot" // The translation key of the keybinding's category.
         ));
 
         startStopRecording = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.skyblockbot.spook2", // The translation key of the keybinding's name
+                "Start/stop recording movements", // The translation key of the keybinding's name
                 InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
                 GLFW.GLFW_KEY_R, // The keycode of the key
-                "category.skyblockbot.record" // The translation key of the keybinding's category.
+                "Replay bot" // The translation key of the keybinding's category.
         ));
 
-        printTestInfo = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        /*printTestInfo = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.skyblockbot.spook3", // The translation key of the keybinding's name
                 InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
                 GLFW.GLFW_KEY_I, // The keycode of the key
                 "category.skyblockbot.getInfo" // The translation key of the keybinding's category.
-        ));
+        ));*/
 
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
 
@@ -65,9 +65,9 @@ public class Keybinds {
                 }
             }
 
-            if (printTestInfo.wasPressed()) {
+            /*if (printTestInfo.wasPressed()) {
                 CompletableFuture<Void> future = CompletableFuture.runAsync(CraftPriceCalculator.getInstance()::debugPrintRecipesPrices);
-            }
+            }*/
         });
 
     }
