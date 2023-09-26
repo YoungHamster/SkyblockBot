@@ -7,7 +7,9 @@ import net.fabricmc.api.Environment;
 
 @Environment(EnvType.CLIENT)
 public class SkyblockBotClient implements ClientModInitializer {
+
     @Override
     public void onInitializeClient() {
     }
+
 }

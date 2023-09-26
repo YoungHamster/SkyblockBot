@@ -46,8 +46,7 @@ public class Keybinds {
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
 
             // this does the clicking
-            CompletableFuture<Void> clickTick =
-                    CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
+            CompletableFuture<Void> clickTick = CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
 
             if (startStopBot.wasPressed()) {
                 if (!ReplayBot.isPlaying()) {
@@ -80,14 +79,17 @@ public class Keybinds {
     private static void asyncPressKeyAfterTick() {
         KeyBinding key;
         key = Keybinds.tickKeyPressQueue.poll();
+
         if (key != null) {
             KeyBinding.onKeyPressed(((KeyBindingMixin) key).getBoundKey());
             key.setPressed(true);
+
             try {
                 Thread.sleep(40); // press button for 2 ticks, maybe make it random later
             } catch (InterruptedException e) {
                 SkyblockBot.LOGGER.info("InterruptedException. Don't care");
             }
+
             key.setPressed(false);
         }
     }

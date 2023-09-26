@@ -6,6 +6,7 @@ import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 
 public class TickState {
+
     private static final int tickStateSize = 8*3+4*2+1+7;
 
     private final Vec3d position;
@@ -22,6 +23,7 @@ public class TickState {
     TickState(Vec3d pos, Vec2f rot, boolean attack,
               boolean forward, boolean backward, boolean right, boolean left,
               boolean sneak, boolean sprint, boolean jump) {
+
         this.position = pos;
         this.rotation = rot;
         this.attack = attack;
@@ -36,6 +38,7 @@ public class TickState {
 
     public void setRotationForClient(MinecraftClient client) {
         assert client.player != null;
+
         client.player.setYaw(getYaw());
         client.player.setPitch(getPitch());
     }

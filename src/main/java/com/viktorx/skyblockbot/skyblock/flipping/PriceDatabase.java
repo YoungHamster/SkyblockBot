@@ -24,12 +24,12 @@ public class PriceDatabase {
     private PriceDatabase() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            conn = DriverManager.getConnection("jdbc:mysql://localhost/skyblock?" +
-                    "user=root&password=8585623");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost/skyblock?user=root&password=8585623");
         } catch (Exception ex) {
             SkyblockBot.LOGGER.info("Couldn't connect to database with ended auctions. Error when creating sql driver or smth.");
             ex.printStackTrace();
         }
+
         loadBazaarPrices();
         SkyblockBot.LOGGER.info("Loaded bazaar prices");
     }
@@ -38,19 +38,23 @@ public class PriceDatabase {
         if (instance == null) {
             instance = new PriceDatabase();
         }
+
         return instance;
     }
 
     public Pair<Double, Integer> fetchPriceTradeVol(String itemName) {
         Pair<Double, Integer> pv = pricesAnd24hVols.get(itemName);
+
         if (pv == null) {
             pv = fetchAHPriceVol(itemName);
         }
+
         return pv;
     }
 
     public Double fetchItemPrice(String itemName) {
         Pair<Double, Integer> priceVol = pricesAnd24hVols.get(itemName);
+
         if (priceVol != null) {
             return priceVol.getLeft();
         } else {
@@ -59,6 +63,7 @@ public class PriceDatabase {
                 return pair.getLeft();
             }
         }
+
         return null;
     }
 
@@ -66,6 +71,7 @@ public class PriceDatabase {
     private Pair<Double, Integer> fetchAHPriceVol(String itemName) {
         String productId = BZNameConverter.getInstance().getBZName(itemName);
         List<Integer> prices = new ArrayList<>();
+
         try {
             // without index it takes like 300ms
             // with index on productId column in db this request takes like 0-2ms on my pc
@@ -81,18 +87,23 @@ public class PriceDatabase {
                     " from database. Sql state: " + e.getSQLState());
             return null;
         }
+
         if (prices.size() == 0) {
             return null;
         }
+
         prices.sort(Integer::compare);
         Pair<Double, Integer> priceAndVol = new ImmutablePair<>(Double.valueOf(prices.get(prices.size() / 2)), prices.size());
+
         pricesAnd24hVols.put(itemName, priceAndVol);
+
         return priceAndVol;
     }
 
     private void loadBazaarPrices() {
         String bazaar = Utils.getSBApiPage("https://api.hypixel.net/skyblock/bazaar");
         bazaar = bazaar.substring(bazaar.indexOf("\"quick_status\":{") + "\"quick_status\":{".length());
+
         while (bazaar.contains("\"productId\"")) {
             Pair<String, String> pair = Utils.getJSONTokenAndCutItOut("\"productId\"", bazaar);
             bazaar = pair.getLeft();

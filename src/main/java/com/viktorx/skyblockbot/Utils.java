@@ -39,6 +39,7 @@ public class Utils {
         for (int i = 0; i < s.length(); i++) {
             int s1 = value(s.charAt(i));
             //getting value of symbol s2[i+1]
+
             if (i + 1 < s.length()) {
                 int s2 = value(s.charAt(i + 1));
                 //comparing the current character from its right character
@@ -63,7 +64,9 @@ public class Utils {
                 .uri(URI.create(URL))
                 .GET() // GET is default
                 .build();
+
         String result = "";
+
         do {
             try {
                 HttpResponse<String> response = client.send(request,
@@ -90,13 +93,19 @@ public class Utils {
                     "token: " + token + "\njson: " + json);
             return new ImmutablePair<>(null, null);
         }
+
         json = json.substring(index);
         int tokenValueStart = json.indexOf(":") + 1;
+
         try {
             if (json.indexOf("}") < json.indexOf(",") || !json.contains(",")) {
-                return new ImmutablePair<>(json.substring(json.indexOf("}") + 1), json.substring(tokenValueStart, json.indexOf("}")));
+                return new ImmutablePair<>(json.substring(json.indexOf("}") + 1),
+                        json.substring(tokenValueStart, json.indexOf("}"))
+                );
             } else {
-                return new ImmutablePair<>(json.substring(json.indexOf(",") + 1), json.substring(tokenValueStart, json.indexOf(",")));
+                return new ImmutablePair<>(json.substring(json.indexOf(",") + 1),
+                        json.substring(tokenValueStart, json.indexOf(","))
+                );
             }
         } catch (Exception e) {
             SkyblockBot.LOGGER.info(e.getMessage());
@@ -105,12 +114,11 @@ public class Utils {
         }
     }
 
-    public static float normalize( float value, float start, float end )
-    {
-        float width       = end - start   ;   //
-        float offsetValue = value - start ;   // value relative to 0
+    public static float normalize(float value, float start, float end) {
+        float width = end - start;   //
+        float offsetValue = value - start;   // value relative to 0
 
-        return ( offsetValue - ( (float)Math.floor( offsetValue / width ) * width ) ) + start ;
+        return (offsetValue - ((float) Math.floor(offsetValue / width) * width)) + start;
         // + start to reset back to start of original range
     }
 

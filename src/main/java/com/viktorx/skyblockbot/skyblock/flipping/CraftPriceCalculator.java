@@ -36,6 +36,7 @@ public class CraftPriceCalculator {
     public Double getRecipePrice(String itemName) {
         SBRecipe recipe = recipes.get(itemName);
         double price = 0.0f;
+
         for (Map.Entry<String, Integer> ingredient : recipe.getIngredients().entrySet()) {
             Double ingrPrice = PriceDatabase.getInstance().fetchItemPrice(ingredient.getKey());
             if (ingrPrice != null) {
@@ -59,15 +60,18 @@ public class CraftPriceCalculator {
         }
 
         int index = file.indexOf(":");
+
         while (index != -1) {
             String itemName = file.substring(0, index);
 
             String ingredientsStr = file.substring(file.indexOf("{") + 1, file.indexOf("}"));
             String[] ingredientsArray = ingredientsStr.split("[:,]");
             Map<String, Integer> ingredients = new HashMap<>();
+
             for (int i = 0; i < ingredientsArray.length / 2; i++) {
                 ingredients.put(ingredientsArray[i * 2], Integer.parseInt(ingredientsArray[i * 2 + 1]));
             }
+
             recipes.put(itemName, new SBRecipe(ingredients, itemName));
 
             if (file.indexOf("}") == file.length() - 1) {
@@ -75,25 +79,31 @@ public class CraftPriceCalculator {
             } else {
                 file = file.substring(file.indexOf("}") + 2);
             }
+
             index = file.indexOf(":");
         }
     }
 
     public void debugPrintRecipesPrices() {
         List<PotentialFlip> flips = new ArrayList<>();
+
         recipes.forEach((item, recipe) -> {
             PotentialFlip pf = FlipFactory.createFlip(CraftFlip.type, item);
-            if(pf != null && pf.getOneFlipInvestment() > 10000.0d) {
+            if (pf != null && pf.getOneFlipInvestment() > 10000.0d) {
                 flips.add(pf);
             }
         });
+
         flips.sort(PotentialFlip::comparingBy24hProfit);
         flips.forEach(flip -> SkyblockBot.LOGGER.info(
-                String.format("%s:{ 24h profit: %.1f, 24h investment: %.1f, one flip profit: %.1f, one flip investment: %.1f",
-                        flip.getItemName(),
-                        flip.getPotential24hProfit(),
-                        flip.get24hInvestment(),
-                        flip.getOneFlipProfit(),
-                        flip.getOneFlipInvestment())));
+                        String.format("%s:{ 24h profit: %.1f, 24h investment: %.1f, one flip profit: %.1f, one flip investment: %.1f",
+                                flip.getItemName(),
+                                flip.getPotential24hProfit(),
+                                flip.get24hInvestment(),
+                                flip.getOneFlipProfit(),
+                                flip.getOneFlipInvestment()
+                        )
+                )
+        );
     }
 }

@@ -45,9 +45,11 @@ public class ScoreboardUtils {
         }
 
         Collection<ScoreboardPlayerScore> scores = scoreboard.getAllPlayerScores(objective);
-        List<ScoreboardPlayerScore> list = Lists.newArrayList(scores.stream()
-                .filter(input -> input != null && input.getPlayerName() != null && !input.getPlayerName().startsWith("#"))
-                .collect(Collectors.toList()));
+        List<ScoreboardPlayerScore> list = Lists.newArrayList(
+                scores.stream().filter(input -> input != null &&
+                        input.getPlayerName() != null &&
+                        !input.getPlayerName().startsWith("#")
+                ).collect(Collectors.toList()));
 
         if (list.size() > 15) {
             scores = Lists.newArrayList(Iterables.skip(list, scores.size() - 15));
@@ -59,6 +61,7 @@ public class ScoreboardUtils {
             Team team = scoreboard.getPlayerTeam(score.getPlayerName());
             String line = Team.decorateName(team, Texts.toText(new MessageImpl(score.getPlayerName()))).getString();
             line = line.replaceAll("§.", "");
+
             lines.add(line);
         }
 

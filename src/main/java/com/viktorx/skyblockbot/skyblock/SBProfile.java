@@ -10,10 +10,7 @@ import net.minecraft.screen.slot.Slot;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 public class SBProfile {
@@ -21,6 +18,16 @@ public class SBProfile {
     private final List<SBRecipe> unlockedRecipes = new ArrayList<>();
     private long bankBalance;
     private long purse;
+
+    private List<String> RECIPE_CATEGORIES = new ArrayList<>(
+            Arrays.asList("Farming", "Mining", "Combat", "Fishing", "Foraging", "Special")
+    );
+
+    private List<String> SKILLS_TYPE = new ArrayList<>(
+            Arrays.asList("Farming", "Mining", "Combat", "Foraging", "Fishing", "Enchanting", "Alchemy")
+    );
+
+    private static final String SKYBLOCK_BOT_TEST_FILE = "C:\\Users\\Nobody\\Desktop\\SBBotTestInfo.txt";
 
     public void loadData() throws TimeoutException {
         purse = SBUtils.getPurse();
@@ -30,19 +37,25 @@ public class SBProfile {
 
     private void loadSkills() throws TimeoutException {
         MinecraftClient client = MinecraftClient.getInstance();
+
         Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[8]); // selects hotbar slot 9(sb menu)
         Keybinds.asyncPressKeyAfterTick(client.options.useKey); // opens sb menu with rmb click
         SBUtils.waitForMenu();
         SBUtils.leftClickOnSlot("Your Skills");
         SBUtils.waitForMenu();
 
-        skills.add(new SBSkill(SBUtils.getSlot("Farming").getStack().getName().getString()));
+
+        for (String name : this.SKILLS_TYPE) {
+            skills.add(new SBSkill(SBUtils.getSlot(name).getStack().getName().getString()));
+        }
+
+        /*skills.add(new SBSkill(SBUtils.getSlot("Farming").getStack().getName().getString()));
         skills.add(new SBSkill(SBUtils.getSlot("Mining").getStack().getName().getString()));
         skills.add(new SBSkill(SBUtils.getSlot("Combat").getStack().getName().getString()));
         skills.add(new SBSkill(SBUtils.getSlot("Foraging").getStack().getName().getString()));
         skills.add(new SBSkill(SBUtils.getSlot("Fishing").getStack().getName().getString()));
         skills.add(new SBSkill(SBUtils.getSlot("Enchanting").getStack().getName().getString()));
-        skills.add(new SBSkill(SBUtils.getSlot("Alchemy").getStack().getName().getString()));
+        skills.add(new SBSkill(SBUtils.getSlot("Alchemy").getStack().getName().getString()));*/
 
         Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
     }
@@ -57,13 +70,19 @@ public class SBProfile {
         SBUtils.waitForMenu();
         List<Slot> recipeSlots = new ArrayList<>();
         try {
-            recipeSlots.add(SBUtils.getSlot("Farming"));
+
+            for (String skill : this.RECIPE_CATEGORIES) {
+                recipeSlots.add(SBUtils.getSlot(skill));
+            }
+
+            /*recipeSlots.add(SBUtils.getSlot("Farming"));
             recipeSlots.add(SBUtils.getSlot("Mining"));
             recipeSlots.add(SBUtils.getSlot("Combat"));
             recipeSlots.add(SBUtils.getSlot("Fishing"));
             recipeSlots.add(SBUtils.getSlot("Foraging"));
-            recipeSlots.add(SBUtils.getSlot("Special"));
-        } catch (TimeoutException ignored) {}
+            recipeSlots.add(SBUtils.getSlot("Special"));*/
+        } catch (TimeoutException ignored) {
+        }
         for (Slot slot : recipeSlots) {
             SBUtils.leftClickOnSlot(slot);
             SBUtils.waitForMenu();
@@ -92,12 +111,14 @@ public class SBProfile {
             for (int j = 1; j < 8; j++) {
                 int slotID = j + i * 9;
                 // skipping empty slots, locked slots, minions and pets
+
                 if (SBUtils.getSlotText(slotID).contains("???")
                         || SBUtils.getSlotText(slotID).contains("Minion")
                         || SBUtils.getSlotText(slotID).contains("Air")
                         || SBUtils.getSlotText(slotID).contains(" Pet")) {
                     continue;
                 }
+
                 SBUtils.leftClickOnSlot(slotID);
                 SBUtils.waitForMenu();
                 recipes.add(parseSBRecipe());
@@ -112,15 +133,20 @@ public class SBProfile {
         String result = SBUtils.getSlotText(25);
         SkyblockBot.LOGGER.info("Parsing recipe for: " + result);
         Map<String, Integer> ingredients = new HashMap<>();
+
         for (int i = 1; i < 4; i++) {
             for (int j = 1; j < 4; j++) {
                 int slotID = j + i * 9;
+
                 ItemStack item = SBUtils.getItemStack(slotID);
                 String name = item.getName().getString();
+
                 if (name.contains("Air")) {
                     continue;
                 }
+
                 int count = item.getCount();
+
                 if (ingredients.containsKey(name)) {
                     ingredients.put(name, ingredients.get(name) + count);
                 } else {
@@ -133,23 +159,29 @@ public class SBProfile {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
+
         sb.append("Bank balance: ").append(bankBalance).append("\n");
         sb.append("Purse: ").append(purse).append("\n");
         sb.append("Skills: {");
+
         skills.forEach(sbSkill -> sb.append(sbSkill.toString()).append(","));
+
         sb.deleteCharAt(sb.length() - 1);
         sb.append("}").append("\n");
         sb.append("Unlocked recipes: {");
+
         unlockedRecipes.forEach(sbRecipe -> sb.append(sbRecipe.toString()).append(","));
+
         sb.deleteCharAt(sb.length() - 1);
         sb.append("}").append("\n");
+
         return sb.toString();
     }
 
     private void saveshit() {
         String sb = toString();
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\Nobody\\Desktop\\SBBotTestInfo.txt"));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(SKYBLOCK_BOT_TEST_FILE));
             writer.write(sb);
             writer.close();
         } catch (IOException ignored) {

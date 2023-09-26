@@ -19,9 +19,12 @@ public class SBRecipe {
         StringBuilder sb = new StringBuilder();
         sb.append(result);
         sb.append(":{");
+
         ingredients.forEach((item, amount) -> sb.append(item).append(":").append(amount).append(","));
+
         sb.deleteCharAt(sb.length() - 1);
         sb.append("}");
+
         return sb.toString();
     }
 }

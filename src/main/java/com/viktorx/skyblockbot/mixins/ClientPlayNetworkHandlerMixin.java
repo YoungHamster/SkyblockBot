@@ -20,31 +20,31 @@ public class ClientPlayNetworkHandlerMixin {
 
     /* i want to count how many times minecraft sends this packet when I normally move and when bot moves
      * if there is no difference then hypixel most likely won't auto-detect the bot
-    */
+     */
     @Inject(method = "onPlayerPositionLook", at = @At("HEAD"))
     public void detectServerChangingPosRot(PlayerPositionLookS2CPacket packet, CallbackInfo ci) {
-        if(ReplayBot.isPlaying() || ReplayBot.isRecording()) {
+        if (ReplayBot.isPlaying() || ReplayBot.isRecording()) {
             ReplayBot.serverChangedPositionRotation = true;
         }
     }
 
     @Inject(method = "onLookAt", at = @At("HEAD"))
     public void detectServerChangingMyRotation(LookAtS2CPacket packet, CallbackInfo ci) {
-        if(ReplayBot.isPlaying()) {
+        if (ReplayBot.isPlaying()) {
             ReplayBot.serverChangedPositionRotation = true;
         }
     }
 
     @Inject(method = "onScreenHandlerSlotUpdate", at = @At("HEAD"))
-    public void detectServerChangingSlot(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci){
-        if(ReplayBot.isPlaying()) {
+    public void detectServerChangingSlot(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci) {
+        if (ReplayBot.isPlaying()) {
             ReplayBot.serverChangedSlot = true;
         }
     }
 
     @Inject(method = "onUpdateSelectedSlot", at = @At("HEAD"))
-    public void detectServerChangingItem(UpdateSelectedSlotS2CPacket packet, CallbackInfo ci){
-        if(ReplayBot.isPlaying()) {
+    public void detectServerChangingItem(UpdateSelectedSlotS2CPacket packet, CallbackInfo ci) {
+        if (ReplayBot.isPlaying()) {
             ReplayBot.serverChangedItem = true;
         }
     }

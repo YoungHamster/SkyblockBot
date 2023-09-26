@@ -10,9 +10,10 @@ public class NotBotCore {
     private static Thread t;
 
     public static void run(ClientPlayerEntity client) {
-        if(botThread == null) {
+        if (botThread == null) {
             botThread = new Bot();
         }
+
         runBotThread = true;
         Thread t = new Thread(botThread);
         t.start();

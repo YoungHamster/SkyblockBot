@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.replay;
 
 public class ReplayBotSettings {
+
     public static final int antiDetectTriggeredWaitTicks = 30;
     public static final int maxLagbackTicks = 10;
     public static final int maxLagbackTicksWhenRecording = 20;
@@ -10,4 +11,5 @@ public class ReplayBotSettings {
     public static final double maxDistanceToFirstPoint = 0.2f;
     public static final int antiStucknessTickCount = 20;
     public static final double detectStucknessCoefficient = 0.1;
+
 }

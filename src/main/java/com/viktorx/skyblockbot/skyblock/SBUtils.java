@@ -33,6 +33,7 @@ public class SBUtils {
             Thread.sleep(100);
         } catch (InterruptedException ignored) {
         }
+
         MinecraftClient client = MinecraftClient.getInstance();
 
         int lmb = ((KeyBindingMixin) client.options.attackKey).getBoundKey().getCode();
@@ -42,6 +43,7 @@ public class SBUtils {
     // gets profile balance from tab, sums personal bank balance and coop bank
     public static long getBankBalance() {
         String bankLine = getTabPlayers().stream().filter(string -> string.contains("Bank")).collect(Collectors.joining());
+
         if (bankLine.length() == 0) {
             return -1;
         }
@@ -51,6 +53,7 @@ public class SBUtils {
             String[] personalAndCoop = bankLine.split("/");
             long coopBal = parseSBShortenedBalance(personalAndCoop[0]);
             long personalBal = parseSBShortenedBalance(personalAndCoop[1]);
+
             return coopBal + personalBal;
         } else {
             return parseSBShortenedBalance(bankLine);
@@ -79,9 +82,11 @@ public class SBUtils {
         MinecraftClient client = MinecraftClient.getInstance();
         Collection<PlayerListEntry> playerListEntries = client.player.networkHandler.getPlayerList();
         List<String> tabPlayers = new ArrayList<>();
+
         playerListEntries.forEach(entry -> {
             tabPlayers.add(client.inGameHud.getPlayerListHud().getPlayerName(entry).getString());
         });
+
         return tabPlayers;
     }
 
@@ -97,14 +102,17 @@ public class SBUtils {
         String purseLine = ScoreboardUtils.
                 getLines(Scoreboard.SIDEBAR_DISPLAY_SLOT_ID)
                 .stream().filter(string -> string.contains("Purse")).collect(Collectors.joining());
+
         if (purseLine.length() == 0) {
             return -1;
         }
+
         return (long) Float.parseFloat(purseLine.replace("Purse:", ""));
     }
 
     public static String getSlotText(int slot) {
         MinecraftClient client = MinecraftClient.getInstance();
+
         return client.player.currentScreenHandler.slots.get(slot).getStack().getName().getString();
     }
 
@@ -125,8 +133,10 @@ public class SBUtils {
     public static List<Slot> getAllSlots(String itemStackName) throws TimeoutException {
         List<Slot> slotList;
         MinecraftClient client = MinecraftClient.getInstance();
+
         int numberOfTries = 100;
         int i = 0;
+
         do {
             slotList = client.player.currentScreenHandler.slots.stream()
                     .filter(slot -> slot.getStack().getName().getString().contains(itemStackName))
@@ -136,18 +146,25 @@ public class SBUtils {
                 Thread.sleep(50);
             } catch (InterruptedException ignored) {
             }
+
             i++;
+
             if (i > numberOfTries) {
                 throw new TimeoutException();
             }
         } while (slotList.size() == 0);
+
         return slotList;
     }
 
     public static boolean anySlotsWithName(String itemStackName) {
         MinecraftClient client = MinecraftClient.getInstance();
-        return client.player.currentScreenHandler.slots.stream()
-                .filter(slot -> slot.getStack().getName().getString().contains(itemStackName)).count() > 0;
+
+        return client.player.currentScreenHandler.slots
+                .stream()
+                .filter(slot ->
+                        slot.getStack().getName().getString().contains(itemStackName)
+                ).count() > 0;
     }
 
     private static void waitForMenuToOpen() {

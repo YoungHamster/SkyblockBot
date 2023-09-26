@@ -11,7 +11,6 @@ public interface PlayerListHudMixin {
     @Accessor
     Text getFooter();
 
-
     @Accessor
     Text getHeader();
 }

@@ -14,8 +14,11 @@ public class SBPlayer {
     private SBProfile profile = new SBProfile();
     private SBGoal goal;
 
+    private static final String SKYBLOCKBOT_TEST_INFO_PATH = "C:\\Users\\Nobody\\Desktop\\SBBotTestInfo.txt";
+
     public void run() throws TimeoutException {
         MinecraftClient client = MinecraftClient.getInstance();
+
         if (!SBUtils.isServerSkyblock()) {
             client.player.sendChatMessage("/l");
             try {
@@ -23,13 +26,16 @@ public class SBPlayer {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
             client.player.sendChatMessage("/play sb");
         }
+
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
         profile.loadData();
     }
 
@@ -44,12 +50,11 @@ public class SBPlayer {
 
     public void logPlayerInfo() {
 
-        String sb = "Player data:\n" + "Current server: " + currentServer + "\n" +
-                profile.toString();
+        String sb = "Player data:\n" + "Current server: " + currentServer + "\n" + profile.toString();
 
         SkyblockBot.LOGGER.info(sb);
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\Nobody\\Desktop\\SBBotTestInfo.txt"));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(SKYBLOCKBOT_TEST_INFO_PATH));
             writer.write(sb);
 
             writer.close();

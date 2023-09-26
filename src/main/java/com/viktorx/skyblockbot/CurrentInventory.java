@@ -27,6 +27,7 @@ public class CurrentInventory {
         if (CurrentInventory.syncID != syncID) {
             syncIDChanged = true;
         }
+
         CurrentInventory.syncID = syncID;
     }
 

@@ -29,6 +29,7 @@ public class SBSkill {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(name).append(":").append(level);
+
         return sb.toString();
     }
 }
