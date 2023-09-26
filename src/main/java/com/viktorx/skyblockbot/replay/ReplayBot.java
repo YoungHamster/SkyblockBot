@@ -2,12 +2,14 @@ package com.viktorx.skyblockbot.replay;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
+import com.viktorx.skyblockbot.mixins.IClientPlayerEntityMixin;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
@@ -30,12 +32,12 @@ public class ReplayBot {
     private static CompletableFuture<Void> pitchTask = null;
 
     private static boolean antiDetectTrigger = false;
+    private static int antiDetectTriggeredTickCounter = 0;
     private static String itemWhenStarted;
     public static boolean serverChangedPositionRotation = false;
     public static boolean serverChangedItem = false;
     public static boolean serverChangedSlot = false;
     private static boolean isStuck = false;
-    private static int stucknessCounter = 0;
     private static List<TickState> lastNTicks = new ArrayList<>();
     public static int debugRecordingPacketCounter = 0;
     public static int debugPlayingPacketCounter = 0;
@@ -49,6 +51,7 @@ public class ReplayBot {
     public static void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(ReplayBot::onTickRec);
         ClientTickEvents.START_CLIENT_TICK.register(ReplayBot::onTickPlay);
+        ClientTickEvents.START_CLIENT_TICK.register(ReplayBot::onTickAntiDetectTriggered);
     }
 
     private static void onTickRec(MinecraftClient client) {
@@ -57,22 +60,9 @@ public class ReplayBot {
         }
 
         assert client.player != null;
-        detectAndCorrectLagBack(client);
+        detectAndCorrectLagBack(client.player);
 
-        tickStates.add(
-                new TickState(
-                        client.player.getPos(),
-                        new Vec2f(Utils.normalize(client.player.getYaw()), Utils.normalize(client.player.getPitch())),
-                        client.options.attackKey.isPressed(),
-                        client.options.forwardKey.isPressed(),
-                        client.options.backKey.isPressed(),
-                        client.options.rightKey.isPressed(),
-                        client.options.leftKey.isPressed(),
-                        client.options.sneakKey.isPressed(),
-                        client.options.sprintKey.isPressed(),
-                        client.options.jumpKey.isPressed()
-                )
-        );
+        tickStates.add(getCurrentTickState());
     }
 
     public static void startRecording() {
@@ -102,13 +92,35 @@ public class ReplayBot {
         SkyblockBot.LOGGER.info("stopped recording");
         recording = false;
 
-        SkyblockBot.LOGGER.info("recording packet counter = " + debugRecordingPacketCounter);
-        SkyblockBot.LOGGER.info("on ground only counter = " + debugOnGroundOnlyCounter);
-        SkyblockBot.LOGGER.info("look and on ground counter = " + debugLookAndOnGroundCounter);
-        SkyblockBot.LOGGER.info("position and on ground counter = " + debugPositionAndOnGroundCounter);
-        SkyblockBot.LOGGER.info("full counter = " + debugFullCounter);
+        printDebugInfo();
 
         saveRecordingAsync();
+    }
+
+    private static void onTickAntiDetectTriggered(MinecraftClient client) {
+        if(ReplayBot.antiDetectTrigger) {
+            if(antiDetectTriggeredTickCounter++ == ReplayBotSettings.antiDetectTriggeredWaitTicks) {
+                antiDetectTrigger = false;
+                unpressButtons();
+                return;
+            }
+
+            asyncPlayAlarmSound();
+            tickStates.get(tickIterator).setButtonsForClient(client);
+
+            Vec2f prevRot = tickStates.get(tickIterator - 1).getRotation();
+            Vec2f currentRot = tickStates.get(tickIterator).getRotation();
+            Vec2f deltaCam = currentRot.add(prevRot.multiply(-1));
+
+            assert client.player != null;
+            client.player.setYaw(client.player.getYaw() + deltaCam.x);
+            client.player.setPitch(client.player.getPitch() + deltaCam.y);
+
+            tickIterator++;
+            if(tickIterator == tickStates.size()) {
+                antiDetectTrigger = false;
+            }
+        }
     }
 
     private static void onTickPlay(MinecraftClient client) {
@@ -129,7 +141,6 @@ public class ReplayBot {
             if (antiDetect(client)) {
                 antiDetectTrigger = true;
                 playing = false;
-                unpressButtons();
                 asyncPlayAlarmSound();
                 return;
             }
@@ -154,11 +165,7 @@ public class ReplayBot {
             } else {
                 SkyblockBot.LOGGER.info("stopped playing because can't do a loop");
                 playing = false;
-                SkyblockBot.LOGGER.info("playing packet counter = " + debugPlayingPacketCounter);
-                SkyblockBot.LOGGER.info("on ground only counter = " + debugOnGroundOnlyCounter);
-                SkyblockBot.LOGGER.info("look and on ground counter = " + debugLookAndOnGroundCounter);
-                SkyblockBot.LOGGER.info("position and on ground counter = " + debugPositionAndOnGroundCounter);
-                SkyblockBot.LOGGER.info("full counter = " + debugFullCounter);
+                printDebugInfo();
             }
         }
     }
@@ -167,7 +174,6 @@ public class ReplayBot {
     public static void startPlaying() {
         if (tickStates.size() == 0) {
             SkyblockBot.LOGGER.warn("can't start playing, nothing to play");
-            loadRecordingAsync();
             return;
         }
 
@@ -184,7 +190,7 @@ public class ReplayBot {
         assert MinecraftClient.getInstance().player != null;
 
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        double distanceToStartPoint = player.getPos().add(tickStates.get(0).getPosition().multiply(-1.0d)).length();
+        double distanceToStartPoint = player.getPos().subtract(tickStates.get(0).getPosition()).length();
 
         if (distanceToStartPoint > ReplayBotSettings.maxDistanceToFirstPoint) {
             SkyblockBot.LOGGER.warn("Can't start so far from first point");
@@ -202,6 +208,7 @@ public class ReplayBot {
         debugFullCounter = 0;
 
         antiDetectTrigger = false;
+        antiDetectTriggeredTickCounter = 0;
         adjustHeadBeforeStarting();
 
         playing = true;
@@ -209,11 +216,7 @@ public class ReplayBot {
 
     public static void stopPlaying() {
         SkyblockBot.LOGGER.info("stopped playing");
-        SkyblockBot.LOGGER.info("playing packet counter = " + debugPlayingPacketCounter);
-        SkyblockBot.LOGGER.info("on ground only counter = " + debugOnGroundOnlyCounter);
-        SkyblockBot.LOGGER.info("look and on ground counter = " + debugLookAndOnGroundCounter);
-        SkyblockBot.LOGGER.info("position and on ground counter = " + debugPositionAndOnGroundCounter);
-        SkyblockBot.LOGGER.info("full counter = " + debugFullCounter);
+        printDebugInfo();
         unpressButtons();
 
         playing = false;
@@ -241,12 +244,13 @@ public class ReplayBot {
             serverChangedPositionRotation = false;
 
             if (tickIterator > 0) {
-                if (!checkPosAdjustLag(client)) {
+                assert client.player != null;
+                if (!checkPosAdjustLag(client.player)) {
                     SkyblockBot.LOGGER.warn("Anti-detection alg: server changed position, can't adjust for it, stopping the bot");
                     return true;
                 }
 
-                if (!checkRot(client)) {
+                if (!checkRot(client.player)) {
                     SkyblockBot.LOGGER.warn("Anti-detection alg: server changed rotation, can't adjust for it");
                     return true;
                 }
@@ -254,6 +258,7 @@ public class ReplayBot {
         }
 
         if (serverChangedSlot) {
+            assert client.player != null;
             if (!client.player.getActiveItem().getName().getString().equals(itemWhenStarted)) {
                 SkyblockBot.LOGGER.warn("Anti-detection alg: server changed hotbar slot");
                 serverChangedSlot = false;
@@ -265,7 +270,16 @@ public class ReplayBot {
     }
 
     private static boolean isNextStatePossible(@NotNull MinecraftClient client) {
-        return false;
+        assert client.player != null;
+        boolean wouldCollide = false;
+        for(int i = 0; i < ReplayBotSettings.checkForCollisionsAdvanceTicks && tickIterator + i < tickStates.size(); i++) {
+            wouldCollide = wouldCollide || ((IClientPlayerEntityMixin) client.player)
+                .callWouldCollideAt(
+                        new BlockPos(tickStates.get(tickIterator + i).getPosition())
+                );
+        }
+
+        return !wouldCollide;
     }
 
     /*
@@ -273,16 +287,16 @@ public class ReplayBot {
      * return - true if it is correct or was corrected (correct by changing tickIterator to index of state closest to current state)
      *          false if the position can't be corrected(which means player was teleported to check for macros or lagged back too far)
      */
-    private static boolean checkPosAdjustLag(@NotNull MinecraftClient client) {
+    private static boolean checkPosAdjustLag(@NotNull ClientPlayerEntity player) {
         TickState state = tickStates.get(tickIterator - 1);
-        double deltaExpectedPos = Utils.distanceBetween(client.player.getPos(), state.getPosition());
+        double deltaExpectedPos = Utils.distanceBetween(player.getPos(), state.getPosition());
         if (deltaExpectedPos > ReplayBotSettings.reactToLagbackThreshold) {
             // if delta is too big something is wrong, check if we were simply lagged back and if not-stop
             double minDelta = ReplayBotSettings.reactToLagbackThreshold;
             int bestTickIndex = -1;
 
             for (int i = 1; i <= ReplayBotSettings.maxLagbackTicks && tickIterator >= i; i++) {
-                double delta = Utils.distanceBetween(client.player.getPos(), tickStates.get(tickIterator - i).getPosition());
+                double delta = Utils.distanceBetween(player.getPos(), tickStates.get(tickIterator - i).getPosition());
 
                 /*
                  * If delta is < max then we're roughly at the correct tick
@@ -295,7 +309,7 @@ public class ReplayBot {
                 }
             }
             if (bestTickIndex != -1) {
-                if (isStuck(client)) {
+                if (isStuck(player)) {
                     // TODO do something
                     SkyblockBot.LOGGER.info("Detected being stuck. Shutting down for now, will do something else later");
                     return false;
@@ -315,23 +329,8 @@ public class ReplayBot {
      * But my guess right now is that it's still gonna do what I intend it to do,
      *  because "stuckness coefficient" will be higher when that method is called rarely, not lower
      */
-    private static boolean isStuck(@NotNull MinecraftClient client) {
-        lastNTicks.add(new TickState(
-                        client.player.getPos(),
-                        new Vec2f(
-                                Utils.normalize(client.player.getYaw()),
-                                Utils.normalize(client.player.getPitch())
-                        ),
-                        client.options.attackKey.isPressed(),
-                        client.options.forwardKey.isPressed(),
-                        client.options.backKey.isPressed(),
-                        client.options.rightKey.isPressed(),
-                        client.options.leftKey.isPressed(),
-                        client.options.sneakKey.isPressed(),
-                        client.options.sprintKey.isPressed(),
-                        client.options.jumpKey.isPressed()
-                )
-        );
+    private static boolean isStuck(@NotNull ClientPlayerEntity player) {
+        lastNTicks.add(getCurrentTickState());
         if (lastNTicks.size() > ReplayBotSettings.antiStucknessTickCount) {
             lastNTicks.remove(0);
         } else {
@@ -345,7 +344,7 @@ public class ReplayBot {
         );
 
         double expectedToMove = Utils.distanceBetween(
-                client.player.getPos(),
+                player.getPos(),
                 tickStates.get(tickIterator - lastNTicks.size()
                 ).getPosition()
         );
@@ -357,10 +356,10 @@ public class ReplayBot {
         return false;
     }
 
-    private static boolean checkRot(@NotNull MinecraftClient client) {
-        float dPitch = Math.abs(tickStates.get(tickIterator - 1).getPitch() - client.player.getPitch());
+    private static boolean checkRot(@NotNull ClientPlayerEntity player) {
+        float dPitch = Math.abs(tickStates.get(tickIterator - 1).getPitch() - player.getPitch());
         float expectedYaw = Utils.normalize(tickStates.get(tickIterator - 1).getYaw());
-        float currentYaw = Utils.normalize(client.player.getYaw());
+        float currentYaw = Utils.normalize(player.getYaw());
 
         float dYaw = Math.abs(expectedYaw - currentYaw);
         float dYaw2 = Math.abs(Math.abs(expectedYaw - currentYaw) - 360);
@@ -376,7 +375,7 @@ public class ReplayBot {
     }
 
     /* Used for recording only */
-    private static void detectAndCorrectLagBack(@NotNull MinecraftClient client) {
+    private static void detectAndCorrectLagBack(@NotNull ClientPlayerEntity player) {
         if (serverChangedPositionRotation) {
             int bestFit = -1;
             double bestFitDistance = ReplayBotSettings.reactToLagbackThreshold;
@@ -385,7 +384,7 @@ public class ReplayBot {
                 int index = tickStates.size() - i - 1;
 
                 double distance = Utils.distanceBetween(
-                        client.player.getPos(),
+                        player.getPos(),
                         tickStates.get(index).getPosition()
                 );
 
@@ -405,6 +404,26 @@ public class ReplayBot {
 
             serverChangedPositionRotation = false;
         }
+    }
+
+    private static TickState getCurrentTickState() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        assert client.player != null;
+        return new TickState(
+                client.player.getPos(),
+                new Vec2f(
+                        Utils.normalize(client.player.getYaw()),
+                        client.player.getPitch()
+                ),
+                client.options.attackKey.isPressed(),
+                client.options.forwardKey.isPressed(),
+                client.options.backKey.isPressed(),
+                client.options.rightKey.isPressed(),
+                client.options.leftKey.isPressed(),
+                client.options.sneakKey.isPressed(),
+                client.options.sprintKey.isPressed(),
+                client.options.jumpKey.isPressed()
+        );
     }
 
     private static void unpressButtons() {
@@ -435,6 +454,8 @@ public class ReplayBot {
     private static void asyncPlayAlarmSound() {
         CompletableFuture.runAsync(() -> {
             MinecraftClient client = MinecraftClient.getInstance();
+            assert client.world != null;
+            assert client.player != null;
             client.world.playSound(
                     client.player.getX(),
                     client.player.getY(),
@@ -448,7 +469,15 @@ public class ReplayBot {
         });
     }
 
-    private static void loadRecordingAsync() {
+    private static void printDebugInfo() {
+        SkyblockBot.LOGGER.info("total packet counter = " + debugPlayingPacketCounter);
+        SkyblockBot.LOGGER.info("on ground only counter = " + debugOnGroundOnlyCounter);
+        SkyblockBot.LOGGER.info("look and on ground counter = " + debugLookAndOnGroundCounter);
+        SkyblockBot.LOGGER.info("position and on ground counter = " + debugPositionAndOnGroundCounter);
+        SkyblockBot.LOGGER.info("full counter = " + debugFullCounter);
+    }
+
+    public static void loadRecordingAsync() {
         CompletableFuture.runAsync(() -> {
             ByteBuffer file;
 
@@ -456,12 +485,11 @@ public class ReplayBot {
                 InputStream is = new FileInputStream(ABSOLUTE_PATH_BIN);
                 file = ByteBuffer.wrap(is.readAllBytes());
                 is.close();
-                SkyblockBot.LOGGER.info("Loaded the recording");
             } catch (IOException e) {
                 SkyblockBot.LOGGER.info("Exception when trying to load from file");
                 return;
             }
-
+            tickStates.clear();
             while (file.hasRemaining()) {
                 Vec3d pos = new Vec3d(file.getDouble(), file.getDouble(), file.getDouble());
                 Vec2f rot = new Vec2f(file.getFloat(), file.getFloat());
@@ -478,6 +506,7 @@ public class ReplayBot {
                         backward, right, left, sneak, sprint, jump)
                 );
             }
+            SkyblockBot.LOGGER.info("Loaded the recording");
         });
     }
 

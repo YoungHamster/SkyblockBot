@@ -11,5 +11,6 @@ public class ReplayBotSettings {
     public static final double maxDistanceToFirstPoint = 0.2f;
     public static final int antiStucknessTickCount = 20;
     public static final double detectStucknessCoefficient = 0.1;
+    public static final int checkForCollisionsAdvanceTicks = 4;
 
 }

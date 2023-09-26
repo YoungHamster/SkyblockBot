@@ -63,6 +63,10 @@ public class TickState {
         return tickStateSize;
     }
 
+    public Vec2f getRotation() {
+        return rotation;
+    }
+
     public float getYaw() {
         return rotation.x;
     }
