@@ -27,10 +27,8 @@ public class ClientConnectionMixin {
             ReplayBot.debugFullCounter++;
         }
 
-        if (ReplayBot.isPlaying()) {
-            ReplayBot.debugPlayingPacketCounter++;
-        } else if (ReplayBot.isRecording()) {
-            ReplayBot.debugRecordingPacketCounter++;
+        if (ReplayBot.isPlaying() || ReplayBot.isRecording()) {
+            ReplayBot.debugPacketCounter++;
         }
     }
 

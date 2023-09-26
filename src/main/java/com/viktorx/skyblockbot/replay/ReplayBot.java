@@ -5,6 +5,7 @@ import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.mixins.IClientPlayerEntityMixin;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.sound.SoundCategory;
@@ -13,6 +14,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
+import org.lwjgl.system.CallbackI;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -39,8 +41,7 @@ public class ReplayBot {
     public static boolean serverChangedSlot = false;
     private static boolean isStuck = false;
     private static List<TickState> lastNTicks = new ArrayList<>();
-    public static int debugRecordingPacketCounter = 0;
-    public static int debugPlayingPacketCounter = 0;
+    public static int debugPacketCounter = 0;
     public static int debugOnGroundOnlyCounter = 0;
     public static int debugLookAndOnGroundCounter = 0;
     public static int debugPositionAndOnGroundCounter = 0;
@@ -78,8 +79,8 @@ public class ReplayBot {
 
         SkyblockBot.LOGGER.info("started recording");
         tickStates.clear();
-        debugRecordingPacketCounter = 0;
 
+        debugPacketCounter = 0;
         debugOnGroundOnlyCounter = 0;
         debugLookAndOnGroundCounter = 0;
         debugPositionAndOnGroundCounter = 0;
@@ -200,8 +201,8 @@ public class ReplayBot {
         SkyblockBot.LOGGER.info("Starting playing");
         itemWhenStarted = player.getActiveItem().getName().getString();
         tickIterator = 0;
-        debugPlayingPacketCounter = 0;
 
+        debugPacketCounter = 0;
         debugOnGroundOnlyCounter = 0;
         debugLookAndOnGroundCounter = 0;
         debugPositionAndOnGroundCounter = 0;
@@ -271,15 +272,28 @@ public class ReplayBot {
 
     private static boolean isNextStatePossible(@NotNull MinecraftClient client) {
         assert client.player != null;
-        boolean wouldCollide = false;
         for(int i = 0; i < ReplayBotSettings.checkForCollisionsAdvanceTicks && tickIterator + i < tickStates.size(); i++) {
-            wouldCollide = wouldCollide || ((IClientPlayerEntityMixin) client.player)
-                .callWouldCollideAt(
-                        new BlockPos(tickStates.get(tickIterator + i).getPosition())
-                );
-        }
 
-        return !wouldCollide;
+            /*
+             * I want to round the Y correctly
+             */
+            Vec3d pos = tickStates.get(tickIterator + i).getPosition();
+            pos = new Vec3d(pos.x, Math.rint(pos.y), pos.z);
+
+            BlockPos blockPos = new BlockPos(pos);
+            BlockPos above = new BlockPos(blockPos).up();
+
+            assert client.world != null;
+
+            BlockState bs = client.world.getBlockState(blockPos);
+            boolean isBlockSolid = client.world.getBlockState(blockPos).getMaterial().isSolid();
+            boolean isBlockAboveSolid = client.world.getBlockState(above).getMaterial().isSolid();
+
+            if(isBlockSolid || isBlockAboveSolid) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /*
@@ -470,7 +484,7 @@ public class ReplayBot {
     }
 
     private static void printDebugInfo() {
-        SkyblockBot.LOGGER.info("total packet counter = " + debugPlayingPacketCounter);
+        SkyblockBot.LOGGER.info("total packet counter = " + debugPacketCounter);
         SkyblockBot.LOGGER.info("on ground only counter = " + debugOnGroundOnlyCounter);
         SkyblockBot.LOGGER.info("look and on ground counter = " + debugLookAndOnGroundCounter);
         SkyblockBot.LOGGER.info("position and on ground counter = " + debugPositionAndOnGroundCounter);
