@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture;
 public class LookHelper {
 
     public static boolean isYawRoughlyClose(float yaw1, float yaw2) {
-        return Math.abs(yaw1 - yaw2) < 5.0F || Math.abs(Math.abs(yaw1 - yaw2) - 360) < 5.0F;
+        return Math.abs(yaw1 - yaw2) < 2.0F || Math.abs(Math.abs(yaw1 - yaw2) - 360) < 2.0F;
     }
 
     public static float getYaw() {

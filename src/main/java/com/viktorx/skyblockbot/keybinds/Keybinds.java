@@ -19,6 +19,7 @@ public class Keybinds {
     //private static KeyBinding printTestInfo;
     private static KeyBinding startStopRecording;
     private static KeyBinding loadRecording;
+    private static KeyBinding pauseReplay;
 
     private static final Queue<KeyBinding> tickKeyPressQueue = new LinkedBlockingQueue<>();
 
@@ -41,6 +42,13 @@ public class Keybinds {
                 "Load recording from recording.bin", // The translation key of the keybinding's name
                 InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
                 GLFW.GLFW_KEY_L, // The keycode of the key
+                "Replay bot" // The translation key of the keybinding's category.
+        ));
+
+        pauseReplay = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "Pause/unpause bot", // The translation key of the keybinding's name
+                InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
+                GLFW.GLFW_KEY_P, // The keycode of the key
                 "Replay bot" // The translation key of the keybinding's category.
         ));
 
@@ -73,8 +81,16 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
-                if (!ReplayBot.isRecording() && !ReplayBot.isPlaying()) {
+                if (ReplayBot.isIdle()) {
                     ReplayBot.loadRecordingAsync();
+                }
+            }
+
+            if(pauseReplay.wasPressed()) {
+                if(ReplayBot.isPlaying()) {
+                    ReplayBot.pause();
+                } else if(ReplayBot.isPaused()) {
+                    ReplayBot.unpause();
                 }
             }
 
