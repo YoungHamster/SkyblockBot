@@ -1,7 +1,7 @@
 package com.viktorx.skyblockbot;
 
 import com.viktorx.skyblockbot.keybinds.Keybinds;
-import com.viktorx.skyblockbot.replay.ReplayBot;
+import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.fabricmc.api.ModInitializer;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,6 +16,6 @@ public class SkyblockBot implements ModInitializer {
     public void onInitialize() {
         LOGGER.info("Hello");
         Keybinds.Init();
-        ReplayBot.Init();
+        ReplayExecutor.Init();
     }
 }

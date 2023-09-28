@@ -1,8 +1,7 @@
 package com.viktorx.skyblockbot.mixins;
 
 import com.viktorx.skyblockbot.CurrentInventory;
-import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.replay.ReplayBot;
+import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.*;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,29 +22,29 @@ public class ClientPlayNetworkHandlerMixin {
      */
     @Inject(method = "onPlayerPositionLook", at = @At("HEAD"))
     public void detectServerChangingPosRot(PlayerPositionLookS2CPacket packet, CallbackInfo ci) {
-        if (ReplayBot.isPlaying() || ReplayBot.isRecording()) {
-            ReplayBot.serverChangedPositionRotation = true;
+        if (ReplayExecutor.isPlaying() || ReplayExecutor.isRecording()) {
+            ReplayExecutor.serverChangedPositionRotation = true;
         }
     }
 
     @Inject(method = "onLookAt", at = @At("HEAD"))
     public void detectServerChangingMyRotation(LookAtS2CPacket packet, CallbackInfo ci) {
-        if (ReplayBot.isPlaying()) {
-            ReplayBot.serverChangedPositionRotation = true;
+        if (ReplayExecutor.isPlaying()) {
+            ReplayExecutor.serverChangedPositionRotation = true;
         }
     }
 
     @Inject(method = "onScreenHandlerSlotUpdate", at = @At("HEAD"))
     public void detectServerChangingSlot(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci) {
-        if (ReplayBot.isPlaying()) {
-            ReplayBot.serverChangedSlot = true;
+        if (ReplayExecutor.isPlaying()) {
+            ReplayExecutor.serverChangedSlot = true;
         }
     }
 
     @Inject(method = "onUpdateSelectedSlot", at = @At("HEAD"))
     public void detectServerChangingItem(UpdateSelectedSlotS2CPacket packet, CallbackInfo ci) {
-        if (ReplayBot.isPlaying()) {
-            ReplayBot.serverChangedItem = true;
+        if (ReplayExecutor.isPlaying()) {
+            ReplayExecutor.serverChangedItem = true;
         }
     }
 }

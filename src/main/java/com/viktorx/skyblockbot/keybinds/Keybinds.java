@@ -2,8 +2,7 @@ package com.viktorx.skyblockbot.keybinds;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
-import com.viktorx.skyblockbot.replay.ReplayBot;
-import com.viktorx.skyblockbot.skyblock.flipping.CraftPriceCalculator;
+import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
@@ -65,32 +64,32 @@ public class Keybinds {
             CompletableFuture<Void> clickTick = CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
 
             if (startStopBot.wasPressed()) {
-                if (!ReplayBot.isPlaying()) {
-                    ReplayBot.startPlaying();
+                if (!ReplayExecutor.isPlaying()) {
+                    ReplayExecutor.startPlaying(true);
                 } else {
-                    ReplayBot.stopPlaying();
+                    ReplayExecutor.stopPlaying();
                 }
             }
 
             if (startStopRecording.wasPressed()) {
-                if (!ReplayBot.isRecording()) {
-                    ReplayBot.startRecording();
+                if (!ReplayExecutor.isRecording()) {
+                    ReplayExecutor.startRecording();
                 } else {
-                    ReplayBot.stopRecording();
+                    ReplayExecutor.stopRecording();
                 }
             }
 
             if (loadRecording.wasPressed()) {
-                if (ReplayBot.isIdle()) {
-                    ReplayBot.loadRecordingAsync();
+                if (ReplayExecutor.isIdle()) {
+                    ReplayExecutor.loadRecordingAsync();
                 }
             }
 
             if(pauseReplay.wasPressed()) {
-                if(ReplayBot.isPlaying()) {
-                    ReplayBot.pause();
-                } else if(ReplayBot.isPaused()) {
-                    ReplayBot.unpause();
+                if(ReplayExecutor.isPlaying()) {
+                    ReplayExecutor.pause();
+                } else if(ReplayExecutor.isPaused()) {
+                    ReplayExecutor.unpause();
                 }
             }
 

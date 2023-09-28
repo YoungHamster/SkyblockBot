@@ -1,13 +1,13 @@
-package com.viktorx.skyblockbot.replay;
+package com.viktorx.skyblockbot.task.replay;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 
 public class TickState {
 
-    private static final int tickStateSize = 8*3+4*2+1+7;
+    private static final int tickStateSize = 8 * 3 + 4 * 2 + 1 + 7 + 4;
 
     private final Vec3d position;
     private final Vec2f rotation;
@@ -19,10 +19,38 @@ public class TickState {
     private final boolean sneak;
     private final boolean sprint;
     private final boolean jump;
+    private final int hotbarSlot; // TODO - record it, save it, play it
+
+    TickState() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        assert client.player != null;
+
+        this.position = client.player.getPos();
+        this.rotation = new Vec2f(
+                client.player.getYaw(),
+                client.player.getPitch()
+        );
+        this.attack = client.options.attackKey.isPressed();
+        this.forward = client.options.forwardKey.isPressed();
+        this.backward = client.options.backKey.isPressed();
+        this.right = client.options.rightKey.isPressed();
+        this.left = client.options.leftKey.isPressed();
+        this.sneak = client.options.sneakKey.isPressed();
+        this.sprint = client.options.sprintKey.isPressed();
+        this.jump = client.options.jumpKey.isPressed();
+
+        for (int i = 0; i < client.options.hotbarKeys.length; i++) {
+            if (client.options.hotbarKeys[i].isPressed()) {
+                hotbarSlot = i;
+                return;
+            }
+        }
+        hotbarSlot = -1;
+    }
 
     TickState(Vec3d pos, Vec2f rot, boolean attack,
               boolean forward, boolean backward, boolean right, boolean left,
-              boolean sneak, boolean sprint, boolean jump) {
+              boolean sneak, boolean sprint, boolean jump, int hotbarSlot) {
 
         this.position = pos;
         this.rotation = rot;
@@ -34,6 +62,7 @@ public class TickState {
         this.sneak = sneak;
         this.sprint = sprint;
         this.jump = jump;
+        this.hotbarSlot = hotbarSlot;
     }
 
     public void setRotationForClient(MinecraftClient client) {
@@ -57,6 +86,19 @@ public class TickState {
         client.options.sneakKey.setPressed(sneak);
         client.options.sprintKey.setPressed(sprint);
         client.options.jumpKey.setPressed(jump);
+
+        /*
+         * This code looks like shit,
+         * but I think it will work fine.
+         * Maybe refactor it later
+         */
+        if (hotbarSlot != -1) {
+            client.options.hotbarKeys[hotbarSlot].setPressed(true);
+        } else {
+            for (KeyBinding hotbarKey : client.options.hotbarKeys) {
+                hotbarKey.setPressed(false);
+            }
+        }
     }
 
     public static int getTickStateSize() {
@@ -109,5 +151,9 @@ public class TickState {
 
     public boolean isJump() {
         return jump;
+    }
+
+    public int getHotbarSlot() {
+        return hotbarSlot;
     }
 }

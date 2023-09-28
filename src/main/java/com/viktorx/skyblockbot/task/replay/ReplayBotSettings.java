@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.replay;
+package com.viktorx.skyblockbot.task.replay;
 
 public class ReplayBotSettings {
 

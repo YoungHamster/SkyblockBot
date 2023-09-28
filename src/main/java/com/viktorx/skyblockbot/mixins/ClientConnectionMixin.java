@@ -1,6 +1,6 @@
 package com.viktorx.skyblockbot.mixins;
 
-import com.viktorx.skyblockbot.replay.ReplayBot;
+import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import net.minecraft.network.ClientConnection;
@@ -18,17 +18,17 @@ public class ClientConnectionMixin {
     @Inject(method = "sendImmediately", at = @At("HEAD"))
     public void countPackets(Packet<?> packet, @Nullable GenericFutureListener<? extends Future<? super Void>> callback, CallbackInfo ci) {
         if (packet.getClass().getName().equals(PlayerMoveC2SPacket.OnGroundOnly.class.getName())) {
-            ReplayBot.debugOnGroundOnlyCounter++;
+            ReplayExecutor.debugOnGroundOnlyCounter++;
         } else if (packet.getClass().getName().equals(PlayerMoveC2SPacket.LookAndOnGround.class.getName())) {
-            ReplayBot.debugLookAndOnGroundCounter++;
+            ReplayExecutor.debugLookAndOnGroundCounter++;
         } else if (packet.getClass().getName().equals(PlayerMoveC2SPacket.PositionAndOnGround.class.getName())) {
-            ReplayBot.debugPositionAndOnGroundCounter++;
+            ReplayExecutor.debugPositionAndOnGroundCounter++;
         } else if (packet.getClass().getName().equals(PlayerMoveC2SPacket.Full.class.getName())) {
-            ReplayBot.debugFullCounter++;
+            ReplayExecutor.debugFullCounter++;
         }
 
-        if (ReplayBot.isPlaying() || ReplayBot.isRecording()) {
-            ReplayBot.debugPacketCounter++;
+        if (ReplayExecutor.isPlaying() || ReplayExecutor.isRecording()) {
+            ReplayExecutor.debugPacketCounter++;
         }
     }
 
