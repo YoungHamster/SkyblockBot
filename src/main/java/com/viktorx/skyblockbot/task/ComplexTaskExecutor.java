@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot;
+package com.viktorx.skyblockbot.task;
 
 public class ComplexTaskExecutor {
 

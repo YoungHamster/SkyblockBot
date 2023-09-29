@@ -147,21 +147,6 @@ public class ReplayExecutor {
 
         tickIterator++;
         if (tickIterator == replay.size()) {
-
-            if(loopWhenDone) {
-                if (Utils.distanceBetween(tickState.getPosition(), replay.getTickState(0).getPosition() )
-                        <= ReplayBotSettings.maxDistanceToFirstPoint) {
-                    adjustHeadBeforeStarting();
-                    SkyblockBot.LOGGER.info("Looped");
-                    tickIterator = 0;
-                    return;
-                } else {
-                    SkyblockBot.LOGGER.info("Stopped playing because can't do a loop");
-                }
-            } else {
-                SkyblockBot.LOGGER.info("Stopped playing because told not to loop");
-            }
-
             printDebugInfo();
             state = ReplayBotState.IDLE;
         }
@@ -200,47 +185,6 @@ public class ReplayExecutor {
             itemsWhenStarted.add(player.getInventory().getStack(i).getName().getString());
         }
 
-        tickIterator = 0;
-
-        debugPacketCounter = 0;
-        debugOnGroundOnlyCounter = 0;
-        debugLookAndOnGroundCounter = 0;
-        debugPositionAndOnGroundCounter = 0;
-        debugFullCounter = 0;
-
-        antiDetectTriggeredTickCounter = 0;
-        adjustHeadBeforeStarting();
-    }
-
-    public static void startPlaying(boolean loopWhenDone) {
-        if (!state.equals(ReplayBotState.IDLE)) {
-            SkyblockBot.LOGGER.warn("Can't play while state = " + state.getName());
-            return;
-        }
-
-        state = ReplayBotState.NOT_IDLE;
-
-        if (replay.size() == 0) {
-            SkyblockBot.LOGGER.warn("can't start playing, nothing to play");
-            state = ReplayBotState.IDLE;
-            return;
-        }
-
-        ReplayExecutor.loopWhenDone = loopWhenDone;
-
-        assert MinecraftClient.getInstance().player != null;
-
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        double distanceToStartPoint = player.getPos().subtract(replay.getTickState(0).getPosition()).length();
-
-        if (distanceToStartPoint > ReplayBotSettings.maxDistanceToFirstPoint) {
-            SkyblockBot.LOGGER.warn("Can't start so far from first point");
-            state = ReplayBotState.IDLE;
-            return;
-        }
-
-        SkyblockBot.LOGGER.info("Starting playing");
-        itemWhenStarted = player.getActiveItem().getName().getString();
         tickIterator = 0;
 
         debugPacketCounter = 0;
@@ -298,8 +242,9 @@ public class ReplayExecutor {
 
         if (serverChangedSlot) {
             assert client.player != null;
-            if (!client.player.getActiveItem().getName().getString().equals(itemWhenStarted)) {
-                SkyblockBot.LOGGER.warn("Anti-detection alg: server changed hotbar slot");
+            if (!client.player.getActiveItem().getName().getString()
+                    .equals(itemsWhenStarted.get(client.player.getInventory().selectedSlot))) {
+                SkyblockBot.LOGGER.warn("Anti-detection alg: server changed item in hand");
                 serverChangedSlot = false;
                 return true;
             }

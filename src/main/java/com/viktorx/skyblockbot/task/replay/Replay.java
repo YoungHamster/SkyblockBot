@@ -50,7 +50,7 @@ public class Replay implements Task {
 
     @Override
     public void execute() {
-        ReplayExecutor.
+        ReplayExecutor.execute(this);
     }
 
     @Override
