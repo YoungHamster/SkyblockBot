@@ -10,8 +10,12 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class Replay implements Task {
+    private final List<TickState> tickStates = new ArrayList<>();
+    private Runnable whenCompleted = null;
+    private Runnable whenAborted = null;
 
     public Replay(){}
 
@@ -50,7 +54,7 @@ public class Replay implements Task {
 
     @Override
     public void execute() {
-        ReplayExecutor.execute(this);
+        ReplayExecutor.INSTANCE.execute(this);
     }
 
     @Override
@@ -87,7 +91,28 @@ public class Replay implements Task {
             SkyblockBot.LOGGER.info("Exception when trying to save movement recording to a file");
         }
     }
-    private final List<TickState> tickStates = new ArrayList<>();
+
+    @Override
+    public void completed() {
+        if(whenCompleted != null)
+            CompletableFuture.runAsync(whenCompleted);
+    }
+
+    @Override
+    public void aborted() {
+        if(whenAborted != null)
+            CompletableFuture.runAsync(whenAborted);
+    }
+
+    @Override
+    public void whenCompleted(Runnable whenCompleted) {
+        this.whenCompleted = whenCompleted;
+    }
+
+    @Override
+    public void whenAborted(Runnable whenAborted) {
+        this.whenAborted = whenAborted;
+    }
 
     public void addTickState(TickState newState) {
         tickStates.add(newState);

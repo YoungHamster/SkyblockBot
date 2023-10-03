@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.mixins;
 
 import com.viktorx.skyblockbot.CurrentInventory;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.*;
@@ -22,29 +23,34 @@ public class ClientPlayNetworkHandlerMixin {
      */
     @Inject(method = "onPlayerPositionLook", at = @At("HEAD"))
     public void detectServerChangingPosRot(PlayerPositionLookS2CPacket packet, CallbackInfo ci) {
-        if (ReplayExecutor.isPlaying() || ReplayExecutor.isRecording()) {
-            ReplayExecutor.serverChangedPositionRotation = true;
+        if (ReplayExecutor.INSTANCE.isPlaying() || ReplayExecutor.INSTANCE.isRecording()) {
+            ReplayExecutor.INSTANCE.serverChangedPositionRotation = true;
         }
     }
 
     @Inject(method = "onLookAt", at = @At("HEAD"))
     public void detectServerChangingMyRotation(LookAtS2CPacket packet, CallbackInfo ci) {
-        if (ReplayExecutor.isPlaying()) {
-            ReplayExecutor.serverChangedPositionRotation = true;
+        if (ReplayExecutor.INSTANCE.isPlaying()) {
+            ReplayExecutor.INSTANCE.serverChangedPositionRotation = true;
         }
     }
 
     @Inject(method = "onScreenHandlerSlotUpdate", at = @At("HEAD"))
     public void detectServerChangingSlot(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci) {
-        if (ReplayExecutor.isPlaying()) {
-            ReplayExecutor.serverChangedSlot = true;
+        if (ReplayExecutor.INSTANCE.isPlaying()) {
+            ReplayExecutor.INSTANCE.serverChangedSlot = true;
         }
     }
 
     @Inject(method = "onUpdateSelectedSlot", at = @At("HEAD"))
     public void detectServerChangingItem(UpdateSelectedSlotS2CPacket packet, CallbackInfo ci) {
-        if (ReplayExecutor.isPlaying()) {
-            ReplayExecutor.serverChangedItem = true;
+        if (ReplayExecutor.INSTANCE.isPlaying()) {
+            ReplayExecutor.INSTANCE.serverChangedItem = true;
         }
+    }
+
+    @Inject(method = "onPlayerSpawnPosition", at = @At("HEAD"))
+    public void detectWorldChange(PlayerSpawnPositionS2CPacket packet, CallbackInfo ci) {
+        GlobalExecutorInfo.worldChangeDetected = true;
     }
 }

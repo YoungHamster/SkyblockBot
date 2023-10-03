@@ -18,17 +18,17 @@ public class ClientConnectionMixin {
     @Inject(method = "sendImmediately", at = @At("HEAD"))
     public void countPackets(Packet<?> packet, @Nullable GenericFutureListener<? extends Future<? super Void>> callback, CallbackInfo ci) {
         if (packet.getClass().getName().equals(PlayerMoveC2SPacket.OnGroundOnly.class.getName())) {
-            ReplayExecutor.debugOnGroundOnlyCounter++;
+            ReplayExecutor.INSTANCE.debugOnGroundOnlyCounter++;
         } else if (packet.getClass().getName().equals(PlayerMoveC2SPacket.LookAndOnGround.class.getName())) {
-            ReplayExecutor.debugLookAndOnGroundCounter++;
+            ReplayExecutor.INSTANCE.debugLookAndOnGroundCounter++;
         } else if (packet.getClass().getName().equals(PlayerMoveC2SPacket.PositionAndOnGround.class.getName())) {
-            ReplayExecutor.debugPositionAndOnGroundCounter++;
+            ReplayExecutor.INSTANCE.debugPositionAndOnGroundCounter++;
         } else if (packet.getClass().getName().equals(PlayerMoveC2SPacket.Full.class.getName())) {
-            ReplayExecutor.debugFullCounter++;
+            ReplayExecutor.INSTANCE.debugFullCounter++;
         }
 
-        if (ReplayExecutor.isPlaying() || ReplayExecutor.isRecording()) {
-            ReplayExecutor.debugPacketCounter++;
+        if (ReplayExecutor.INSTANCE.isPlaying() || ReplayExecutor.INSTANCE.isRecording()) {
+            ReplayExecutor.INSTANCE.debugPacketCounter++;
         }
     }
 
