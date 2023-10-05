@@ -3,6 +3,7 @@ package com.viktorx.skyblockbot.task.changeIsland;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
+import org.lwjgl.system.CallbackI;
 
 public class ChangeIslandExecutor {
     public static ChangeIslandExecutor INSTANCE = new ChangeIslandExecutor();
@@ -33,27 +34,26 @@ public class ChangeIslandExecutor {
         }
 
         if(!sentCommand) {
+            GlobalExecutorInfo.worldLoaded = false;
             client.player.sendChatMessage(changeIsland.getCommand());
             sentCommand = true;
+            return;
         }
 
-        if(GlobalExecutorInfo.worldChangeDetected) {
-            if(waitChunksTickCounter++ >= ChangeIslandSettings.ticksToWaitForChunks) {
-                executing = false;
-                GlobalExecutorInfo.worldChangeDetected = false;
-                changeIsland.completed();
-            }
-        } else {
-            if(waitBeforeAttemptTickCounter++ >= ChangeIslandSettings.ticksToWaitBeforeAttempt) {
+        if(GlobalExecutorInfo.worldLoaded) {
+            executing = false;
+            changeIsland.completed();
+            return;
+        }
 
-                if(attemptCounter++ >= ChangeIslandSettings.maxAttempts) {
-                    executing = false;
+        if(!GlobalExecutorInfo.worldLoading) {
+            if(waitBeforeAttemptTickCounter++ == ChangeIslandSettings.ticksToWaitBeforeAttempt) {
+                if(attemptCounter++ == ChangeIslandSettings.maxAttempts) {
                     changeIsland.aborted();
+                    executing = false;
                 } else {
-                    sentCommand = false;
-                    waitBeforeAttemptTickCounter = 0;
+                    client.player.sendChatMessage(changeIsland.getCommand());
                 }
-
             }
         }
     }

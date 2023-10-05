@@ -8,7 +8,8 @@
     "KeyBindingMixin",
     "ClientPlayNetworkHandlerMixin",
     "ClientConnectionMixin",
-    "IClientPlayerEntityMixin"
+    "IClientPlayerEntityMixin",
+    "MinecraftClientMixin"
   ],
   "client": [
   ],

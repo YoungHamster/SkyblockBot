@@ -4,6 +4,7 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIsland;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.replay.Replay;
+import com.viktorx.skyblockbot.task.replay.ReplayBotSettings;
 
 public class ComplexFarmingTask {
     /*private Replay replay = null;
@@ -20,35 +21,48 @@ public class ComplexFarmingTask {
     private final Task getToCorrectIsland;
     private final Task farm;
     private long durationInMs;
-    private boolean running = false;
+    private boolean executing = false;
 
     ComplexFarmingTask() {
         this.getToSkyblock = new ChangeIsland("/play skyblock");
         this.getToCorrectIsland = new ChangeIsland("/warp garden");
-        this.farm = new Replay();
+        this.farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE);
 
         this.getToSkyblock.whenCompleted(getToCorrectIsland::execute);
-        this.getToSkyblock.whenAborted(() -> SkyblockBot.LOGGER.info("Couldn't warp to skyblock!"));
+        this.getToSkyblock.whenAborted(() -> {
+            SkyblockBot.LOGGER.info("Couldn't warp to skyblock!");
+            executing = false;
+        });
+
         this.getToCorrectIsland.whenCompleted(farm::execute);
-        this.getToCorrectIsland.whenAborted(() -> SkyblockBot.LOGGER.info("Couldn't warp to garden"));
+        this.getToCorrectIsland.whenAborted(() -> {
+            SkyblockBot.LOGGER.info("Couldn't warp to garden");
+            executing = false;
+        });
+
         this.farm.whenCompleted(farm::execute);
         this.farm.whenAborted(() -> {
-            if(GlobalExecutorInfo.worldChangeDetected) {
+            if(GlobalExecutorInfo.worldLoading) {
+
                 try {
                     Thread.sleep(ChangeIslandSettings.ticksToWaitForChunks * 50);
                 } catch (InterruptedException ignored) {}
-                GlobalExecutorInfo.worldChangeDetected = false;
-                getToCorrectIsland.execute();
+                if(GlobalExecutorInfo.worldLoaded) {
+                    getToCorrectIsland.execute();
+                } else {
+                    SkyblockBot.LOGGER.info("Couldn't farm.");
+                    executing = false;
+                }
             }
         });
     }
 
     public void execute() {
-        running = true;
+        executing = true;
         getToSkyblock.execute();
     }
 
-    public boolean isRunning() {
-        return running;
+    public boolean isExecuting() {
+        return executing;
     }
 }

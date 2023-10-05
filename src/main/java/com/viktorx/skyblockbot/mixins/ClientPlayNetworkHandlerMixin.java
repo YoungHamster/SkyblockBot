@@ -1,7 +1,6 @@
 package com.viktorx.skyblockbot.mixins;
 
 import com.viktorx.skyblockbot.CurrentInventory;
-import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.*;
@@ -18,9 +17,6 @@ public class ClientPlayNetworkHandlerMixin {
         CurrentInventory.setSyncID(packet.getSyncId());
     }
 
-    /* i want to count how many times minecraft sends this packet when I normally move and when bot moves
-     * if there is no difference then hypixel most likely won't auto-detect the bot
-     */
     @Inject(method = "onPlayerPositionLook", at = @At("HEAD"))
     public void detectServerChangingPosRot(PlayerPositionLookS2CPacket packet, CallbackInfo ci) {
         if (ReplayExecutor.INSTANCE.isPlaying() || ReplayExecutor.INSTANCE.isRecording()) {
@@ -47,10 +43,5 @@ public class ClientPlayNetworkHandlerMixin {
         if (ReplayExecutor.INSTANCE.isPlaying()) {
             ReplayExecutor.INSTANCE.serverChangedItem = true;
         }
-    }
-
-    @Inject(method = "onPlayerSpawnPosition", at = @At("HEAD"))
-    public void detectWorldChange(PlayerSpawnPositionS2CPacket packet, CallbackInfo ci) {
-        GlobalExecutorInfo.worldChangeDetected = true;
     }
 }
