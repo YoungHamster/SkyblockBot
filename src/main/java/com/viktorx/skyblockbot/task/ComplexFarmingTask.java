@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.task;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIsland;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.replay.Replay;
@@ -59,7 +60,19 @@ public class ComplexFarmingTask {
 
     public void execute() {
         executing = true;
-        getToSkyblock.execute();
+
+        /*
+         * If server isn't skyblock then we start by going to skyblock
+         * If it is skyblock but not garden then we start by going to graden
+         * If it is garden we just farm
+         */
+        if(!SBUtils.isServerSkyblock()) {
+            getToSkyblock.execute();
+        } else if (!SBUtils.getIslandOrArea().equals("GARDEN")) {
+            getToCorrectIsland.execute();
+        } else {
+            farm.execute();
+        }
     }
 
     public boolean isExecuting() {
