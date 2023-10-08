@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot;
 
 import com.viktorx.skyblockbot.keybinds.Keybinds;
+import com.viktorx.skyblockbot.task.buyItem.BuyItemExecutor;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandExecutor;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.fabricmc.api.ModInitializer;
@@ -19,5 +20,6 @@ public class SkyblockBot implements ModInitializer {
         Keybinds.Init();
         ReplayExecutor.INSTANCE.Init();
         ChangeIslandExecutor.INSTANCE.Init();
+        BuyItemExecutor.INSTANCE.Init();
     }
 }

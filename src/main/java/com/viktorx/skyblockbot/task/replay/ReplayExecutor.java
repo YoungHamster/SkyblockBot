@@ -133,6 +133,12 @@ public class ReplayExecutor {
             }
         }
 
+        if(GlobalExecutorInfo.worldLoading) {
+            state = ReplayBotState.IDLE;
+            replay.aborted();
+            return;
+        }
+
         if (antiDetect(client)) {
             state = ReplayBotState.NOT_IDLE;
             asyncPlayAlarmSound();
