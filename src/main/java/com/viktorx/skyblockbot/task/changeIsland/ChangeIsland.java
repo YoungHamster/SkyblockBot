@@ -20,6 +20,16 @@ public class ChangeIsland implements Task {
     }
 
     @Override
+    public void pause() {
+        ChangeIslandExecutor.INSTANCE.pause();
+    }
+
+    @Override
+    public void resume() {
+        ChangeIslandExecutor.INSTANCE.resume();
+    }
+
+    @Override
     public void saveToFile(String filename) {
 
     }

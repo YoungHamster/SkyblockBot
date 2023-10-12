@@ -16,6 +16,7 @@ public class Replay implements Task {
     private final List<TickState> tickStates = new ArrayList<>();
     private Runnable whenCompleted = null;
     private Runnable whenAborted = null;
+    private boolean executing = false;
 
     public Replay(){}
 
@@ -54,7 +55,18 @@ public class Replay implements Task {
 
     @Override
     public void execute() {
+        executing = true;
         ReplayExecutor.INSTANCE.execute(this);
+    }
+
+    @Override
+    public void pause() {
+        ReplayExecutor.INSTANCE.pause();
+    }
+
+    @Override
+    public void resume() {
+        ReplayExecutor.INSTANCE.resume();
     }
 
     @Override
@@ -94,12 +106,14 @@ public class Replay implements Task {
 
     @Override
     public void completed() {
+        executing = false;
         if(whenCompleted != null)
             CompletableFuture.runAsync(whenCompleted);
     }
 
     @Override
     public void aborted() {
+        executing = false;
         if(whenAborted != null)
             CompletableFuture.runAsync(whenAborted);
     }
@@ -107,6 +121,11 @@ public class Replay implements Task {
     @Override
     public void whenCompleted(Runnable whenCompleted) {
         this.whenCompleted = whenCompleted;
+    }
+
+    @Override
+    public boolean isExecuting() {
+        return executing;
     }
 
     @Override

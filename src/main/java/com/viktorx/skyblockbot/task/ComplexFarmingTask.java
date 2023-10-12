@@ -75,6 +75,18 @@ public class ComplexFarmingTask {
         }
     }
 
+    public void pause() {
+        if(farm.isExecuting()) {
+            farm.pause();
+        }
+    }
+
+    public void resume() {
+        if(farm.isExecuting()) {
+            farm.resume();
+        }
+    }
+
     public boolean isExecuting() {
         return executing;
     }

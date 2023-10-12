@@ -190,6 +190,8 @@ public class ReplayExecutor {
 
         SkyblockBot.LOGGER.info("Starting playing");
 
+        this.replay = replay;
+
         itemsWhenStarted.clear();
         for(int i = 0; i < 9; i++) {
             itemsWhenStarted.add(player.getInventory().getStack(i).getName().getString());
@@ -499,7 +501,7 @@ public class ReplayExecutor {
         SkyblockBot.LOGGER.info("Paused");
     }
 
-    public void unpause() {
+    public void resume() {
         if (!state.equals(ReplayBotState.PAUSED)) {
             SkyblockBot.LOGGER.info("Can't unpause when not paused");
             return;

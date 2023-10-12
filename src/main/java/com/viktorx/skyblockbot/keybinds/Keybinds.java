@@ -19,7 +19,7 @@ public class Keybinds {
     //private static KeyBinding printTestInfo;
     private static KeyBinding startStopRecording;
     private static KeyBinding loadRecording;
-    private static KeyBinding pauseReplay;
+    private static KeyBinding pauseTask;
 
     private static final Queue<KeyBinding> tickKeyPressQueue = new LinkedBlockingQueue<>();
 
@@ -45,7 +45,7 @@ public class Keybinds {
                 "Replay bot" // The translation key of the keybinding's category.
         ));
 
-        pauseReplay = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        pauseTask = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "Pause/unpause bot", // The translation key of the keybinding's name
                 InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
                 GLFW.GLFW_KEY_P, // The keycode of the key
@@ -68,6 +68,7 @@ public class Keybinds {
                 if (!ComplexFarmingTask.INSTANCE.isExecuting()) {
                     ComplexFarmingTask.INSTANCE.execute();
                 } else {
+                    ComplexFarmingTask.INSTANCE.abort();
                 }
             }
 
@@ -85,11 +86,11 @@ public class Keybinds {
                 }
             }
 
-            if(pauseReplay.wasPressed()) {
-                if(ReplayExecutor.INSTANCE.isPlaying()) {
-                    ReplayExecutor.INSTANCE.pause();
-                } else if(ReplayExecutor.INSTANCE.isPaused()) {
-                    ReplayExecutor.INSTANCE.unpause();
+            if(pauseTask.wasPressed()) {
+                if(ComplexFarmingTask.INSTANCE.isPlaying()) {
+                    ComplexFarmingTask.INSTANCE.pause();
+                } else if(ComplexFarmingTask.INSTANCE.isPaused()) {
+                    ComplexFarmingTask.INSTANCE.resume();
                 }
             }
 

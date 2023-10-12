@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.task.buyItem;
 
+import com.viktorx.skyblockbot.skyblock.flipping.AuctionBrowser;
 import com.viktorx.skyblockbot.skyblock.flipping.PriceDatabase;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
@@ -20,11 +21,29 @@ public class BuyItemExecutor {
         this.task = task;
     }
 
+    public void pause() {
+
+    }
+
+    public void resume() {
+        
+    }
+
     public void onTickBuy(MinecraftClient client) {
         if(!executing) {
             return;
         }
-        PriceDatabase.getInstance().fetchItemPrice(task.getItemName());
+        String auctionCommand = AuctionBrowser.INSTANCE.getAuctionWithBestPrice(task.getItemName());
+        if(auctionCommand == null) {
+            task.aborted();
+            executing = false;
+            return;
+        }
+
+        assert client.player != null;
+        client.player.sendChatMessage(auctionCommand);
+
+        // TODO
 
     }
 }

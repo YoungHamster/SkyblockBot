@@ -12,7 +12,17 @@ public class BuyItem implements Task {
 
     @Override
     public void execute() {
+        BuyItemExecutor.INSTANCE.execute(this);
+    }
 
+    @Override
+    public void pause() {
+        BuyItemExecutor.INSTANCE.pause();
+    }
+
+    @Override
+    public void resume() {
+        BuyItemExecutor.INSTANCE.resume();
     }
 
     @Override

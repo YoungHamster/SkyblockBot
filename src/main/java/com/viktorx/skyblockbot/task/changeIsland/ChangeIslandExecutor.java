@@ -28,6 +28,14 @@ public class ChangeIslandExecutor {
         executing = true;
     }
 
+    public void pause() {
+        executing = false;
+    }
+
+    public void resume() {
+        executing = true;
+    }
+
     public void onTickChangeIsland(MinecraftClient client) {
         if(!executing) {
             return;
