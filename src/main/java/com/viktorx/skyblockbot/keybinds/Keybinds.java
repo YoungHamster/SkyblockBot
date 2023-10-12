@@ -81,13 +81,13 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
-                if (ReplayExecutor.INSTANCE.isIdle()) {
-                    ReplayExecutor.INSTANCE.loadRecordingAsync();
+                if (!ComplexFarmingTask.INSTANCE.isExecuting()) {
+                    ComplexFarmingTask.INSTANCE.loadRecordingAsync();
                 }
             }
 
             if(pauseTask.wasPressed()) {
-                if(ComplexFarmingTask.INSTANCE.isPlaying()) {
+                if(!ComplexFarmingTask.INSTANCE.isPaused()) {
                     ComplexFarmingTask.INSTANCE.pause();
                 } else if(ComplexFarmingTask.INSTANCE.isPaused()) {
                     ComplexFarmingTask.INSTANCE.resume();

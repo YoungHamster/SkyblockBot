@@ -70,6 +70,11 @@ public class Replay implements Task {
     }
 
     @Override
+    public void abort() {
+        ReplayExecutor.INSTANCE.abort();
+    }
+
+    @Override
     public void saveToFile(String filename) {
         ByteBuffer bb = ByteBuffer.allocate(tickStates.size() * (TickState.getTickStateSize()));
 
@@ -124,13 +129,18 @@ public class Replay implements Task {
     }
 
     @Override
-    public boolean isExecuting() {
-        return executing;
+    public void whenAborted(Runnable whenAborted) {
+        this.whenAborted = whenAborted;
     }
 
     @Override
-    public void whenAborted(Runnable whenAborted) {
-        this.whenAborted = whenAborted;
+    public boolean isExecuting() {
+        return ReplayExecutor.INSTANCE.isExecuting(this);
+    }
+
+    @Override
+    public boolean isPaused() {
+        return ReplayExecutor.INSTANCE.isPaused();
     }
 
     public void addTickState(TickState newState) {

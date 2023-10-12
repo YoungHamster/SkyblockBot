@@ -36,6 +36,14 @@ public class ChangeIslandExecutor {
         executing = true;
     }
 
+    public void abort() {
+        executing = false;
+    }
+
+    public boolean isExecuting(ChangeIsland task) {
+        return executing && changeIsland == task;
+    }
+
     public void onTickChangeIsland(MinecraftClient client) {
         if(!executing) {
             return;

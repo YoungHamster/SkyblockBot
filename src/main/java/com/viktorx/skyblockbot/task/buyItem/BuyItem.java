@@ -9,20 +9,29 @@ public class BuyItem implements Task {
     private String[] itemLoreKeyWords;
     private Runnable whenCompleted;
     private Runnable whenAborted;
+    private boolean paused = false;
 
     @Override
     public void execute() {
+        paused = false;
         BuyItemExecutor.INSTANCE.execute(this);
     }
 
     @Override
     public void pause() {
         BuyItemExecutor.INSTANCE.pause();
+        paused = true;
     }
 
     @Override
     public void resume() {
         BuyItemExecutor.INSTANCE.resume();
+        paused = false;
+    }
+
+    @Override
+    public void abort() {
+        BuyItemExecutor.INSTANCE.abort();
     }
 
     @Override
@@ -48,6 +57,16 @@ public class BuyItem implements Task {
     @Override
     public void whenAborted(Runnable whenAborted) {
         this.whenAborted = whenAborted;
+    }
+
+    @Override
+    public boolean isExecuting() {
+        return BuyItemExecutor.INSTANCE.isExecuting(this);
+    }
+
+    @Override
+    public boolean isPaused() {
+        return paused;
     }
 
     public String getItemName() {

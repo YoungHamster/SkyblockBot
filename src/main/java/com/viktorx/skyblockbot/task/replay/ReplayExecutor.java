@@ -4,6 +4,7 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
+import com.viktorx.skyblockbot.task.Task;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -209,7 +210,7 @@ public class ReplayExecutor {
         adjustHeadBeforeStarting();
     }
 
-    public void stopPlaying() {
+    public void abort() {
         SkyblockBot.LOGGER.info("stopped playing");
         printDebugInfo();
         unpressButtons();
@@ -524,6 +525,10 @@ public class ReplayExecutor {
 
     public boolean isIdle() {
         return state.equals(ReplayBotState.IDLE);
+    }
+
+    public boolean isExecuting(Task task) {
+        return !state.equals(ReplayBotState.IDLE) && replay == task;
     }
 
     public boolean isPaused() {

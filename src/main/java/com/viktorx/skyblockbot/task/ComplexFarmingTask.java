@@ -7,6 +7,8 @@ import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.replay.Replay;
 import com.viktorx.skyblockbot.task.replay.ReplayBotSettings;
 
+import java.util.concurrent.CompletableFuture;
+
 public class ComplexFarmingTask {
     /*private Replay replay = null;
     private Craft craft = null;
@@ -20,28 +22,37 @@ public class ComplexFarmingTask {
 
     private final Task getToSkyblock;
     private final Task getToCorrectIsland;
-    private final Task farm;
+    private Task farm;
+    private Task currentTask;
     private long durationInMs;
-    private boolean executing = false;
 
     ComplexFarmingTask() {
         this.getToSkyblock = new ChangeIsland("/play skyblock");
         this.getToCorrectIsland = new ChangeIsland("/warp garden");
         this.farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE);
 
-        this.getToSkyblock.whenCompleted(getToCorrectIsland::execute);
+        this.getToSkyblock.whenCompleted(() -> {
+            currentTask = getToCorrectIsland;
+            getToCorrectIsland.execute();
+        });
         this.getToSkyblock.whenAborted(() -> {
             SkyblockBot.LOGGER.info("Couldn't warp to skyblock!");
-            executing = false;
+            currentTask = null;
         });
 
-        this.getToCorrectIsland.whenCompleted(farm::execute);
+        this.getToCorrectIsland.whenCompleted(() -> {
+            currentTask = farm;
+            farm.execute();
+        });
         this.getToCorrectIsland.whenAborted(() -> {
             SkyblockBot.LOGGER.info("Couldn't warp to garden");
-            executing = false;
+            currentTask = null;
         });
 
-        this.farm.whenCompleted(farm::execute);
+        this.farm.whenCompleted(() -> {
+            currentTask = farm;
+            farm.execute();
+        });
         this.farm.whenAborted(() -> {
             if(GlobalExecutorInfo.worldLoading) {
 
@@ -49,17 +60,17 @@ public class ComplexFarmingTask {
                     Thread.sleep(ChangeIslandSettings.ticksToWaitForChunks * 50);
                 } catch (InterruptedException ignored) {}
                 if(GlobalExecutorInfo.worldLoaded) {
+                    currentTask = getToCorrectIsland;
                     getToCorrectIsland.execute();
                 } else {
                     SkyblockBot.LOGGER.info("Couldn't farm.");
-                    executing = false;
+                    currentTask = null;
                 }
             }
         });
     }
 
     public void execute() {
-        executing = true;
 
         /*
          * If server isn't skyblock then we start by going to skyblock
@@ -67,27 +78,46 @@ public class ComplexFarmingTask {
          * If it is garden we just farm
          */
         if(!SBUtils.isServerSkyblock()) {
+            currentTask = getToSkyblock;
             getToSkyblock.execute();
         } else if (!SBUtils.getIslandOrArea().equals("GARDEN")) {
+            currentTask = getToCorrectIsland;
             getToCorrectIsland.execute();
         } else {
+            currentTask = farm;
             farm.execute();
         }
     }
 
     public void pause() {
-        if(farm.isExecuting()) {
-            farm.pause();
+        if(currentTask.isExecuting()) {
+            currentTask.pause();
         }
     }
 
     public void resume() {
-        if(farm.isExecuting()) {
-            farm.resume();
+        if(currentTask.isExecuting()) {
+            currentTask.resume();
+        }
+    }
+
+    public void abort() {
+        if(currentTask.isExecuting()) {
+            currentTask.abort();
         }
     }
 
     public boolean isExecuting() {
-        return executing;
+        return currentTask != null;
+    }
+
+    public boolean isPaused() {
+        return currentTask.isPaused();
+    }
+
+    public void loadRecordingAsync() {
+        CompletableFuture.runAsync(() -> {
+            farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE);
+        });
     }
 }
