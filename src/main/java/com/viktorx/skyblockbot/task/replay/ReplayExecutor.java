@@ -25,7 +25,6 @@ public class ReplayExecutor {
 
     private Replay replay;
     private int tickIterator;
-    private boolean loopWhenDone;
     private ReplayBotState state = ReplayBotState.IDLE;
     private CompletableFuture<Void> yawTask = null;
     private CompletableFuture<Void> pitchTask = null;
@@ -169,6 +168,8 @@ public class ReplayExecutor {
             SkyblockBot.LOGGER.warn("Can't play while state = " + state.getName());
             return;
         }
+
+        this.replay = replay;
 
         if (replay.size() == 0) {
             SkyblockBot.LOGGER.warn("can't start playing, nothing to play");

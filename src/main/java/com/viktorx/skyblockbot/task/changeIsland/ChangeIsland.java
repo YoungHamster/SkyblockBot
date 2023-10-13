@@ -4,7 +4,7 @@ import com.viktorx.skyblockbot.task.Task;
 
 import java.util.concurrent.CompletableFuture;
 
-public class ChangeIsland implements Task {
+public class ChangeIsland extends Task {
 
     private String command;
     private boolean paused = false;

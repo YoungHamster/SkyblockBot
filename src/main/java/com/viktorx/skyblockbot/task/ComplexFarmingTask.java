@@ -82,6 +82,7 @@ public class ComplexFarmingTask {
             getToSkyblock.execute();
         } else if (!SBUtils.getIslandOrArea().equals("GARDEN")) {
             currentTask = getToCorrectIsland;
+        } else if (!SBUtils.getIslandOrArea().contains("Plot")) {
             getToCorrectIsland.execute();
         } else {
             currentTask = farm;

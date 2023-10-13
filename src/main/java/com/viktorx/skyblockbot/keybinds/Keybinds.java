@@ -2,6 +2,7 @@ package com.viktorx.skyblockbot.keybinds;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
+import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.ComplexFarmingTask;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -62,7 +63,7 @@ public class Keybinds {
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
 
             // this does the clicking
-            CompletableFuture<Void> clickTick = CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
+            CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
 
             if (startStopBot.wasPressed()) {
                 if (!ComplexFarmingTask.INSTANCE.isExecuting()) {

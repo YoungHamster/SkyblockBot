@@ -51,6 +51,7 @@ public class ChangeIslandExecutor {
 
         if(!sentCommand) {
             GlobalExecutorInfo.worldLoaded = false;
+            assert client.player != null;
             client.player.sendChatMessage(changeIsland.getCommand());
             sentCommand = true;
             return;
@@ -68,6 +69,7 @@ public class ChangeIslandExecutor {
                     changeIsland.aborted();
                     executing = false;
                 } else {
+                    assert client.player != null;
                     client.player.sendChatMessage(changeIsland.getCommand());
                 }
             }

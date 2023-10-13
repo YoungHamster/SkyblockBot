@@ -5,14 +5,14 @@ import java.util.concurrent.CompletableFuture;
 public abstract class Task {
 
 
-    private Runnable whenCompleted = null;
-    private Runnable whenAborted = null;
+    protected Runnable whenCompleted = null;
+    protected Runnable whenAborted = null;
 
-    abstract void execute();
-    abstract void pause();
-    abstract void resume();
-    abstract void abort();
-    abstract void saveToFile(String filename);
+    public abstract void execute();
+    public abstract void pause();
+    public abstract void resume();
+    public abstract void abort();
+    public abstract void saveToFile(String filename);
     public void completed() {
         if(whenCompleted != null)
             CompletableFuture.runAsync(whenCompleted);
@@ -27,6 +27,6 @@ public abstract class Task {
     public void whenAborted(Runnable whenAborted) {
         this.whenAborted = whenAborted;
     }
-    abstract boolean isExecuting();
-    abstract boolean isPaused();
+    public abstract boolean isExecuting();
+    public abstract boolean isPaused();
 }

@@ -75,7 +75,7 @@ public class SBUtils {
     }
 
     public static boolean isServerSkyblock() {
-        return getIslandOrArea().length() == 0;
+        return getIslandOrArea().length() != 0;
     }
 
     private static List<String> getTabPlayers() {
