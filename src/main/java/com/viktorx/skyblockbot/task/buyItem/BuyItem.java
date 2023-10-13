@@ -72,4 +72,8 @@ public class BuyItem implements Task {
     public String getItemName() {
         return itemName;
     }
+
+    public String[] getItemLoreKeyWords() {
+        return itemLoreKeyWords;
+    }
 }

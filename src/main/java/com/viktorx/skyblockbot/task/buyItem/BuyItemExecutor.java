@@ -9,7 +9,8 @@ public class BuyItemExecutor {
 
     public static final BuyItemExecutor INSTANCE = new BuyItemExecutor();
 
-    private boolean executing = false;
+    private BuyItemState state = BuyItemState.IDLE;
+    private BuyItemState beforePauseState;
     private BuyItem buyItem;
 
     public void Init() {
@@ -17,34 +18,35 @@ public class BuyItemExecutor {
     }
 
     public void execute(BuyItem task) {
-        executing = true;
+        state = BuyItemState.SENDING_COMMAND;
         this.buyItem = task;
     }
 
     public void pause() {
-
+        beforePauseState = state;
+        state = BuyItemState.PAUSED;
     }
 
     public void resume() {
-
+        state = beforePauseState;
     }
 
     public void abort() {
-        executing = false;
+        state = BuyItemState.IDLE;
     }
 
     public boolean isExecuting(Task task) {
-        return executing && buyItem == task;
+        return !state.equals(BuyItemState.IDLE) && buyItem == task;
     }
 
     public void onTickBuy(MinecraftClient client) {
-        if(!executing) {
+        if(!state.equals(BuyItemState.BUYING)) {
             return;
         }
-        String auctionCommand = AuctionBrowser.INSTANCE.getAuctionWithBestPrice(buyItem.getItemName());
+        String auctionCommand = AuctionBrowser.INSTANCE.getAuctionWithBestPrice(buyItem.getItemName(), buyItem.getItemLoreKeyWords());
         if(auctionCommand == null) {
             buyItem.aborted();
-            executing = false;
+            state = BuyItemState.IDLE;
             return;
         }
 

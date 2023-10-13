@@ -124,16 +124,6 @@ public class Replay implements Task {
     }
 
     @Override
-    public void whenCompleted(Runnable whenCompleted) {
-        this.whenCompleted = whenCompleted;
-    }
-
-    @Override
-    public void whenAborted(Runnable whenAborted) {
-        this.whenAborted = whenAborted;
-    }
-
-    @Override
     public boolean isExecuting() {
         return ReplayExecutor.INSTANCE.isExecuting(this);
     }
