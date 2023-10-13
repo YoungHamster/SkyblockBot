@@ -7,7 +7,7 @@ import net.minecraft.util.math.Vec3d;
 
 public class TickState {
 
-    private static final int tickStateSize = 8 * 3 + 4 * 2 + 1 + 7 + 4;
+    private static final int tickStateSize = 8 * 3 + 4 * 2 + 8 + 4;
 
     private final Vec3d position;
     private final Vec2f rotation;
@@ -19,7 +19,7 @@ public class TickState {
     private final boolean sneak;
     private final boolean sprint;
     private final boolean jump;
-    private final int hotbarSlot; // TODO - record it, save it, play it
+    private final int hotbarSlot;
 
     TickState() {
         MinecraftClient client = MinecraftClient.getInstance();

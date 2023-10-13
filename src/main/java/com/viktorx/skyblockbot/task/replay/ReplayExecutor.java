@@ -95,9 +95,7 @@ public class ReplayExecutor {
         }
 
         if (antiDetectTriggeredTickCounter++ == ReplayBotSettings.antiDetectTriggeredWaitTicks) {
-            unpressButtons();
-            state = ReplayBotState.IDLE;
-            replay.aborted();
+            abort();
             return;
         }
 
@@ -114,9 +112,7 @@ public class ReplayExecutor {
 
         tickIterator++;
         if (tickIterator == replay.size()) {
-            unpressButtons();
-            state = ReplayBotState.IDLE;
-            replay.aborted();
+            abort();
         }
     }
 
@@ -135,7 +131,7 @@ public class ReplayExecutor {
 
         if(GlobalExecutorInfo.worldLoading) {
             state = ReplayBotState.IDLE;
-            replay.aborted();
+            abort();
             return;
         }
 
@@ -174,6 +170,7 @@ public class ReplayExecutor {
         if (replay.size() == 0) {
             SkyblockBot.LOGGER.warn("can't start playing, nothing to play");
             state = ReplayBotState.IDLE;
+            abort();
             return;
         }
 
@@ -187,6 +184,7 @@ public class ReplayExecutor {
         if (distanceToStartPoint > ReplayBotSettings.maxDistanceToFirstPoint) {
             SkyblockBot.LOGGER.warn("Can't start so far from first point");
             state = ReplayBotState.IDLE;
+            abort();
             return;
         }
 
@@ -212,11 +210,12 @@ public class ReplayExecutor {
     }
 
     public void abort() {
-        SkyblockBot.LOGGER.info("stopped playing");
+        SkyblockBot.LOGGER.info("aborted playing");
         printDebugInfo();
         unpressButtons();
 
         state = ReplayBotState.IDLE;
+        replay.aborted();
     }
 
     /*

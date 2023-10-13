@@ -77,7 +77,7 @@ public class ComplexFarmingTask {
          * If it is skyblock but not garden then we start by going to graden
          * If it is garden we just farm
          */
-        if(!SBUtils.isServerSkyblock()) {
+        /*if(!SBUtils.isServerSkyblock()) {
             currentTask = getToSkyblock;
             getToSkyblock.execute();
         } else if (!SBUtils.getIslandOrArea().equals("GARDEN")) {
@@ -87,7 +87,9 @@ public class ComplexFarmingTask {
         } else {
             currentTask = farm;
             farm.execute();
-        }
+        }*/
+        currentTask = farm;
+        farm.execute();
     }
 
     public void pause() {
@@ -105,6 +107,7 @@ public class ComplexFarmingTask {
     public void abort() {
         if(currentTask.isExecuting()) {
             currentTask.abort();
+            currentTask = null;
         }
     }
 

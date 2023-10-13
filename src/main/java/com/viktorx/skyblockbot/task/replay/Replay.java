@@ -40,7 +40,7 @@ public class Replay extends Task {
     }
 
     public void saveToFile(String filename) {
-        ByteBuffer bb = ByteBuffer.allocate(tickStates.size() * (TickState.getTickStateSize()));
+        ByteBuffer bb = ByteBuffer.allocate(8 + tickStates.size() * (TickState.getTickStateSize()));
 
         bb.putLong(saveProtocolVersion); // some unique number to represent save protocol version
 
