@@ -90,7 +90,7 @@ public class ReplayExecutor {
 
     private void antiDetectDone() {
         if(ReplayBotSettings.autoQuitWhenAntiDetect) {
-            MinecraftClient.getInstance().close();
+            MinecraftClient.getInstance().stop();
         }
     }
 
@@ -262,7 +262,7 @@ public class ReplayExecutor {
 
         if (serverChangedSlot) {
             assert client.player != null;
-            if (!client.player.getActiveItem().getName().getString()
+            if (!client.player.getInventory().getMainHandStack().getName().getString()
                     .equals(itemsWhenStarted.get(client.player.getInventory().selectedSlot))) {
                 SkyblockBot.LOGGER.warn("Anti-detection alg: server changed item in hand");
                 serverChangedSlot = false;

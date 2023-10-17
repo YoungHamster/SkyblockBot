@@ -21,8 +21,12 @@ public class ComplexFarmingTask {
     private final Timer regularPauseTimer = new Timer(true);
 
     void whenGetToSkyblockCompleted() {
-        currentTask = getToGarden;
-        getToGarden.execute();
+        if (!SBUtils.getIslandOrArea().contains("Plot")) {
+            currentTask = getToGarden;
+        } else {
+            currentTask = farm;
+        }
+        currentTask.execute();
     }
 
     void whenGetToSkyblockAborted() {
@@ -84,15 +88,13 @@ public class ComplexFarmingTask {
          */
         if(!SBUtils.isServerSkyblock()) {
             currentTask = getToSkyblock;
-            getToSkyblock.execute();
-        } else if (!SBUtils.getIslandOrArea().equals("GARDEN")) {
-            currentTask = getToGarden;
         } else if (!SBUtils.getIslandOrArea().contains("Plot")) {
-            getToGarden.execute();
+            currentTask = getToGarden;
         } else {
             currentTask = farm;
-            farm.execute();
         }
+
+        currentTask.execute();
 
         /*
          * Basically every durationInMs we tell the farming bot to pause for 10 minutes when it's done the loop

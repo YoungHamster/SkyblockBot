@@ -34,6 +34,11 @@ public class LookHelper {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
 
         float yawDirection = (targetYaw - LookHelper.getYaw()) / Math.abs(targetYaw - getYaw());
+        if(Math.abs(targetYaw - getYaw()) > 180) {
+            yawDirection = 1;
+        } else {
+            yawDirection = -1;
+        }
         long time = System.currentTimeMillis();
 
         while (!LookHelper.isYawRoughlyClose(LookHelper.getYaw(), targetYaw)) {
