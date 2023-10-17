@@ -89,7 +89,7 @@ public class ComplexFarmingTask {
             farm.execute();
         }*/
         currentTask = farm;
-        farm.execute();
+        currentTask.execute();
     }
 
     public void pause() {
@@ -107,8 +107,8 @@ public class ComplexFarmingTask {
     public void abort() {
         if(currentTask.isExecuting()) {
             currentTask.abort();
-            currentTask = null;
         }
+        currentTask = null;
     }
 
     public boolean isExecuting() {
