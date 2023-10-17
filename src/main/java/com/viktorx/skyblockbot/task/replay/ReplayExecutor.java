@@ -33,7 +33,6 @@ public class ReplayExecutor {
     public boolean serverChangedPositionRotation = false;
     public boolean serverChangedItem = false;
     public boolean serverChangedSlot = false;
-    private boolean isStuck = false;
     private final List<TickState> lastNTicks = new ArrayList<>();
     public int debugPacketCounter = 0;
     public int debugOnGroundOnlyCounter = 0;
@@ -89,6 +88,12 @@ public class ReplayExecutor {
         state = ReplayBotState.IDLE;
     }
 
+    private void antiDetectDone() {
+        if(ReplayBotSettings.autoQuitWhenAntiDetect) {
+            MinecraftClient.getInstance().close();
+        }
+    }
+
     private void onTickAntiDetectTriggered(MinecraftClient client) {
         if (!state.equals(ReplayBotState.ANTI_DETECT_TRIGGERED)) {
             return;
@@ -96,6 +101,7 @@ public class ReplayExecutor {
 
         if (antiDetectTriggeredTickCounter++ == ReplayBotSettings.antiDetectTriggeredWaitTicks) {
             abort();
+            antiDetectDone();
             return;
         }
 
@@ -113,6 +119,7 @@ public class ReplayExecutor {
         tickIterator++;
         if (tickIterator == replay.size()) {
             abort();
+            antiDetectDone();
         }
     }
 
@@ -521,10 +528,6 @@ public class ReplayExecutor {
 
         state = ReplayBotState.PLAYING;
         SkyblockBot.LOGGER.info("Unpaused");
-    }
-
-    public boolean isIdle() {
-        return state.equals(ReplayBotState.IDLE);
     }
 
     public boolean isExecuting(Task task) {

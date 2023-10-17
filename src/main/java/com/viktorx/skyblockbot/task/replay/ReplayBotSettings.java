@@ -13,5 +13,6 @@ public class ReplayBotSettings {
     public static final int antiStucknessTickCount = 20;
     public static final double detectStucknessCoefficient = 0.1;
     public static final int checkForCollisionsAdvanceTicks = 4;
+    public static boolean autoQuitWhenAntiDetect = true;
 
 }

@@ -10,7 +10,6 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public class Replay extends Task {
     private final List<TickState> tickStates = new ArrayList<>();
@@ -73,16 +72,6 @@ public class Replay extends Task {
         } catch (IOException e) {
             SkyblockBot.LOGGER.info("Exception when trying to save movement recording to a file");
         }
-    }
-
-    public void completed() {
-        if(whenCompleted != null)
-            CompletableFuture.runAsync(whenCompleted);
-    }
-
-    public void aborted() {
-        if(whenAborted != null)
-            CompletableFuture.runAsync(whenAborted);
     }
 
     public boolean isExecuting() {

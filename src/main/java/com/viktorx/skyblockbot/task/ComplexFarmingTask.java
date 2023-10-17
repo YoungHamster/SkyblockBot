@@ -7,67 +7,72 @@ import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.replay.Replay;
 import com.viktorx.skyblockbot.task.replay.ReplayBotSettings;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 
 public class ComplexFarmingTask {
-    /*private Replay replay = null;
-    private Craft craft = null;
-    private Enchant enchant = null;
-    private Reforge reforge = null;
-    private BuyBZ buyBZ = null;
-    private BuyAH buyAH = null;
-    private BuyNPC buyNPC = null;
-    private ChangeIsland changeIsland = null;*/
     public static final ComplexFarmingTask INSTANCE = new ComplexFarmingTask();
 
     private final Task getToSkyblock;
-    private final Task getToCorrectIsland;
+    private final Task getToGarden;
     private Task farm;
     private Task currentTask;
-    private long durationInMs;
+    private final Timer regularPauseTimer = new Timer(true);
+
+    void whenGetToSkyblockCompleted() {
+        currentTask = getToGarden;
+        getToGarden.execute();
+    }
+
+    void whenGetToSkyblockAborted() {
+        SkyblockBot.LOGGER.info("Couldn't warp to skyblock!");
+        currentTask = null;
+    }
+
+    void whenGetToGardenCompleted() {
+        currentTask = farm;
+        farm.execute();
+    }
+
+    void whenGetToGardenAborted() {
+        SkyblockBot.LOGGER.info("Couldn't warp to garden");
+        currentTask = null;
+    }
+
+    void whenFarmCompleted() {
+        currentTask = farm;
+        farm.execute();
+    }
+
+    void whenFarmAborted() {
+        if(GlobalExecutorInfo.worldLoading) {
+
+            try {
+                Thread.sleep(ChangeIslandSettings.ticksToWaitForChunks * 50);
+            } catch (InterruptedException ignored) {}
+            if(GlobalExecutorInfo.worldLoaded) {
+                currentTask = getToGarden;
+                getToGarden.execute();
+            } else {
+                SkyblockBot.LOGGER.info("Couldn't farm.");
+                currentTask = null;
+            }
+        }
+    }
 
     ComplexFarmingTask() {
         this.getToSkyblock = new ChangeIsland("/play skyblock");
-        this.getToCorrectIsland = new ChangeIsland("/warp garden");
+        this.getToSkyblock.whenCompleted(this::whenGetToSkyblockCompleted);
+        this.getToSkyblock.whenAborted(this::whenGetToSkyblockAborted);
+
+        this.getToGarden = new ChangeIsland("/warp garden");
+        this.getToGarden.whenCompleted(this::whenGetToGardenCompleted);
+        this.getToGarden.whenAborted(this::whenGetToGardenAborted);
+
         this.farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE);
-
-        this.getToSkyblock.whenCompleted(() -> {
-            currentTask = getToCorrectIsland;
-            getToCorrectIsland.execute();
-        });
-        this.getToSkyblock.whenAborted(() -> {
-            SkyblockBot.LOGGER.info("Couldn't warp to skyblock!");
-            currentTask = null;
-        });
-
-        this.getToCorrectIsland.whenCompleted(() -> {
-            currentTask = farm;
-            farm.execute();
-        });
-        this.getToCorrectIsland.whenAborted(() -> {
-            SkyblockBot.LOGGER.info("Couldn't warp to garden");
-            currentTask = null;
-        });
-
-        this.farm.whenCompleted(() -> {
-            currentTask = farm;
-            farm.execute();
-        });
-        this.farm.whenAborted(() -> {
-            if(GlobalExecutorInfo.worldLoading) {
-
-                try {
-                    Thread.sleep(ChangeIslandSettings.ticksToWaitForChunks * 50);
-                } catch (InterruptedException ignored) {}
-                if(GlobalExecutorInfo.worldLoaded) {
-                    currentTask = getToCorrectIsland;
-                    getToCorrectIsland.execute();
-                } else {
-                    SkyblockBot.LOGGER.info("Couldn't farm.");
-                    currentTask = null;
-                }
-            }
-        });
+        this.farm.whenCompleted(this::whenFarmCompleted);
+        this.farm.whenAborted(this::whenFarmAborted);
     }
 
     public void execute() {
@@ -77,19 +82,49 @@ public class ComplexFarmingTask {
          * If it is skyblock but not garden then we start by going to graden
          * If it is garden we just farm
          */
-        /*if(!SBUtils.isServerSkyblock()) {
+        if(!SBUtils.isServerSkyblock()) {
             currentTask = getToSkyblock;
             getToSkyblock.execute();
         } else if (!SBUtils.getIslandOrArea().equals("GARDEN")) {
-            currentTask = getToCorrectIsland;
+            currentTask = getToGarden;
         } else if (!SBUtils.getIslandOrArea().contains("Plot")) {
-            getToCorrectIsland.execute();
+            getToGarden.execute();
         } else {
             currentTask = farm;
             farm.execute();
-        }*/
-        currentTask = farm;
-        currentTask.execute();
+        }
+
+        /*
+         * Basically every durationInMs we tell the farming bot to pause for 10 minutes when it's done the loop
+         * After 10 minutes it tells itself to run again when loop is done and starts executing itself again
+         *
+         * TLDR: pause for 10 minutes every 2 hours but only at the end of the farming loop
+         */
+        // 120 minutes
+        long durationInMs = 1000 * 60 * 120;
+        // 10 minutes
+        long pauseDuration = 1000 * 60 * 10;
+
+        // I'm not sure if that is considered terrible code, i have a feeling that it is,
+        // but i'm gonna leave it here until someone assures me
+        ComplexFarmingTask cft = this;
+        regularPauseTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                farm.whenCompleted(() -> {
+                    try {
+                        Thread.sleep(pauseDuration);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    farm.whenCompleted(cft::whenFarmCompleted);
+
+                    farm.execute();
+                });
+            }
+        },
+                durationInMs, durationInMs);
     }
 
     public void pause() {
