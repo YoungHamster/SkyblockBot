@@ -107,9 +107,7 @@ public class ComplexFarmingTask {
         // 10 minutes
         long pauseDuration = 1000 * 60 * 10;
 
-        // I'm not sure if that is considered terrible code, i have a feeling that it is,
-        // but i'm gonna leave it here until someone assures me
-        ComplexFarmingTask cft = this;
+        regularPauseTimer.cancel();
         regularPauseTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -120,7 +118,7 @@ public class ComplexFarmingTask {
                         throw new RuntimeException(e);
                     }
 
-                    farm.whenCompleted(cft::whenFarmCompleted);
+                    farm.whenCompleted(ComplexFarmingTask.INSTANCE::whenFarmCompleted);
 
                     farm.execute();
                 });
@@ -146,6 +144,7 @@ public class ComplexFarmingTask {
             currentTask.abort();
         }
         currentTask = null;
+        regularPauseTimer.cancel();
     }
 
     public boolean isExecuting() {

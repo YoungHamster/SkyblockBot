@@ -160,8 +160,8 @@ public class ReplayExecutor {
         tickIterator++;
         if (tickIterator == replay.size()) {
             printDebugInfo();
-            replay.completed();
             state = ReplayBotState.IDLE;
+            replay.completed();
         }
     }
 
