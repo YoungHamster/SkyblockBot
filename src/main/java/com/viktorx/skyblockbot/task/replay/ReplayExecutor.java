@@ -189,10 +189,14 @@ public class ReplayExecutor {
         assert MinecraftClient.getInstance().player != null;
 
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        double distanceToStartPoint = player.getPos().subtract(replay.getTickState(0).getPosition()).length();
+        Vec3d expected = replay.getTickState(0).getPosition();
+        Vec3d actual = player.getPos();
+        double distanceToStartPoint = actual.subtract(expected).length();
 
         if (distanceToStartPoint > ReplayBotSettings.maxDistanceToFirstPoint) {
-            SkyblockBot.LOGGER.warn("Can't start so far from first point");
+            SkyblockBot.LOGGER.warn(
+                    "Can't start so far from first point. Expected x: " + expected.x  + " z:" + expected.z
+                    + ", actual x:" + actual.x + " z:" + actual.z);
             state = ReplayBotState.IDLE;
             abort();
             return;
@@ -479,16 +483,6 @@ public class ReplayExecutor {
         SkyblockBot.LOGGER.info("look and on ground counter = " + debugLookAndOnGroundCounter);
         SkyblockBot.LOGGER.info("position and on ground counter = " + debugPositionAndOnGroundCounter);
         SkyblockBot.LOGGER.info("full counter = " + debugFullCounter);
-    }
-
-    public void loadRecordingAsync() {
-        loadRecordingAsync(ReplayBotSettings.DEFAULT_RECORDING_FILE);
-    }
-
-    public void loadRecordingAsync(String filename) {
-        CompletableFuture.runAsync(() -> {
-            replay = new Replay(filename);
-        });
     }
 
     private void saveRecordingAsync() {
