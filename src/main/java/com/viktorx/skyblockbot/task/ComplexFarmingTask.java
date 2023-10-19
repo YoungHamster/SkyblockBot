@@ -6,6 +6,7 @@ import com.viktorx.skyblockbot.task.changeIsland.ChangeIsland;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.replay.Replay;
 import com.viktorx.skyblockbot.task.replay.ReplayBotSettings;
+import com.viktorx.skyblockbot.task.sellSacks.SellSacks;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -16,6 +17,7 @@ public class ComplexFarmingTask {
 
     private final Task getToSkyblock;
     private final Task getToGarden;
+    private final Task sellSacks;
     private Task farm;
     private Task currentTask;
     private Timer regularPauseTimer;
@@ -49,9 +51,23 @@ public class ComplexFarmingTask {
         currentTask = null;
     }
 
-    void whenFarmCompleted() {
+    void whenSellSacksCompleted() {
         currentTask = farm;
-        farm.execute();
+        currentTask.execute();
+    }
+
+    void whenSellSacksAborted() {
+        currentTask = farm;
+        currentTask.execute();
+    }
+
+    void whenFarmCompleted() {
+        if(GlobalExecutorInfo.totalSackCount.get() > GlobalExecutorInfo.totalSackCountLimit) {
+            currentTask = sellSacks;
+        } else {
+            currentTask = farm;
+        }
+        currentTask.execute();
     }
 
     void whenFarmAborted() {
@@ -62,8 +78,12 @@ public class ComplexFarmingTask {
                 Thread.sleep(ChangeIslandSettings.ticksToWaitForChunks * 50);
             } catch (InterruptedException ignored) {}
             if(GlobalExecutorInfo.worldLoaded) {
-                currentTask = getToGarden;
-                getToGarden.execute();
+                if(SBUtils.isServerSkyblock()) {
+                    currentTask = getToGarden;
+                } else {
+                    currentTask = getToSkyblock;
+                }
+                currentTask.execute();
             } else {
                 SkyblockBot.LOGGER.info("Couldn't farm.");
                 currentTask = null;
@@ -79,6 +99,10 @@ public class ComplexFarmingTask {
         this.getToGarden = new ChangeIsland("/warp garden");
         this.getToGarden.whenCompleted(this::whenGetToGardenCompleted);
         this.getToGarden.whenAborted(this::whenGetToGardenAborted);
+
+        this.sellSacks = new SellSacks();
+        this.sellSacks.whenCompleted(this::whenSellSacksCompleted);
+        this.sellSacks.whenCompleted(this::whenSellSacksAborted);
 
         this.farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE);
         this.farm.whenCompleted(this::whenFarmCompleted);

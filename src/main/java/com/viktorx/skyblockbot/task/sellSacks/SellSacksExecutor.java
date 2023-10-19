@@ -69,7 +69,6 @@ public class SellSacksExecutor {
                 client.player.sendChatMessage(task.getCommand());
                 state = SellSacksState.WAITING_FOR_MENU;
                 nextState = SellSacksState.SELLING;
-                SkyblockBot.LOGGER.info("Sent command, waiting for menu");
             }
 
             case WAITING_FOR_MENU -> {
@@ -89,11 +88,11 @@ public class SellSacksExecutor {
                 } catch (TimeoutException e) {
                     state = SellSacksState.IDLE;
                     task.aborted();
+                    return;
                 }
 
                 state = SellSacksState.WAITING_FOR_MENU;
                 nextState = SellSacksState.CONFIRMING;
-                SkyblockBot.LOGGER.info("Clicked sell, waiting for menu");
             }
 
             case CONFIRMING -> {
@@ -107,10 +106,10 @@ public class SellSacksExecutor {
                 } catch (TimeoutException e) {
                     state = SellSacksState.IDLE;
                     task.aborted();
+                    return;
                 }
 
                 state = SellSacksState.WAITING_BEFORE_CLOSING_MENU;
-                SkyblockBot.LOGGER.info("Confirmed sell, waiting before closing");
             }
 
             case WAITING_BEFORE_CLOSING_MENU -> {
@@ -126,6 +125,8 @@ public class SellSacksExecutor {
                     task.aborted();
                 }
 
+                SkyblockBot.LOGGER.info("Sold sacks!");
+                state = SellSacksState.IDLE;
                 task.completed();
             }
 

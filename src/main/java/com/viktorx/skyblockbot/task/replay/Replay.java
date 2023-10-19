@@ -23,7 +23,11 @@ public class Replay extends Task {
     }
 
     public void execute() {
-        ReplayExecutor.INSTANCE.execute(this);
+        try {
+            ReplayExecutor.INSTANCE.execute(this);
+        } catch (InterruptedException e) {
+            SkyblockBot.LOGGER.info("Interrupted while trying to execute Replay, wtf?");
+        }
     }
 
     public void pause() {

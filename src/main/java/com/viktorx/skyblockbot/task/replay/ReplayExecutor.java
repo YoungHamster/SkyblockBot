@@ -19,10 +19,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Semaphore;
 
 public class ReplayExecutor {
 
     public static final ReplayExecutor INSTANCE = new ReplayExecutor();
+
+    private Semaphore executeSem = new Semaphore(1);
 
     private Replay replay;
     private int tickIterator;
@@ -169,9 +172,12 @@ public class ReplayExecutor {
     }
 
 
-    public void execute(Replay replay) {
+    public void execute(Replay replay) throws InterruptedException {
+        executeSem.acquire();
+
         if (!state.equals(ReplayBotState.IDLE)) {
             SkyblockBot.LOGGER.warn("Can't play while state = " + state.getName());
+            executeSem.release();
             return;
         }
 
@@ -181,6 +187,7 @@ public class ReplayExecutor {
             SkyblockBot.LOGGER.warn("can't start playing, nothing to play");
             state = ReplayBotState.IDLE;
             abort();
+            executeSem.release();
             return;
         }
 
@@ -199,6 +206,7 @@ public class ReplayExecutor {
                     + ", actual x:" + actual.x + " z:" + actual.z);
             state = ReplayBotState.IDLE;
             abort();
+            executeSem.release();
             return;
         }
 
@@ -221,6 +229,8 @@ public class ReplayExecutor {
 
         antiDetectTriggeredTickCounter = 0;
         adjustHeadBeforeStarting();
+
+        executeSem.release();
     }
 
     public void abort() {

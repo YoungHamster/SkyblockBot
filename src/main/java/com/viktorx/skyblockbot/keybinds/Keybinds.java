@@ -87,7 +87,6 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
-                new SellSacks().execute();
                 if (!ComplexFarmingTask.INSTANCE.isExecuting()) {
                     ComplexFarmingTask.INSTANCE.loadRecordingAsync();
                 }

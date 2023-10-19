@@ -2,6 +2,7 @@ package com.viktorx.skyblockbot.mixins;
 
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.ScreenshotDaemon;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.*;
@@ -61,6 +62,7 @@ public class ClientPlayNetworkHandlerMixin {
             decrease = decrease.substring(1);
             delta -= Integer.parseInt(decrease.replace(",", ""));
 
+            GlobalExecutorInfo.totalSackCount.addAndGet(delta);
             ScreenshotDaemon.INSTANCE.updateSackCount(delta);
         }
     }
