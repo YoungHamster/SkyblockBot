@@ -52,10 +52,14 @@ public class ClientPlayNetworkHandlerMixin {
         if(message.contains("Sacks")) {
             int delta = 0;
             if(message.contains("+")) {
-                delta += Integer.parseInt(message.split("\\+.+ ")[0]);
+                String increase = message.split("\\+.+ ")[0];
+                increase = increase.substring(1, increase.length() - 2);
+                delta += Integer.parseInt(increase);
             }
             if(message.contains("-")) {
-                delta -= Integer.parseInt(message.split("-.+ ")[0]);
+                String decrease = message.split("-.+ ")[0];
+                decrease = decrease.substring(1, decrease.length() - 2);
+                delta -= Integer.parseInt(decrease);
             }
             ScreenshotDaemon.INSTANCE.updateSackCount(delta);
         }
