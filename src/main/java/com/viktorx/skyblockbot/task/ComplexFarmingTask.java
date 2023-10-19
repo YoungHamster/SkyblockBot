@@ -18,7 +18,7 @@ public class ComplexFarmingTask {
     private final Task getToGarden;
     private Task farm;
     private Task currentTask;
-    private final Timer regularPauseTimer = new Timer(true);
+    private Timer regularPauseTimer;
 
     void whenGetToSkyblockCompleted() {
         if (!SBUtils.getIslandOrArea().contains("Plot")) {
@@ -35,6 +35,11 @@ public class ComplexFarmingTask {
     }
 
     void whenGetToGardenCompleted() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            SkyblockBot.LOGGER.info("Wtf? WhenGetToGardenCompleted was interrupted when sleeping");
+        }
         currentTask = farm;
         farm.execute();
     }
@@ -51,6 +56,7 @@ public class ComplexFarmingTask {
 
     void whenFarmAborted() {
         if(GlobalExecutorInfo.worldLoading) {
+            SkyblockBot.LOGGER.info("Warped out of garden. Trying to get back");
 
             try {
                 Thread.sleep(ChangeIslandSettings.ticksToWaitForChunks * 50);
@@ -80,6 +86,10 @@ public class ComplexFarmingTask {
     }
 
     public void execute() {
+        if(isExecuting()) {
+            SkyblockBot.LOGGER.info("Can't start complexFarmingTask when it is already executing");
+            return;
+        }
 
         /*
          * If server isn't skyblock then we start by going to skyblock
@@ -107,11 +117,14 @@ public class ComplexFarmingTask {
         // 10 minutes
         long pauseDuration = 1000 * 60 * 10;
 
-        regularPauseTimer.cancel();
+        regularPauseTimer = new Timer(true);
         regularPauseTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                SkyblockBot.LOGGER.info("When the current farm loop is done bot is going to take a break");
+
                 farm.whenCompleted(() -> {
+                    SkyblockBot.LOGGER.info("Bot is taking a break");
                     try {
                         Thread.sleep(pauseDuration);
                     } catch (InterruptedException e) {
@@ -121,6 +134,7 @@ public class ComplexFarmingTask {
                     farm.whenCompleted(ComplexFarmingTask.INSTANCE::whenFarmCompleted);
 
                     farm.execute();
+                    SkyblockBot.LOGGER.info("Break is over, bot is farming again");
                 });
             }
         },
@@ -144,7 +158,12 @@ public class ComplexFarmingTask {
             currentTask.abort();
         }
         currentTask = null;
-        regularPauseTimer.cancel();
+        try {
+            regularPauseTimer.cancel();
+            regularPauseTimer.purge();
+        } catch (IllegalStateException e) {
+            SkyblockBot.LOGGER.info("Exception when aborting ComplexFarmingTask. Can't cancel regularPauseTimer because it is already cancelled");
+        }
     }
 
     public boolean isExecuting() {

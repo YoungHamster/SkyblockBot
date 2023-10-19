@@ -4,6 +4,7 @@ import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -11,6 +12,28 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class Utils {
+
+    public static File getLastModified(String directoryFilePath)
+    {
+        File directory = new File(directoryFilePath);
+        File[] files = directory.listFiles(File::isFile);
+        long lastModifiedTime = Long.MIN_VALUE;
+        File chosenFile = null;
+
+        if (files != null)
+        {
+            for (File file : files)
+            {
+                if (file.lastModified() > lastModifiedTime)
+                {
+                    chosenFile = file;
+                    lastModifiedTime = file.lastModified();
+                }
+            }
+        }
+
+        return chosenFile;
+    }
 
     private static int value(char r) {
         if (r == 'I')
