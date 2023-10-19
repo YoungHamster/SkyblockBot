@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.mixins;
 
+import com.viktorx.skyblockbot.ScreenshotDaemon;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.minecraft.client.MinecraftClient;

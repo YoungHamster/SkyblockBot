@@ -3,8 +3,12 @@ package com.viktorx.skyblockbot.skyblock.flipping;
 import com.google.gson.Gson;
 import com.viktorx.skyblockbot.Utils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class AuctionBrowser {
-    private static final String auctionPageAddress = "";
+    private static final String auctionPageAddress = "https://api.hypixel.net/skyblock/auctions?page=";
 
     public static AuctionBrowser INSTANCE = new AuctionBrowser();
 
@@ -13,14 +17,22 @@ public class AuctionBrowser {
      * or null if no bin auction with that item were found
      */
     public String getAuctionWithBestPrice(String itemName, String[] itemLoreKeyWords) {
+
         Gson gson = new Gson();
-        // TODO get all pages
-        String json = Utils.getSBApiPage(auctionPageAddress);
+        String json = Utils.getSBApiPage(auctionPageAddress + '0');
         AuctionPage page = gson.fromJson(json, AuctionPage.class);
+
+        List<Auction> auctions = new ArrayList<>(Arrays.stream(page.auctions).toList());
+
+        // TODO make this parallel
+        for(int i = 1; i < page.totalPages; i++) {
+            json = Utils.getSBApiPage(auctionPageAddress + '0');
+            auctions.addAll(Arrays.stream(gson.fromJson(json, AuctionPage.class).auctions).toList());
+        }
 
         int lowestPrice = -1;
         String lowestPriceUUID = null;
-        for (Auction auction : page.auctions) {
+        for (Auction auction : auctions) {
             if(auction.bin) {
                 if(isItemRight(itemName, itemLoreKeyWords, auction)) {
                     if(lowestPrice == -1 || auction.starting_bid < lowestPrice) {

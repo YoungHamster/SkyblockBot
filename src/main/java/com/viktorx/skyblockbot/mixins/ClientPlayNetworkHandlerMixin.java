@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.mixins;
 
 import com.viktorx.skyblockbot.CurrentInventory;
+import com.viktorx.skyblockbot.ScreenshotDaemon;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.*;
@@ -42,6 +43,21 @@ public class ClientPlayNetworkHandlerMixin {
     public void detectServerChangingItem(UpdateSelectedSlotS2CPacket packet, CallbackInfo ci) {
         if (ReplayExecutor.INSTANCE.isPlaying()) {
             ReplayExecutor.INSTANCE.serverChangedItem = true;
+        }
+    }
+
+    @Inject(method = "onGameMessage", at = @At("HEAD"))
+    public void interceptMessage(GameMessageS2CPacket packet, CallbackInfo ci) {
+        String message = packet.getMessage().getString();
+        if(message.contains("Sacks")) {
+            int delta = 0;
+            if(message.contains("+")) {
+                delta += Integer.parseInt(message.split("\\+.+ ")[0]);
+            }
+            if(message.contains("-")) {
+                delta -= Integer.parseInt(message.split("-.+ ")[0]);
+            }
+            ScreenshotDaemon.INSTANCE.updateSackCount(delta);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.task.replay;
 
+import com.viktorx.skyblockbot.ScreenshotDaemon;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.movement.LookHelper;
@@ -89,6 +90,7 @@ public class ReplayExecutor {
     }
 
     private void antiDetectDone() {
+        ScreenshotDaemon.INSTANCE.takeAndSendScreenshot("Anti detect triggered!!!");
         if(ReplayBotSettings.autoQuitWhenAntiDetect) {
             MinecraftClient.getInstance().stop();
         }
@@ -146,6 +148,7 @@ public class ReplayExecutor {
             state = ReplayBotState.NOT_IDLE;
             asyncPlayAlarmSound();
             state = ReplayBotState.ANTI_DETECT_TRIGGERED;
+            ScreenshotDaemon.INSTANCE.takeAndSendScreenshot("Anti detect triggered!!!");
             return;
         }
 

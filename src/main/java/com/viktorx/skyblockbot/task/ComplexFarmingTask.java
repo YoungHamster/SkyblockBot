@@ -179,4 +179,8 @@ public class ComplexFarmingTask {
             farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE);
         });
     }
+
+    public Task getCurrentTask() {
+        return currentTask;
+    }
 }
