@@ -46,21 +46,21 @@ public class ClientPlayNetworkHandlerMixin {
         }
     }
 
-    @Inject(method = "onGameMessage", at = @At("HEAD"))
+    @Inject(method = "onGameMessage", at = @At("TAIL"))
     public void interceptMessage(GameMessageS2CPacket packet, CallbackInfo ci) {
         String message = packet.getMessage().getString();
-        if(message.contains("Sacks")) {
+        if(message.contains("Sacks") && message.contains("Last 30s.")) {
             int delta = 0;
-            if(message.contains("+")) {
-                String increase = message.split("\\+.+ ")[0];
-                increase = increase.substring(1, increase.length() - 2);
-                delta += Integer.parseInt(increase);
-            }
-            if(message.contains("-")) {
-                String decrease = message.split("-.+ ")[0];
-                decrease = decrease.substring(1, decrease.length() - 2);
-                delta -= Integer.parseInt(decrease);
-            }
+            String[] split = message.split(" ");
+
+            String increase = split[1];
+            increase = increase.substring(1);
+            delta += Integer.parseInt(increase);
+
+            String decrease = split[3];
+            decrease = decrease.substring(1);
+            delta -= Integer.parseInt(decrease);
+
             ScreenshotDaemon.INSTANCE.updateSackCount(delta);
         }
     }

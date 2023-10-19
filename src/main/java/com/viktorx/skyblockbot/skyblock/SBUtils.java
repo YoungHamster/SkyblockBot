@@ -107,6 +107,7 @@ public class SBUtils {
             return -1;
         }
 
+        purseLine = purseLine.replace(",", ""); // erase , between triplets
         return (long) Float.parseFloat(purseLine.replace("Purse:", ""));
     }
 

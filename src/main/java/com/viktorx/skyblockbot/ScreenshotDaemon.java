@@ -2,41 +2,29 @@ package com.viktorx.skyblockbot;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
-import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.model.request.InputMediaPhoto;
-import com.pengrad.telegrambot.model.request.ParseMode;
-import com.pengrad.telegrambot.request.SendMediaGroup;
-import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
 import com.pengrad.telegrambot.response.SendResponse;
-import com.viktorx.skyblockbot.skyblock.SBUtils;
+import com.viktorx.skyblockbot.skyblock.flipping.PriceDatabase;
 import com.viktorx.skyblockbot.task.ComplexFarmingTask;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.ScreenshotRecorder;
-import net.minecraft.text.Text;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.function.Consumer;
 
 public class ScreenshotDaemon {
     public static final ScreenshotDaemon INSTANCE = new ScreenshotDaemon();
 
     private final Timer timer = new Timer(true);
     TelegramBot bot;
-    private long chatId = 360813091;
+    private final long chatId = 360813091;
     private boolean started = false;
 
     // 5 minutes
     private final long delay = 1000 * 60 * 5;
     private final long firstDelay = 3000; // 3 secs
-    private final int hardcodedItemPrice = 530;
+    private final String itemName = "Enchanted Carrot";
     private int sackCount = 0;
 
     public void start() {
@@ -71,25 +59,33 @@ public class ScreenshotDaemon {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                int count = 0;
+                synchronized (this) {
+                    count = sackCount;
+                }
+
                 takeAndSendScreenshot(
-                "Current task: " + ComplexFarmingTask.INSTANCE.getCurrentTask().getClass().getName()
-                        + ", purse: " + SBUtils.getPurse()
-                        + ", items picked up past 5 minutes: " + sackCount
-                        + ", projected 1h profit: " + sackCount * hardcodedItemPrice);
-                sackCount = 0;
+                        "Current task: " + ComplexFarmingTask.INSTANCE.getCurrentTask().getClass().getName()
+                                + "\nItems picked up past 5 minutes: " + count
+                                + "\nProjected 1h profit: " + count
+                                * PriceDatabase.getInstance().fetchItemPrice(itemName)
+                                * 12);
+
+                synchronized (this) {
+                    sackCount = sackCount - count;
+                }
 
             }
         }, firstDelay, delay);
     }
 
     public void takeAndSendScreenshot(String caption) {
-        SkyblockBot.LOGGER.info("Pressing F2 i guess");
-        SkyblockBot.LOGGER.info("ChatId: " + chatId);
 
         ScreenshotRecorder.saveScreenshot(
                 new File(System.getProperty("user.dir")),
                 MinecraftClient.getInstance().getFramebuffer(),
-                text -> { });
+                text -> {
+                });
 
         // Waiting arbitrary amount of time because screenshots get taken asynchronously in minecraft
         try {
@@ -99,7 +95,7 @@ public class ScreenshotDaemon {
         }
 
         File lastScreenshot = Utils.getLastModified("screenshots");
-        if(!lastScreenshot.exists()) {
+        if (!lastScreenshot.exists()) {
             SkyblockBot.LOGGER.info("Last screenshot doesn't exist for some reason");
             return;
         }
@@ -107,11 +103,18 @@ public class ScreenshotDaemon {
         SendPhoto info = new SendPhoto(chatId, lastScreenshot)
                 .caption(caption);
         SendResponse sendResponse = bot.execute(info);
-        SkyblockBot.LOGGER.info("Sent screenshot. Response ok: " + sendResponse.isOk()
-                + ", message: " + sendResponse.message());
+
+        if (sendResponse.isOk()) {
+            SkyblockBot.LOGGER.info("Sent screenshot. Response ok: " + sendResponse.isOk());
+        } else {
+            SkyblockBot.LOGGER.info("Sent screenshot. Response ok: " + sendResponse.isOk()
+                    + ", message: " + sendResponse.message());
+        }
     }
 
     public void updateSackCount(int delta) {
-        sackCount += delta;
+        synchronized (this) {
+            sackCount += delta;
+        }
     }
 }

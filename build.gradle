@@ -24,7 +24,7 @@ dependencies {
     // ебал я в рот вашу джаву с еёйными блять системами сборки. сука почему нельзя как в питоне????? да потому что тупые джависты блять
     shadow(implementation('mysql:mysql-connector-java:8.0.31'))
     // Telegram bot api
-    implementation group: 'com.github.pengrad', name: 'java-telegram-bot-api', version: '6.9.1'
+    shadow(implementation group: 'com.github.pengrad', name: 'java-telegram-bot-api', version: '6.9.1')
 
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
