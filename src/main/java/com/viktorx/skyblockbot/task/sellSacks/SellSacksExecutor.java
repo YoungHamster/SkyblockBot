@@ -1,20 +1,137 @@
 package com.viktorx.skyblockbot.task.sellSacks;
 
+import com.viktorx.skyblockbot.CurrentInventory;
+import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.skyblock.SBUtils;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
+
+import java.util.concurrent.TimeoutException;
 
 public class SellSacksExecutor {
 
     public static SellSacksExecutor INSTANCE = new SellSacksExecutor();
 
     private SellSacks task;
+    private SellSacksState state = SellSacksState.IDLE;
+    private SellSacksState nextState;
+    private SellSacksState stateBeforePause;
+    private int waitTickCounter = 0;
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickSellSacks);
     }
 
+    public void execute(SellSacks task) {
+        this.task = task;
+        waitTickCounter = 0;
+        state = SellSacksState.SENDING_COMMAND;
+        SkyblockBot.LOGGER.info("Executing sell sacks");
+    }
+
+    public void pause() {
+        if (state == SellSacksState.IDLE) {
+            SkyblockBot.LOGGER.info("Can't pause sell sacks executor when not executing");
+            return;
+        }
+
+        stateBeforePause = state;
+        state = SellSacksState.PAUSED;
+    }
+
+    public void resume() {
+        if (state != SellSacksState.PAUSED) {
+            SkyblockBot.LOGGER.info("SellSacksExecutor not paused!");
+            return;
+        }
+
+        state = stateBeforePause;
+    }
+
+    public void abort() {
+        state = SellSacksState.IDLE;
+    }
+
+    public boolean isExecuting(SellSacks task) {
+        return this.task.equals(task) && state != SellSacksState.IDLE;
+    }
+
+    public boolean isPaused() {
+        return state.equals(SellSacksState.PAUSED);
+    }
+
     private void onTickSellSacks(MinecraftClient client) {
 
+        switch (state) {
+            case SENDING_COMMAND -> {
+                assert client.player != null;
+                client.player.sendChatMessage(task.getCommand());
+                state = SellSacksState.WAITING_FOR_MENU;
+                nextState = SellSacksState.SELLING;
+                SkyblockBot.LOGGER.info("Sent command, waiting for menu");
+            }
+
+            case WAITING_FOR_MENU -> {
+                if (CurrentInventory.syncIDChanged()) {
+                    state = nextState;
+                }
+            }
+
+            case SELLING -> {
+                if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeClick) {
+                    return;
+                }
+                waitTickCounter = 0;
+
+                try {
+                    SBUtils.leftClickOnSlot(task.getSellStacksSlotName());
+                } catch (TimeoutException e) {
+                    state = SellSacksState.IDLE;
+                    task.aborted();
+                }
+
+                state = SellSacksState.WAITING_FOR_MENU;
+                nextState = SellSacksState.CONFIRMING;
+                SkyblockBot.LOGGER.info("Clicked sell, waiting for menu");
+            }
+
+            case CONFIRMING -> {
+                if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeClick) {
+                    return;
+                }
+                waitTickCounter = 0;
+
+                try {
+                    SBUtils.leftClickOnSlot(task.getConfirmSlotName());
+                } catch (TimeoutException e) {
+                    state = SellSacksState.IDLE;
+                    task.aborted();
+                }
+
+                state = SellSacksState.WAITING_BEFORE_CLOSING_MENU;
+                SkyblockBot.LOGGER.info("Confirmed sell, waiting before closing");
+            }
+
+            case WAITING_BEFORE_CLOSING_MENU -> {
+                if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeClick) {
+                    return;
+                }
+                waitTickCounter = 0;
+
+                try {
+                    SBUtils.leftClickOnSlot(task.getClosingSlotName());
+                } catch (TimeoutException e) {
+                    state = SellSacksState.IDLE;
+                    task.aborted();
+                }
+
+                task.completed();
+            }
+
+            default -> {
+            }
+        }
     }
 
 }

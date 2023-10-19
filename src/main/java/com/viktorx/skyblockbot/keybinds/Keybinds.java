@@ -2,10 +2,9 @@ package com.viktorx.skyblockbot.keybinds;
 
 import com.viktorx.skyblockbot.ScreenshotDaemon;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
-import com.viktorx.skyblockbot.skyblock.flipping.PriceDatabase;
 import com.viktorx.skyblockbot.task.ComplexFarmingTask;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
+import com.viktorx.skyblockbot.task.sellSacks.SellSacks;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.option.KeyBinding;
@@ -68,7 +67,7 @@ public class Keybinds {
             CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
 
             if (startStopBot.wasPressed()) {
-                if(!screenshotDaemonStarted) {
+                if (!screenshotDaemonStarted) {
                     screenshotDaemonStarted = true;
                     ScreenshotDaemon.INSTANCE.start();
                 }
@@ -88,15 +87,16 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
+                new SellSacks().execute();
                 if (!ComplexFarmingTask.INSTANCE.isExecuting()) {
                     ComplexFarmingTask.INSTANCE.loadRecordingAsync();
                 }
             }
 
-            if(pauseTask.wasPressed()) {
-                if(!ComplexFarmingTask.INSTANCE.isPaused()) {
+            if (pauseTask.wasPressed()) {
+                if (!ComplexFarmingTask.INSTANCE.isPaused()) {
                     ComplexFarmingTask.INSTANCE.pause();
-                } else if(ComplexFarmingTask.INSTANCE.isPaused()) {
+                } else if (ComplexFarmingTask.INSTANCE.isPaused()) {
                     ComplexFarmingTask.INSTANCE.resume();
                 }
             }

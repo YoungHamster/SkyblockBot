@@ -1,20 +1,15 @@
 package com.viktorx.skyblockbot.task.buyItem;
 
 public enum BuyItemState {
-    IDLE("idle"),
-    SENDING_COMMAND("not_idle"),
-    WAITING_FOR_MENU("recording"),
-    BUYING("playing"),
-    CONFIRMING_BUY("anti_detect_triggered"),
-    PAUSED("paused");
+    IDLE,
+    SENDING_COMMAND,
+    WAITING_FOR_MENU,
+    BUYING,
+    CONFIRMING_BUY,
+    PAUSED;
 
-    private final String name;
 
-    BuyItemState(String name) {
-        this.name = name;
-    }
+    BuyItemState() {
 
-    public String getName() {
-        return this.name;
     }
 }

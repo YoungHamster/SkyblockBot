@@ -22,21 +22,17 @@ public class SBUtils {
         leftClickOnSlot(getSlot(itemStackName));
     }
 
-    // left clicks on inventory slot with itemStack that has said name
+    // left clicks on inventory slot
     public static void leftClickOnSlot(Slot slot) throws TimeoutException {
         leftClickOnSlot(slot.id);
     }
 
-    // left clicks on inventory slot with itemStack that has said name
+    // left clicks on inventory slot with slotID
     public static void leftClickOnSlot(int slotID) throws TimeoutException {
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException ignored) {
-        }
-
         MinecraftClient client = MinecraftClient.getInstance();
 
         int lmb = ((KeyBindingMixin) client.options.attackKey).getBoundKey().getCode();
+        assert client.interactionManager != null;
         client.interactionManager.clickSlot(CurrentInventory.getSyncId(), slotID, lmb, SlotActionType.PICKUP, client.player);
     }
 
@@ -80,6 +76,7 @@ public class SBUtils {
 
     private static List<String> getTabPlayers() {
         MinecraftClient client = MinecraftClient.getInstance();
+        assert client.player != null;
         Collection<PlayerListEntry> playerListEntries = client.player.networkHandler.getPlayerList();
         List<String> tabPlayers = new ArrayList<>();
 
@@ -114,6 +111,7 @@ public class SBUtils {
     public static String getSlotText(int slot) {
         MinecraftClient client = MinecraftClient.getInstance();
 
+        assert client.player != null;
         return client.player.currentScreenHandler.slots.get(slot).getStack().getName().getString();
     }
 
@@ -125,6 +123,7 @@ public class SBUtils {
     // kind of heavy function for what it's doing, but lag-proofing should be very useful and you only need to do this once in while
     public static ItemStack getItemStack(int slotID) {
         MinecraftClient client = MinecraftClient.getInstance();
+        assert client.player != null;
         return client.player.currentScreenHandler.slots.get(slotID).getStack();
     }
 
@@ -139,6 +138,7 @@ public class SBUtils {
         int i = 0;
 
         do {
+            assert client.player != null;
             slotList = client.player.currentScreenHandler.slots.stream()
                     .filter(slot -> slot.getStack().getName().getString().contains(itemStackName))
                     .collect(Collectors.toList());
@@ -161,6 +161,7 @@ public class SBUtils {
     public static boolean anySlotsWithName(String itemStackName) {
         MinecraftClient client = MinecraftClient.getInstance();
 
+        assert client.player != null;
         return client.player.currentScreenHandler.slots
                 .stream()
                 .filter(slot ->

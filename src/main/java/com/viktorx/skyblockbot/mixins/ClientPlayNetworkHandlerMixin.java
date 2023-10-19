@@ -55,11 +55,11 @@ public class ClientPlayNetworkHandlerMixin {
 
             String increase = split[1];
             increase = increase.substring(1);
-            delta += Integer.parseInt(increase);
+            delta += Integer.parseInt(increase.replace(",", ""));
 
             String decrease = split[3];
             decrease = decrease.substring(1);
-            delta -= Integer.parseInt(decrease);
+            delta -= Integer.parseInt(decrease.replace(",", ""));
 
             ScreenshotDaemon.INSTANCE.updateSackCount(delta);
         }
