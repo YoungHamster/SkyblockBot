@@ -59,17 +59,20 @@ public class ScreenshotDaemon {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                int count = 0;
+                int count;
                 synchronized (this) {
                     count = sackCount;
                 }
 
+                int projectedProfit = (int)(count
+                        * PriceDatabase.getInstance().fetchItemPrice(itemName)
+                        * 12);
+
                 takeAndSendScreenshot(
                         "Current task: " + ComplexFarmingTask.INSTANCE.getCurrentTask().getClass().getName()
                                 + "\nItems picked up past 5 minutes: " + count
-                                + "\nProjected 1h profit: " + count
-                                * PriceDatabase.getInstance().fetchItemPrice(itemName)
-                                * 12);
+                                + "\nProjected 1h profit: " + projectedProfit,
+                                false);
 
                 synchronized (this) {
                     sackCount = sackCount - count;
@@ -79,7 +82,7 @@ public class ScreenshotDaemon {
         }, firstDelay, delay);
     }
 
-    public void takeAndSendScreenshot(String caption) {
+    public void takeAndSendScreenshot(String caption, boolean notify) {
 
         ScreenshotRecorder.saveScreenshot(
                 new File(System.getProperty("user.dir")),
@@ -101,7 +104,7 @@ public class ScreenshotDaemon {
         }
 
         SendPhoto info = new SendPhoto(chatId, lastScreenshot)
-                .caption(caption);
+                .caption(caption).disableNotification(!notify);
         SendResponse sendResponse = bot.execute(info);
 
         if (sendResponse.isOk()) {

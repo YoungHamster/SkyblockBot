@@ -93,7 +93,7 @@ public class ReplayExecutor {
     }
 
     private void antiDetectDone() {
-        ScreenshotDaemon.INSTANCE.takeAndSendScreenshot("Anti detect triggered!!!");
+        ScreenshotDaemon.INSTANCE.takeAndSendScreenshot("Anti detect triggered!!!", true);
         if(ReplayBotSettings.autoQuitWhenAntiDetect) {
             MinecraftClient.getInstance().stop();
         }
@@ -151,7 +151,7 @@ public class ReplayExecutor {
             state = ReplayBotState.NOT_IDLE;
             asyncPlayAlarmSound();
             state = ReplayBotState.ANTI_DETECT_TRIGGERED;
-            ScreenshotDaemon.INSTANCE.takeAndSendScreenshot("Anti detect triggered!!!");
+            ScreenshotDaemon.INSTANCE.takeAndSendScreenshot("Anti detect triggered!!!", true);
             return;
         }
 

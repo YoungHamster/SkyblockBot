@@ -9,5 +9,5 @@ public class GlobalExecutorInfo {
     public static final int waitTicksBeforeClick = 20;
 
     public static AtomicInteger totalSackCount = new AtomicInteger(0);
-    public static final int totalSackCountLimit = 100000; // When this limit is reached bot stops after loop and sells sacks
+    public static final int totalSackCountLimit = 50000; // When this limit is reached bot stops after loop and sells sacks
 }
