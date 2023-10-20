@@ -2,14 +2,14 @@ package com.viktorx.skyblockbot.task;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
+import com.viktorx.skyblockbot.task.buyItem.BuyItem;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIsland;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.replay.Replay;
 import com.viktorx.skyblockbot.task.replay.ReplayBotSettings;
 import com.viktorx.skyblockbot.task.sellSacks.SellSacks;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class ComplexFarmingTask {
@@ -21,6 +21,10 @@ public class ComplexFarmingTask {
     private Task farm;
     private Task currentTask;
     private Timer regularPauseTimer;
+    private Timer checkGodPotAndCookieTimer;
+    private Timer checkSacks;
+    private final List<Runnable> runWhenFarmCompleted = new ArrayList<>();
+    private final Queue<Task> taskQueue = new ArrayDeque<>();
 
     void whenGetToSkyblockCompleted() {
         if (!SBUtils.getIslandOrArea().contains("Plot")) {
@@ -57,10 +61,15 @@ public class ComplexFarmingTask {
     }
 
     void whenFarmCompleted() {
-        if(GlobalExecutorInfo.totalSackCount.get() > GlobalExecutorInfo.totalSackCountLimit) {
-            currentTask = sellSacks;
-        } else {
-            currentTask = farm;
+        synchronized (runWhenFarmCompleted) {
+            for (Runnable task : runWhenFarmCompleted) {
+                task.run();
+            }
+            runWhenFarmCompleted.clear();
+        }
+
+        if(!taskQueue.isEmpty()) {
+            currentTask = taskQueue.poll();
         }
         currentTask.execute();
     }
@@ -108,6 +117,9 @@ public class ComplexFarmingTask {
             return;
         }
 
+        runWhenFarmCompleted.clear();
+        taskQueue.clear();
+
         /*
          * If server isn't skyblock then we start by going to skyblock
          * If it is skyblock but not garden then we start by going to graden
@@ -140,22 +152,50 @@ public class ComplexFarmingTask {
             public void run() {
                 SkyblockBot.LOGGER.info("When the current farm loop is done bot is going to take a break");
 
-                farm.whenCompleted(() -> {
-                    SkyblockBot.LOGGER.info("Bot is taking a break");
-                    try {
-                        Thread.sleep(pauseDuration);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    farm.whenCompleted(ComplexFarmingTask.INSTANCE::whenFarmCompleted);
-
-                    farm.execute();
-                    SkyblockBot.LOGGER.info("Break is over, bot is farming again");
-                });
+                synchronized (runWhenFarmCompleted) {
+                    runWhenFarmCompleted.add(() -> {
+                        SkyblockBot.LOGGER.info("Bot is taking a break");
+                        try {
+                            Thread.sleep(pauseDuration);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        SkyblockBot.LOGGER.info("Break is over, bot is farming again");
+                    });
+                }
             }
         },
                 durationInMs, durationInMs);
+
+        long timeBetweenChecks = 1000 * 60 * 5; // 5 minutes
+
+        checkGodPotAndCookieTimer = new Timer(true);
+        checkGodPotAndCookieTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                // TODO check if god pot has less than some number left and same for cookie buff
+
+                synchronized (runWhenFarmCompleted) {
+                    runWhenFarmCompleted.add(() -> {
+                        currentTask = new BuyItem("God Potion", new String[0]);
+                    });
+                }
+            }
+        },
+                0, timeBetweenChecks);
+
+        checkSacks = new Timer(true);
+        checkSacks.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+              if(GlobalExecutorInfo.totalSackCount.get() > GlobalExecutorInfo.totalSackCountLimit) {
+                  synchronized (runWhenFarmCompleted) {
+                      runWhenFarmCompleted.add(() -> currentTask = sellSacks);
+                  }
+              }
+            }
+        },
+                0, timeBetweenChecks);
     }
 
     public void pause() {

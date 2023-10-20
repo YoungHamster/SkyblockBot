@@ -83,13 +83,7 @@ public class SellSacksExecutor {
                 }
                 waitTickCounter = 0;
 
-                try {
-                    SBUtils.leftClickOnSlot(task.getSellStacksSlotName());
-                } catch (TimeoutException e) {
-                    state = SellSacksState.IDLE;
-                    task.aborted();
-                    return;
-                }
+                clickOnSlotOrAbort(task.getSellStacksSlotName());
 
                 state = SellSacksState.WAITING_FOR_MENU;
                 nextState = SellSacksState.CONFIRMING;
@@ -101,13 +95,7 @@ public class SellSacksExecutor {
                 }
                 waitTickCounter = 0;
 
-                try {
-                    SBUtils.leftClickOnSlot(task.getConfirmSlotName());
-                } catch (TimeoutException e) {
-                    state = SellSacksState.IDLE;
-                    task.aborted();
-                    return;
-                }
+                clickOnSlotOrAbort(task.getConfirmSlotName());
 
                 state = SellSacksState.WAITING_BEFORE_CLOSING_MENU;
             }
@@ -118,12 +106,7 @@ public class SellSacksExecutor {
                 }
                 waitTickCounter = 0;
 
-                try {
-                    SBUtils.leftClickOnSlot(task.getClosingSlotName());
-                } catch (TimeoutException e) {
-                    state = SellSacksState.IDLE;
-                    task.aborted();
-                }
+                clickOnSlotOrAbort(task.getClosingSlotName());
 
                 SkyblockBot.LOGGER.info("Sold sacks!");
                 state = SellSacksState.IDLE;
@@ -132,6 +115,15 @@ public class SellSacksExecutor {
 
             default -> {
             }
+        }
+    }
+
+    private void clickOnSlotOrAbort(String slotName) {
+        try {
+            SBUtils.leftClickOnSlot(slotName);
+        } catch (TimeoutException e) {
+            state = SellSacksState.IDLE;
+            task.aborted();
         }
     }
 

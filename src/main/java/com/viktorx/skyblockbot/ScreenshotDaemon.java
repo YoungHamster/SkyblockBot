@@ -62,22 +62,22 @@ public class ScreenshotDaemon {
                 int count;
                 synchronized (this) {
                     count = sackCount;
+                    count = 0;
                 }
 
                 int projectedProfit = (int)(count
                         * PriceDatabase.getInstance().fetchItemPrice(itemName)
                         * 12);
 
+                String taskName = ComplexFarmingTask.INSTANCE.getCurrentTask().getClass().getName();
+                String[] foo = taskName.split("\\.");
+                taskName = foo[foo.length - 1];
+
                 takeAndSendScreenshot(
-                        "Current task: " + ComplexFarmingTask.INSTANCE.getCurrentTask().getClass().getName()
+                        "Current task: " + taskName
                                 + "\nItems picked up past 5 minutes: " + count
                                 + "\nProjected 1h profit: " + projectedProfit,
                                 false);
-
-                synchronized (this) {
-                    sackCount = sackCount - count;
-                }
-
             }
         }, firstDelay, delay);
     }

@@ -12,7 +12,7 @@ public abstract class Task {
     public abstract void pause();
     public abstract void resume();
     public abstract void abort();
-    public abstract void saveToFile(String filename);
+    public void saveToFile(String filename) {};
     public void completed() {
         if(whenCompleted != null)
             CompletableFuture.runAsync(whenCompleted);

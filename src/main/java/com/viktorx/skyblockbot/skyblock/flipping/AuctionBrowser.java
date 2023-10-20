@@ -6,28 +6,45 @@ import com.viktorx.skyblockbot.Utils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AuctionBrowser {
     private static final String auctionPageAddress = "https://api.hypixel.net/skyblock/auctions?page=";
 
     public static AuctionBrowser INSTANCE = new AuctionBrowser();
 
-    /*
-     * returns /viewauction command with uuid of that auction
-     * or null if no bin auction with that item were found
-     */
-    public String getAuctionWithBestPrice(String itemName, String[] itemLoreKeyWords) {
+    private List<Auction> auctions;
+    private AtomicBoolean loaded = new AtomicBoolean(false);
+
+    public void loadAH() {
+        loaded.set(false);
 
         Gson gson = new Gson();
         String json = Utils.getSBApiPage(auctionPageAddress + '0');
         AuctionPage page = gson.fromJson(json, AuctionPage.class);
 
-        List<Auction> auctions = new ArrayList<>(Arrays.stream(page.auctions).toList());
+        auctions = new ArrayList<>(Arrays.stream(page.auctions).toList());
 
         // TODO make this parallel
         for(int i = 1; i < page.totalPages; i++) {
             json = Utils.getSBApiPage(auctionPageAddress + '0');
             auctions.addAll(Arrays.stream(gson.fromJson(json, AuctionPage.class).auctions).toList());
+        }
+
+        loaded.set(true);
+    }
+
+    public boolean isAHLoaded() {
+        return loaded.get();
+    }
+
+    /*
+     * returns /viewauction command with uuid of that auction
+     * or null if no bin auction with that item were found
+     */
+    public String getAuctionWithBestPrice(String itemName, String[] itemLoreKeyWords) {
+        if(!loaded.get()) {
+            return null;
         }
 
         int lowestPrice = -1;
