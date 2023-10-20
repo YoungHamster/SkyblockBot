@@ -60,4 +60,20 @@ public class BuyItem extends Task {
     public String[] getItemLoreKeyWords() {
         return itemLoreKeyWords;
     }
+
+    public String getBuySlotName() {
+        return "Buy Item Right Now";
+    }
+
+    public String getConfirmSlotName() {
+        return "Confirm";
+    }
+
+    public String getViewBidsSlotName() {
+        return "View Bids";
+    }
+
+    public String getCollectAuctionSlotName() {
+        return "Collect Auction";
+    }
 }
