@@ -22,9 +22,11 @@ public class MinecraftClientMixin {
     @Inject(method = "setScreen", at = @At("TAIL"))
     public void detectWorldLoad(@Nullable Screen screen, CallbackInfo ci) {
         if (screen == null) {
+            SkyblockBot.LOGGER.info("Screen == null");
             GlobalExecutorInfo.worldLoading = false;
             GlobalExecutorInfo.worldLoaded = true;
         } else if (screen.getClass() == DownloadingTerrainScreen.class) {
+            SkyblockBot.LOGGER.info("Screen == DownloadingTerrainScreen");
             GlobalExecutorInfo.worldLoading = true;
             GlobalExecutorInfo.worldLoaded = false;
         }

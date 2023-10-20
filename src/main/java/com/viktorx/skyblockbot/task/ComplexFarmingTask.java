@@ -37,11 +37,6 @@ public class ComplexFarmingTask {
     }
 
     void whenGetToGardenCompleted() {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            SkyblockBot.LOGGER.info("Wtf? WhenGetToGardenCompleted was interrupted when sleeping");
-        }
         currentTask = farm;
         farm.execute();
     }
@@ -74,20 +69,18 @@ public class ComplexFarmingTask {
         if(GlobalExecutorInfo.worldLoading) {
             SkyblockBot.LOGGER.info("Warped out of garden. Trying to get back");
 
-            try {
-                Thread.sleep(ChangeIslandSettings.ticksToWaitForChunks * 50);
-            } catch (InterruptedException ignored) {}
-            if(GlobalExecutorInfo.worldLoaded) {
-                if(SBUtils.isServerSkyblock()) {
-                    currentTask = getToGarden;
-                } else {
-                    currentTask = getToSkyblock;
-                }
-                currentTask.execute();
-            } else {
-                SkyblockBot.LOGGER.info("Couldn't farm.");
-                currentTask = null;
+            while(!GlobalExecutorInfo.worldLoaded) {
+                try {
+                    Thread.sleep(ChangeIslandSettings.ticksToWaitForChunks);
+                } catch (InterruptedException ignored) {}
             }
+
+            if(SBUtils.isServerSkyblock()) {
+                currentTask = getToGarden;
+            } else {
+                currentTask = getToSkyblock;
+            }
+            currentTask.execute();
         }
     }
 
@@ -138,8 +131,8 @@ public class ComplexFarmingTask {
          */
         // 120 minutes
         long durationInMs = 1000 * 60 * 120;
-        // 10 minutes
-        long pauseDuration = 1000 * 60 * 10;
+        // 20 minutes
+        long pauseDuration = 1000 * 60 * 20;
 
         regularPauseTimer = new Timer(true);
         regularPauseTimer.scheduleAtFixedRate(new TimerTask() {
