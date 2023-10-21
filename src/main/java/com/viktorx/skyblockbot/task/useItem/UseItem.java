@@ -6,7 +6,7 @@ import com.viktorx.skyblockbot.task.buyBZItem.BuyBZItemExecutor;
 public class UseItem extends Task {
     private String itemName;
 
-    public UseItem(String itemName) {
+    public void setItemName(String itemName) {
         this.itemName = itemName;
     }
 

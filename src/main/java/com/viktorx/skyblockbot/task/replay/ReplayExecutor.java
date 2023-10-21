@@ -255,9 +255,16 @@ public class ReplayExecutor {
         }
 
         if (serverChangedItem) {
-            SkyblockBot.LOGGER.warn("Anti-detection alg: server changed held item, stopping the bot");
             serverChangedItem = false;
-            return true;
+
+            assert client.player != null;
+            String expected = itemsWhenStarted.get(client.player.getInventory().selectedSlot);
+            String current = client.player.getInventory().getMainHandStack().getName().getString();
+            if (!current.equals(expected)) {
+                SkyblockBot.LOGGER.warn("Anti-detection alg: server changed item in hand. Expected: " + expected
+                        + ", current: " + current);
+                return true;
+            }
         }
 
         if (serverChangedPositionRotation) {
@@ -278,11 +285,14 @@ public class ReplayExecutor {
         }
 
         if (serverChangedSlot) {
+            serverChangedSlot = false;
+
             assert client.player != null;
-            if (!client.player.getInventory().getMainHandStack().getName().getString()
-                    .equals(itemsWhenStarted.get(client.player.getInventory().selectedSlot))) {
-                SkyblockBot.LOGGER.warn("Anti-detection alg: server changed item in hand");
-                serverChangedSlot = false;
+            String expected = itemsWhenStarted.get(client.player.getInventory().selectedSlot);
+            String current = client.player.getInventory().getMainHandStack().getName().getString();
+            if (!current.equals(expected)) {
+                SkyblockBot.LOGGER.warn("Anti-detection alg: server changed slot. Expected item in hand: " + expected
+                                        + ", current: " + current);
                 return true;
             }
         }

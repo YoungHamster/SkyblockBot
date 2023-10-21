@@ -5,11 +5,14 @@ import com.viktorx.skyblockbot.task.Task;
 import java.util.concurrent.CompletableFuture;
 
 public class BuyItem extends Task {
-    private final String itemName;
-    private final String[] itemLoreKeyWords;
+    private String itemName;
+    private String[] itemLoreKeyWords;
     private boolean paused = false;
 
-    public BuyItem(String itemName, String[] itemLoreKeyWords) {
+    public BuyItem() {
+    }
+
+    public void setItemInfo(String itemName, String[] itemLoreKeyWords) {
         this.itemName = itemName;
         this.itemLoreKeyWords = itemLoreKeyWords;
     }

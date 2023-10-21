@@ -2,6 +2,7 @@ package com.viktorx.skyblockbot.skyblock;
 
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
+import com.viktorx.skyblockbot.mixins.PlayerListHudMixin;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.item.ItemStack;
@@ -54,6 +55,29 @@ public class SBUtils {
         } else {
             return parseSBShortenedBalance(bankLine);
         }
+    }
+
+    public static long getTimeLeftGodPot() {
+        PlayerListHudMixin hud = (PlayerListHudMixin) MinecraftClient.getInstance().inGameHud.getPlayerListHud();
+        String[] footer = hud.getFooter().getString().split("\n");
+        String godPotTime = null;
+        for (String line : footer) {
+            if (line.contains("You have a God Potion active! ")) {
+                godPotTime = line.replace("You have a God Potion active! ", "");
+            }
+        }
+        if(godPotTime == null) {
+            return 0;
+        }
+
+        // TODO convert string to time
+        return 1000 * 60 * 60; // 60 mins
+    }
+
+    public static long getTimeLeftCookieBuff() {
+        PlayerListHudMixin hud = (PlayerListHudMixin) MinecraftClient.getInstance().inGameHud.getPlayerListHud();
+        String footer = hud.getFooter().getString();
+        return 1000 * 60 * 60; // 60 mins
     }
 
     // takes 1B returns 1.000.000.000, same with 1M, 1k or 1

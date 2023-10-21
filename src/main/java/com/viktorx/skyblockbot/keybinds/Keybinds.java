@@ -2,6 +2,7 @@ package com.viktorx.skyblockbot.keybinds;
 
 import com.viktorx.skyblockbot.ScreenshotDaemon;
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.ComplexFarmingTask;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.task.sellSacks.SellSacks;
@@ -87,9 +88,9 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
-                if (!ComplexFarmingTask.INSTANCE.isExecuting()) {
+                /*if (!ComplexFarmingTask.INSTANCE.isExecuting()) {
                     ComplexFarmingTask.INSTANCE.loadRecordingAsync();
-                }
+                }*/
             }
 
             if (pauseTask.wasPressed()) {

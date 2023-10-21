@@ -9,10 +9,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PriceDatabase {
     private static PriceDatabase instance;
@@ -20,6 +17,8 @@ public class PriceDatabase {
     // using normalized names instead of "id"'s here
     private final Map<String, Pair<Double, Integer>> pricesAnd24hVols = new HashMap<>(); // item:price,24h trade vol
     private Connection conn;
+    private final Timer priceReloadTimer = new Timer(true);
+    private final long priceReloadInterval = 1000 * 60 * 30;
 
     private PriceDatabase() {
         try {
@@ -32,6 +31,15 @@ public class PriceDatabase {
 
         loadBazaarPrices();
         SkyblockBot.LOGGER.info("Loaded bazaar prices");
+
+        priceReloadTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                loadBazaarPrices();
+                SkyblockBot.LOGGER.info("Reloaded bazaar prices");
+            }
+        },
+                priceReloadInterval, priceReloadInterval);
     }
 
     public static synchronized PriceDatabase getInstance() {
@@ -43,7 +51,10 @@ public class PriceDatabase {
     }
 
     public Pair<Double, Integer> fetchPriceTradeVol(String itemName) {
-        Pair<Double, Integer> pv = pricesAnd24hVols.get(itemName);
+        Pair<Double, Integer> pv;
+        synchronized (pricesAnd24hVols) {
+            pv = pricesAnd24hVols.get(itemName);
+        }
 
         if (pv == null) {
             pv = fetchAHPriceVol(itemName);
@@ -53,7 +64,10 @@ public class PriceDatabase {
     }
 
     public Double fetchItemPrice(String itemName) {
-        Pair<Double, Integer> priceVol = pricesAnd24hVols.get(itemName);
+        Pair<Double, Integer> priceVol;
+        synchronized (pricesAnd24hVols) {
+            priceVol = pricesAnd24hVols.get(itemName);
+        }
 
         if (priceVol != null) {
             return priceVol.getLeft();
@@ -95,42 +109,46 @@ public class PriceDatabase {
         prices.sort(Integer::compare);
         Pair<Double, Integer> priceAndVol = new ImmutablePair<>(Double.valueOf(prices.get(prices.size() / 2)), prices.size());
 
-        pricesAnd24hVols.put(itemName, priceAndVol);
+        synchronized (pricesAnd24hVols) {
+            pricesAnd24hVols.put(itemName, priceAndVol);
+        }
 
         return priceAndVol;
     }
 
     private void loadBazaarPrices() {
-        String bazaar = Utils.getSBApiPage("https://api.hypixel.net/skyblock/bazaar");
-        bazaar = bazaar.substring(bazaar.indexOf("\"quick_status\":{") + "\"quick_status\":{".length());
+        synchronized (pricesAnd24hVols) {
+            String bazaar = Utils.getSBApiPage("https://api.hypixel.net/skyblock/bazaar");
+            bazaar = bazaar.substring(bazaar.indexOf("\"quick_status\":{") + "\"quick_status\":{".length());
 
-        while (bazaar.contains("\"productId\"")) {
-            Pair<String, String> pair = Utils.getJSONTokenAndCutItOut("\"productId\"", bazaar);
-            bazaar = pair.getLeft();
+            while (bazaar.contains("\"productId\"")) {
+                Pair<String, String> pair = Utils.getJSONTokenAndCutItOut("\"productId\"", bazaar);
+                bazaar = pair.getLeft();
 
-            String itemName = pair.getRight();
-            itemName = itemName.substring(1, itemName.length() - 1);
-            itemName = BZNameConverter.getInstance().getNormalName(itemName);
+                String itemName = pair.getRight();
+                itemName = itemName.substring(1, itemName.length() - 1);
+                itemName = BZNameConverter.getInstance().getNormalName(itemName);
 
-            pair = Utils.getJSONTokenAndCutItOut("\"sellPrice\"", bazaar);
-            bazaar = pair.getLeft();
-            double sellPrice = Float.parseFloat(pair.getRight());
+                pair = Utils.getJSONTokenAndCutItOut("\"sellPrice\"", bazaar);
+                bazaar = pair.getLeft();
+                double sellPrice = Float.parseFloat(pair.getRight());
 
-            pair = Utils.getJSONTokenAndCutItOut("\"sellMovingWeek\"", bazaar);
-            bazaar = pair.getLeft();
-            int sold7d = Integer.parseInt(pair.getRight());
+                pair = Utils.getJSONTokenAndCutItOut("\"sellMovingWeek\"", bazaar);
+                bazaar = pair.getLeft();
+                int sold7d = Integer.parseInt(pair.getRight());
 
-            pair = Utils.getJSONTokenAndCutItOut("\"buyPrice\"", bazaar);
-            bazaar = pair.getLeft();
-            double buyPrice = Float.parseFloat(pair.getRight());
+                pair = Utils.getJSONTokenAndCutItOut("\"buyPrice\"", bazaar);
+                bazaar = pair.getLeft();
+                double buyPrice = Float.parseFloat(pair.getRight());
 
-            pair = Utils.getJSONTokenAndCutItOut("\"buyMovingWeek\"", bazaar);
-            bazaar = pair.getLeft();
-            int bought7d = Integer.parseInt(pair.getRight());
+                pair = Utils.getJSONTokenAndCutItOut("\"buyMovingWeek\"", bazaar);
+                bazaar = pair.getLeft();
+                int bought7d = Integer.parseInt(pair.getRight());
 
-            pricesAnd24hVols.put(itemName, new ImmutablePair<>((sellPrice + buyPrice) / 2, (sold7d + bought7d) / 7));
+                pricesAnd24hVols.put(itemName, new ImmutablePair<>((sellPrice + buyPrice) / 2, (sold7d + bought7d) / 7));
 
-            bazaar = bazaar.substring(bazaar.indexOf("\"quick_status\"") + "\"quick_status\":{".length());
+                bazaar = bazaar.substring(bazaar.indexOf("\"quick_status\"") + "\"quick_status\":{".length());
+            }
         }
     }
 }

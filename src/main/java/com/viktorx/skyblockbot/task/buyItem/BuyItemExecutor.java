@@ -8,6 +8,7 @@ import com.viktorx.skyblockbot.task.Task;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 public class BuyItemExecutor {
@@ -91,10 +92,12 @@ public class BuyItemExecutor {
             }
 
             case CHECKING_BUY_RESULT -> {
-
-                // TODO probably just check chat and jump to correct next state
-                state = BuyItemState.IDLE;
-                task.completed();
+                List<String> messageHistory = client.inGameHud.getChatHud().getMessageHistory();
+                if(messageHistory.get(messageHistory.size() - 1).contains("Visit the Auction House to collect you item")) {
+                    state = BuyItemState.CLAIMING_AUCTION;
+                } else {
+                    state = BuyItemState.RESTARTING;
+                }
             }
 
             case RESTARTING -> {
@@ -154,8 +157,12 @@ public class BuyItemExecutor {
         }
     }
 
+    /*
+     * This class waits half of what other classes wait,
+     * because I don't want to lose too many auctions to bots and fast players
+     */
     private boolean waitBeforeClick() {
-        if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeClick) {
+        if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeClick / 2) {
             return true;
         }
         waitTickCounter = 0;
