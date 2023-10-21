@@ -1,10 +1,12 @@
-package com.viktorx.skyblockbot.skyblock.flipping;
+package com.viktorx.skyblockbot.skyblock.flipping.auction;
+
+import java.util.List;
 
 public class Auction {
     public String uuid = null;
     public String auctioneer = null;
     public String profile_id = null;
-    public transient String[] coop = null;
+    public transient List<String> coop = null;
     public long start;
     public long end;
     public String item_name = null;
@@ -12,13 +14,13 @@ public class Auction {
     public String extra = null;
     public String category = null;
     public String tier = null;
-    public int starting_bid;
+    public long starting_bid;
     public String itemBytes = null;
     public boolean claimed;
-    public String[] claimed_bidders = null;
-    public int highest_bid_amount;
+    public List<String> claimed_bidders = null;
+    public long highest_bid_amount;
     public long last_updated;
     public boolean bin;
-    public String[] bids = null;
+    public List<Bid> bids = null;
     public String item_uuid = null;
 }

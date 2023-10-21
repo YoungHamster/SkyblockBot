@@ -1,4 +1,6 @@
-package com.viktorx.skyblockbot.skyblock.flipping;
+package com.viktorx.skyblockbot.skyblock.flipping.auction;
+
+import java.util.List;
 
 public class AuctionPage {
     public boolean success;
@@ -6,5 +8,5 @@ public class AuctionPage {
     public int totalPages;
     public int totalAuctions;
     public long lastUpdated;
-    public Auction[] auctions;
+    public List<Auction> auctions;
 }

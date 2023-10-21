@@ -88,7 +88,8 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
-                SkyblockBot.LOGGER.info("Item: " + client.player.getInventory().getStack(8).getName().getString());
+                SkyblockBot.LOGGER.info("Time: " + SBUtils.getTimeLeftGodPot());
+                SkyblockBot.LOGGER.info("Time: " + SBUtils.getTimeLeftCookieBuff());
                 /*if (!ComplexFarmingTask.INSTANCE.isExecuting()) {
                     ComplexFarmingTask.INSTANCE.loadRecordingAsync();
                 }*/

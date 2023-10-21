@@ -12,6 +12,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.ScreenshotRecorder;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -26,10 +28,11 @@ public class ScreenshotDaemon {
     // 5 minutes
     private final long delay = 1000 * 60 * 5;
     private final long firstDelay = 3000; // 3 secs
-    private int lastCarrotCount = 0;
+    private int lastTotalSackCount = 0;
     private int lastRedMushCount = 0;
     private int lastBrownMushCount = 0;
     private int lastCropieCount = 0;
+    private final List<String> messageQueue = new ArrayList<>();
 
     public void start() {
         synchronized (this) {
@@ -68,46 +71,48 @@ public class ScreenshotDaemon {
                 double brownMushPrice = PriceDatabase.getInstance().fetchItemPrice(ItemNames.ENCH_BROWN_MUSHROOM.getName());
                 double cropiePrice = PriceDatabase.getInstance().fetchItemPrice(ItemNames.CROPIE.getName());
 
-                int carrotCount = GlobalExecutorInfo.carrotCount.get();
-                SkyblockBot.LOGGER.info("Carrot count: " + carrotCount);
+                int totalCount = GlobalExecutorInfo.totalSackCount.get();
                 int redMushCount = GlobalExecutorInfo.redMushroomCount.get();
                 int brownMushCount = GlobalExecutorInfo.brownMushroomCount.get();
                 int cropieCount = GlobalExecutorInfo.cropieCount.get();
 
-                carrotCount = carrotCount - lastCarrotCount;
+                totalCount = totalCount - lastTotalSackCount;
                 redMushCount = redMushCount - lastRedMushCount;
                 brownMushCount = brownMushCount - lastBrownMushCount;
                 cropieCount = cropieCount - lastCropieCount;
 
-                lastCarrotCount = lastCarrotCount + carrotCount;
+
+                lastTotalSackCount = lastTotalSackCount + totalCount;
                 lastRedMushCount = lastRedMushCount + redMushCount;
                 lastBrownMushCount = lastBrownMushCount + brownMushCount;
                 lastCropieCount = lastCropieCount + cropieCount;
 
-                carrotCount = carrotCount / 160;
                 redMushCount = redMushCount / 160;
                 brownMushCount = brownMushCount / 160;
+                int carrotCount = totalCount - redMushCount - brownMushCount - cropieCount;
 
-                int projectedProfit = (int)((carrotPrice * carrotCount + redMushPrice * redMushCount
-                                            + brownMushCount * brownMushPrice + cropieCount * cropiePrice) * 12);
+                int projectedProfit = (int) ((carrotPrice * carrotCount + redMushPrice * redMushCount
+                        + brownMushCount * brownMushPrice + cropieCount * cropiePrice) * 12);
 
-                String taskName;
-                if(ComplexFarmingTask.INSTANCE.getCurrentTask() == null) {
-                    taskName = "null. No task is currently executing";
-                } else {
-                    taskName = ComplexFarmingTask.INSTANCE.getCurrentTask().getClass().getName();
-                    String[] foo = taskName.split("\\.");
-                    taskName = foo[foo.length - 1];
+                String taskName = ComplexFarmingTask.INSTANCE.getCurrentTaskName();
+
+                StringBuilder messages = new StringBuilder("\n");
+                synchronized (messageQueue) {
+                    for (String message : messageQueue) {
+                        messages.append(message).append("\n");
+                    }
+                    messageQueue.clear();
                 }
 
                 takeAndSendScreenshot(
-                        "Current task: " + taskName
-                                + "\nEnchanted carrots picked up past 5 minutes: " + carrotCount
-                                + "\nEnchanted red mushrooms picked up past 5 minutes: " + redMushCount
-                                + "\nEnchanted brown mushrooms picked up past 5 minutes: " + brownMushCount
-                                + "\nCropies picked up past 5 minutes: " + cropieCount
-                                + "\nProjected 1h profit: " + projectedProfit,
-                                false);
+                        "⛏Current task: " + taskName
+                                + "\n\uD83E\uDD55Enchanted carrots: " + carrotCount
+                                + "\n\uD83C\uDF44Enchanted red mushrooms: " + redMushCount
+                                + "\n\uD83C\uDF44Enchanted brown mushrooms: " + brownMushCount
+                                + "\n\uD83D\uDFEBCropies: " + cropieCount
+                                + "\n\uD83D\uDCB0Projected 1h profit: " + projectedProfit
+                                + messages,
+                        false);
             }
         }, firstDelay, delay);
     }
@@ -142,6 +147,12 @@ public class ScreenshotDaemon {
         } else {
             SkyblockBot.LOGGER.info("Sent screenshot. Response ok: " + sendResponse.isOk()
                     + ", message: " + sendResponse.message());
+        }
+    }
+
+    public void queueMessage(String message) {
+        synchronized (messageQueue) {
+            messageQueue.add(message);
         }
     }
 }

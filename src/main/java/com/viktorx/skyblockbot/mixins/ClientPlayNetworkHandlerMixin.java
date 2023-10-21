@@ -71,5 +71,20 @@ public class ClientPlayNetworkHandlerMixin {
         if (message.contains("Cropie (Armor Set Bonus)")) {
             GlobalExecutorInfo.cropieCount.addAndGet(1);
         }
+
+        if(message.contains("Sacks") && message.contains("Last 30s.")) {
+            int delta = 0;
+            String[] split = message.split(" ");
+
+            String increase = split[1];
+            increase = increase.substring(1);
+            delta += Integer.parseInt(increase.replace(",", ""));
+
+            String decrease = split[3];
+            decrease = decrease.substring(1);
+            delta -= Integer.parseInt(decrease.replace(",", ""));
+
+            GlobalExecutorInfo.totalSackCount.addAndGet(delta);
+        }
     }
 }

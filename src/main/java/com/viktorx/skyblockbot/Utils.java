@@ -3,7 +3,6 @@ package com.viktorx.skyblockbot;
 import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -19,21 +18,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Utils {
-    private static List<Pair<String, Integer>> prevTickInventory = new ArrayList<>();
+    private static final List<Pair<String, Integer>> prevTickInventory = new ArrayList<>();
 
     public static void InitItemCounter() {
         /*
          * Counting new items in inventory
          */
         ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            if(client.player == null) {
+            if (client.player == null) {
                 return;
             }
-            if(client.player.getInventory() == null) {
+            if (client.player.getInventory() == null) {
                 return;
             }
 
-            if(prevTickInventory.size() == 0) {
+            if (prevTickInventory.size() == 0) {
                 for (int i = 0; i < 40; i++) {
                     ItemStack stack = client.player.getInventory().getStack(i);
                     prevTickInventory.add(new ImmutablePair<>(stack.getName().getString(), stack.getCount()));
@@ -41,14 +40,14 @@ public class Utils {
                 return;
             }
 
-            for(int i = 0; i < 40; i++) {
+            for (int i = 0; i < 40; i++) {
                 String itemName = client.player.getInventory().getStack(i).getName().getString();
-                if(itemName.equals(ItemNames.CARROT.getName()) ||
-                    itemName.equals(ItemNames.RED_MUSHROOM.getName()) ||
-                    itemName.equals(ItemNames.BROWN_MUSHROOM.getName())) {
+                if (itemName.equals(ItemNames.CARROT.getName()) ||
+                        itemName.equals(ItemNames.RED_MUSHROOM.getName()) ||
+                        itemName.equals(ItemNames.BROWN_MUSHROOM.getName())) {
 
                     int prevCount;
-                    if(itemName.equals(prevTickInventory.get(i).getLeft())) {
+                    if (itemName.equals(prevTickInventory.get(i).getLeft())) {
                         prevCount = prevTickInventory.get(i).getRight();
                     } else {
                         prevCount = 0;
@@ -56,12 +55,7 @@ public class Utils {
 
                     int delta = client.player.getInventory().getStack(i).getCount() - prevCount;
 
-                    if(delta > 0) {
-
-                        SkyblockBot.LOGGER.info("Current name: " + client.player.getInventory().getStack(i).getName().getString() +
-                                ", count: " + client.player.getInventory().getStack(i).getCount() +
-                                ", prev name: " + itemName +
-                                ", prev count: " + prevCount);
+                    if (delta > 0) {
 
                         if (itemName.equals(ItemNames.CARROT.getName())) {
                             GlobalExecutorInfo.carrotCount.addAndGet(delta);
@@ -82,19 +76,15 @@ public class Utils {
         });
     }
 
-    public static File getLastModified(String directoryFilePath)
-    {
+    public static File getLastModified(String directoryFilePath) {
         File directory = new File(directoryFilePath);
         File[] files = directory.listFiles(File::isFile);
         long lastModifiedTime = Long.MIN_VALUE;
         File chosenFile = null;
 
-        if (files != null)
-        {
-            for (File file : files)
-            {
-                if (file.lastModified() > lastModifiedTime)
-                {
+        if (files != null) {
+            for (File file : files) {
+                if (file.lastModified() > lastModifiedTime) {
                     chosenFile = file;
                     lastModifiedTime = file.lastModified();
                 }

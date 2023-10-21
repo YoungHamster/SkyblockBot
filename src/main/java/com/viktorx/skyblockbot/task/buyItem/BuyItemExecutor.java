@@ -2,7 +2,7 @@ package com.viktorx.skyblockbot.task.buyItem;
 
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
-import com.viktorx.skyblockbot.skyblock.flipping.AuctionBrowser;
+import com.viktorx.skyblockbot.skyblock.flipping.auction.AuctionBrowser;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.Task;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;

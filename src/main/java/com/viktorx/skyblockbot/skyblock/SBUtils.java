@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.skyblock;
 
 import com.viktorx.skyblockbot.CurrentInventory;
+import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
 import com.viktorx.skyblockbot.mixins.PlayerListHudMixin;
 import net.minecraft.client.MinecraftClient;
@@ -17,6 +18,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public class SBUtils {
+
+    private static final long second = 1000;
+    private static final long minute = second * 60;
+    private static final long hour = minute * 60;
+    private static final long day = hour * 24;
 
     // left clicks on inventory slot with itemStack that has said name
     public static void leftClickOnSlot(String itemStackName) throws TimeoutException {
@@ -57,31 +63,35 @@ public class SBUtils {
         }
     }
 
+    /*
+     * God pot time is written with capital letter
+     */
     public static long getTimeLeftGodPot() {
         PlayerListHudMixin hud = (PlayerListHudMixin) MinecraftClient.getInstance().inGameHud.getPlayerListHud();
         String[] footer = hud.getFooter().getString().split("\n");
         String godPotTime = null;
         for (String line : footer) {
-            if (line.contains("You have a God Potion active! ")) {
-                godPotTime = line.replace("You have a God Potion active! ", "");
+            if (line.contains("God Potion")) {
+                godPotTime = line.split("active! ")[1];
+                break;
             }
         }
         if(godPotTime == null) {
             return 0;
         }
 
-        long second = 1000;
-        long minute = second * 60;
-        long hour = minute * 60;
-        if(godPotTime.contains("hours")) {
+        if(godPotTime.contains("Hours") || godPotTime.contains("Hour")) {
             return Long.parseLong(godPotTime.split(" ")[0]) * hour;
-        } else if (godPotTime.contains("minutes")) {
+        } else if (godPotTime.contains("Minutes")) {
             return Long.parseLong(godPotTime.split(" ")[0]) * minute;
         } else {
             return Long.parseLong(godPotTime.split(" ")[0]) * second;
         }
     }
 
+    /*
+     * Cookie buff time is written with regular letter
+     */
     public static long getTimeLeftCookieBuff() {
         PlayerListHudMixin hud = (PlayerListHudMixin) MinecraftClient.getInstance().inGameHud.getPlayerListHud();
         String[] footer = hud.getFooter().getString().split("\n");
@@ -95,8 +105,16 @@ public class SBUtils {
         if(cookieTime == null) {
             return 0;
         }
-        // TODO
-        return 1000 * 60 * 60;
+
+        if (cookieTime.contains("days") || cookieTime.contains("day")) {
+            return Long.parseLong(cookieTime.split(" ")[0]) * day;
+        } else if(cookieTime.contains("hours") || cookieTime.contains("hour")) {
+            return Long.parseLong(cookieTime.split(" ")[0]) * hour;
+        } else if (cookieTime.contains("minutes")) {
+            return Long.parseLong(cookieTime.split(" ")[0]) * minute;
+        } else {
+            return Long.parseLong(cookieTime.split(" ")[0]) * second;
+        }
     }
 
     // takes 1B returns 1.000.000.000, same with 1M, 1k or 1

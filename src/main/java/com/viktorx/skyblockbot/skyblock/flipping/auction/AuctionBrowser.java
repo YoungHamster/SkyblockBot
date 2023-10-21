@@ -1,10 +1,10 @@
-package com.viktorx.skyblockbot.skyblock.flipping;
+package com.viktorx.skyblockbot.skyblock.flipping.auction;
 
 import com.google.gson.Gson;
+import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -12,26 +12,46 @@ public class AuctionBrowser {
     private static final String auctionPageAddress = "https://api.hypixel.net/skyblock/auctions?page=";
 
     public static AuctionBrowser INSTANCE = new AuctionBrowser();
-
-    private List<Auction> auctions;
-    private AtomicBoolean loaded = new AtomicBoolean(false);
+    private final Gson gson = new Gson();
+    private final List<Auction> auctions = new ArrayList<>();
+    private final AtomicBoolean loaded = new AtomicBoolean(false);
 
     public void loadAH() {
+        SkyblockBot.LOGGER.info("Loading auctions!");
+
         loaded.set(false);
 
-        Gson gson = new Gson();
         String json = Utils.getSBApiPage(auctionPageAddress + '0');
         AuctionPage page = gson.fromJson(json, AuctionPage.class);
 
-        auctions = new ArrayList<>(Arrays.stream(page.auctions).toList());
+        auctions.clear();
+        auctions.addAll(page.auctions);
 
-        // TODO make this parallel
+        List<Thread> threads = new ArrayList<>();
         for(int i = 1; i < page.totalPages; i++) {
-            json = Utils.getSBApiPage(auctionPageAddress + '0');
-            auctions.addAll(Arrays.stream(gson.fromJson(json, AuctionPage.class).auctions).toList());
+            int finalI = i;
+            threads.add(new Thread(() -> loadPageAsync(finalI)));
+            threads.get(threads.size() - 1).start();
+        }
+
+        for(Thread thr : threads) {
+            try {
+                thr.join();
+            } catch (InterruptedException e) {
+                SkyblockBot.LOGGER.info("Auction Browser interrupted exception. Wtf??? I was just loading auctions in parallel");
+            }
         }
 
         loaded.set(true);
+
+        SkyblockBot.LOGGER.info("Loaded auctions!");
+    }
+
+    private void loadPageAsync(int pageNumber) {
+        String json = Utils.getSBApiPage(auctionPageAddress + pageNumber);
+        synchronized (auctions) {
+            auctions.addAll(gson.fromJson(json, AuctionPage.class).auctions);
+        }
     }
 
     public boolean isAHLoaded() {
@@ -47,7 +67,7 @@ public class AuctionBrowser {
             return null;
         }
 
-        int lowestPrice = -1;
+        long lowestPrice = -1;
         String lowestPriceUUID = null;
         for (Auction auction : auctions) {
             if(auction.bin) {
@@ -68,8 +88,8 @@ public class AuctionBrowser {
             return false;
         }
 
-        for(int i = 0; i < itemLoreKeywords.length; i++) {
-            if(!item.item_lore.contains(itemLoreKeywords[i])) {
+        for (String itemLoreKeyword : itemLoreKeywords) {
+            if (!item.item_lore.contains(itemLoreKeyword)) {
                 return false;
             }
         }

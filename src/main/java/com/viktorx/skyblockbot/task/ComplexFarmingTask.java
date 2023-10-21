@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.task;
 
+import com.viktorx.skyblockbot.ScreenshotDaemon;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
@@ -34,6 +35,8 @@ public class ComplexFarmingTask {
     private final Queue<Task> taskQueue = new ArrayBlockingQueue<>(20);
 
     void whenGetToSkyblockCompleted() {
+        ScreenshotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
+
         if (!SBUtils.getIslandOrArea().contains(ComplexFarmingTaskSettings.gardenName)) {
             currentTask = getToGarden;
         } else {
@@ -53,6 +56,8 @@ public class ComplexFarmingTask {
     }
 
     void defaultWhenCompleted() {
+        ScreenshotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
+
         if (!taskQueue.isEmpty()) {
             currentTask = taskQueue.poll();
         } else {
@@ -69,6 +74,8 @@ public class ComplexFarmingTask {
     }
 
     void whenFarmCompleted() {
+        ScreenshotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
+
         synchronized (runWhenFarmCompleted) {
             for (Runnable notTask : runWhenFarmCompleted) {
                 notTask.run();
@@ -133,6 +140,13 @@ public class ComplexFarmingTask {
         if (isExecuting()) {
             SkyblockBot.LOGGER.info("Can't start complexFarmingTask when it is already executing");
             return;
+        } else {
+            ((BuyItem) buyItem).setItemInfo(ItemNames.GOD_POT.getName(), new String[0]);
+            buyItem.execute();
+        }
+
+        if(buyItem.isExecuting()) {
+            return;
         }
 
         runWhenFarmCompleted.clear();
@@ -189,6 +203,10 @@ public class ComplexFarmingTask {
         checkGodPotAndCookieTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                if(!SBUtils.isServerSkyblock()) {
+                    SkyblockBot.LOGGER.info("Server isn't skyblock. Skipping god pot and cookie check");
+                    return;
+                }
 
                 if(SBUtils.getTimeLeftGodPot() < ComplexFarmingTaskSettings.godPotBuyThreshold) {
                     if(!taskQueue.contains(buyItem)) {
@@ -282,12 +300,18 @@ public class ComplexFarmingTask {
     }
 
     public void loadRecordingAsync() {
-        CompletableFuture.runAsync(() -> {
-            farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE);
-        });
+        synchronized (runWhenFarmCompleted) {
+            runWhenFarmCompleted.add(() -> farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE));
+        }
     }
 
-    public Task getCurrentTask() {
-        return currentTask;
+    public String getCurrentTaskName() {
+        if(currentTask == null) {
+            return "null. No task is currently executing";
+        }
+        String taskName = currentTask.getClass().getName();
+        String[] foo = taskName.split("\\.");
+        taskName = foo[foo.length - 1];
+        return taskName;
     }
 }
