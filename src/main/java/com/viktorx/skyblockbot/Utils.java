@@ -1,5 +1,10 @@
 package com.viktorx.skyblockbot;
 
+import com.viktorx.skyblockbot.skyblock.ItemNames;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -10,8 +15,72 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Utils {
+    private static List<Pair<String, Integer>> prevTickInventory = new ArrayList<>();
+
+    public static void InitItemCounter() {
+        /*
+         * Counting new items in inventory
+         */
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            if(client.player == null) {
+                return;
+            }
+            if(client.player.getInventory() == null) {
+                return;
+            }
+
+            if(prevTickInventory.size() == 0) {
+                for (int i = 0; i < 40; i++) {
+                    ItemStack stack = client.player.getInventory().getStack(i);
+                    prevTickInventory.add(new ImmutablePair<>(stack.getName().getString(), stack.getCount()));
+                }
+                return;
+            }
+
+            for(int i = 0; i < 40; i++) {
+                String itemName = client.player.getInventory().getStack(i).getName().getString();
+                if(itemName.equals(ItemNames.CARROT.getName()) ||
+                    itemName.equals(ItemNames.RED_MUSHROOM.getName()) ||
+                    itemName.equals(ItemNames.BROWN_MUSHROOM.getName())) {
+
+                    int prevCount;
+                    if(itemName.equals(prevTickInventory.get(i).getLeft())) {
+                        prevCount = prevTickInventory.get(i).getRight();
+                    } else {
+                        prevCount = 0;
+                    }
+
+                    int delta = client.player.getInventory().getStack(i).getCount() - prevCount;
+
+                    if(delta > 0) {
+
+                        SkyblockBot.LOGGER.info("Current name: " + client.player.getInventory().getStack(i).getName().getString() +
+                                ", count: " + client.player.getInventory().getStack(i).getCount() +
+                                ", prev name: " + itemName +
+                                ", prev count: " + prevCount);
+
+                        if (itemName.equals(ItemNames.CARROT.getName())) {
+                            GlobalExecutorInfo.carrotCount.addAndGet(delta);
+                        } else if (itemName.equals(ItemNames.RED_MUSHROOM.getName())) {
+                            GlobalExecutorInfo.redMushroomCount.addAndGet(delta);
+                        } else {
+                            GlobalExecutorInfo.brownMushroomCount.addAndGet(delta);
+                        }
+                    }
+                }
+            }
+
+            prevTickInventory.clear();
+            for (int i = 0; i < 40; i++) {
+                ItemStack stack = client.player.getInventory().getStack(i);
+                prevTickInventory.add(new ImmutablePair<>(stack.getName().getString(), stack.getCount()));
+            }
+        });
+    }
 
     public static File getLastModified(String directoryFilePath)
     {

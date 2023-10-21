@@ -192,6 +192,8 @@ public class ComplexFarmingTask {
 
                 if(SBUtils.getTimeLeftGodPot() < ComplexFarmingTaskSettings.godPotBuyThreshold) {
                     if(!taskQueue.contains(buyItem)) {
+                        SkyblockBot.LOGGER.info("Queueing to buy god pot. Minutes left: " + SBUtils.getTimeLeftGodPot() / (1000 * 60));
+
                         ((BuyItem) buyItem).setItemInfo(ItemNames.GOD_POT.getName(), new String[0]);
                         taskQueue.add(buyItem);
                         ((UseItem) useItem).setItemName(ItemNames.GOD_POT.getName());
@@ -200,6 +202,8 @@ public class ComplexFarmingTask {
                 }
 
                 if(SBUtils.getTimeLeftCookieBuff() < ComplexFarmingTaskSettings.cookieBuyThreshold) {
+                    SkyblockBot.LOGGER.info("Queueing to buy cookie. Minutes left: " + SBUtils.getTimeLeftCookieBuff() / (1000 * 60));
+
                     ((BuyBZItem) buyBZItem).setItemName(ItemNames.BOOSTER_COOKIE.getName());
                     taskQueue.add(buyBZItem);
                     ((UseItem) useItem).setItemName(ItemNames.BOOSTER_COOKIE.getName());

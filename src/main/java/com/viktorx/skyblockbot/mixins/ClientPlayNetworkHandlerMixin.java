@@ -48,42 +48,6 @@ public class ClientPlayNetworkHandlerMixin {
         }
 
         /*
-         * Counting new items in inventory
-         */
-        int slot = packet.getSlot();
-        if(slot >= 0) {
-            String newName = packet.getItemStack().getName().getString();
-            int newCount = packet.getItemStack().getCount();
-
-            String currentName = MinecraftClient.getInstance().player.getInventory().getStack(slot).getName().getString();
-            int currentCount;
-            if(currentName.equals(ItemNames.CARROT.getName()) ||
-                    currentName.equals(ItemNames.RED_MUSHROOM.getName()) ||
-                    currentName.equals(ItemNames.BROWN_MUSHROOM.getName())) {
-                currentCount = MinecraftClient.getInstance().player.getInventory().getStack(slot).getCount();
-            } else {
-                currentCount = 0;
-            }
-
-            int delta = newCount - currentCount;
-
-            SkyblockBot.LOGGER.info(
-                            "New item name: " + newName +
-                            ", new count: " + newCount +
-                            ", current item name: " + currentName +
-                            ", current count: " + currentCount);
-            if (delta > 0) {
-                if (newName.equals(ItemNames.CARROT.getName())) {
-                    GlobalExecutorInfo.carrotCount.addAndGet(delta);
-                } else if (newName.equals(ItemNames.RED_MUSHROOM.getName())) {
-                    GlobalExecutorInfo.redMushroomCount.addAndGet(delta);
-                } else if (newName.equals(ItemNames.BROWN_MUSHROOM.getName())) {
-                    GlobalExecutorInfo.brownMushroomCount.addAndGet(delta);
-                }
-            }
-        }
-
-        /*
          * Anti-detect
          */
         if (ReplayExecutor.INSTANCE.isPlaying()) {

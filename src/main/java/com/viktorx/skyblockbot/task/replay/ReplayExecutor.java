@@ -216,7 +216,7 @@ public class ReplayExecutor {
 
         itemsWhenStarted.clear();
         for(int i = 0; i < 9; i++) {
-            itemsWhenStarted.add(player.getInventory().getStack(i).getName().getString());
+            itemsWhenStarted.add(player.getInventory().getStack(i).getItem().getName().getString());
         }
 
         tickIterator = 0;
@@ -259,7 +259,7 @@ public class ReplayExecutor {
 
             assert client.player != null;
             String expected = itemsWhenStarted.get(client.player.getInventory().selectedSlot);
-            String current = client.player.getInventory().getMainHandStack().getName().getString();
+            String current = client.player.getInventory().getMainHandStack().getItem().getName().getString();
             if (!current.equals(expected)) {
                 SkyblockBot.LOGGER.warn("Anti-detection alg: server changed item in hand. Expected: " + expected
                         + ", current: " + current);
@@ -289,7 +289,7 @@ public class ReplayExecutor {
 
             assert client.player != null;
             String expected = itemsWhenStarted.get(client.player.getInventory().selectedSlot);
-            String current = client.player.getInventory().getMainHandStack().getName().getString();
+            String current = client.player.getInventory().getMainHandStack().getItem().getName().getString();
             if (!current.equals(expected)) {
                 SkyblockBot.LOGGER.warn("Anti-detection alg: server changed slot. Expected item in hand: " + expected
                                         + ", current: " + current);

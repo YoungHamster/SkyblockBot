@@ -70,14 +70,33 @@ public class SBUtils {
             return 0;
         }
 
-        // TODO convert string to time
-        return 1000 * 60 * 60; // 60 mins
+        long second = 1000;
+        long minute = second * 60;
+        long hour = minute * 60;
+        if(godPotTime.contains("hours")) {
+            return Long.parseLong(godPotTime.split(" ")[0]) * hour;
+        } else if (godPotTime.contains("minutes")) {
+            return Long.parseLong(godPotTime.split(" ")[0]) * minute;
+        } else {
+            return Long.parseLong(godPotTime.split(" ")[0]) * second;
+        }
     }
 
     public static long getTimeLeftCookieBuff() {
         PlayerListHudMixin hud = (PlayerListHudMixin) MinecraftClient.getInstance().inGameHud.getPlayerListHud();
-        String footer = hud.getFooter().getString();
-        return 1000 * 60 * 60; // 60 mins
+        String[] footer = hud.getFooter().getString().split("\n");
+        String cookieTime = null;
+        for (int i = 0; i < footer.length; i++) {
+            if (footer[i].contains("Cookie Buff")) {
+                cookieTime = footer[i + 1];
+                break;
+            }
+        }
+        if(cookieTime == null) {
+            return 0;
+        }
+        // TODO
+        return 1000 * 60 * 60;
     }
 
     // takes 1B returns 1.000.000.000, same with 1M, 1k or 1
