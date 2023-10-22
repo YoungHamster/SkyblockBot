@@ -6,22 +6,20 @@ import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
-
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeoutException;
+import net.minecraft.entity.player.PlayerInventory;
 
 public class UseItemExecutor {
+
+    private static final int defaultHotbarSlot = 1;
 
     public static UseItemExecutor INSTANCE = new UseItemExecutor();
 
     private UseItem task;
     private UseItemState state = UseItemState.IDLE;
     private UseItemState stateBeforePause;
-    private UseItemState nextState;
     private int itemSlot;
     private int startingSlot;
-    private Queue<Integer> slotsToClick = new ArrayBlockingQueue<>(3);
+    private boolean wasUsedHotbarSlotEmpty = true;
     private int waitBeforeActionIterator = 0;
 
     public void Init() {
@@ -36,7 +34,7 @@ public class UseItemExecutor {
 
         this.task = task;
         waitBeforeActionIterator = 0;
-        slotsToClick.clear();
+        wasUsedHotbarSlotEmpty = true;
         state = UseItemState.CHECKING_INVENTORY;
     }
 
@@ -71,6 +69,7 @@ public class UseItemExecutor {
     }
 
     private void onTick(MinecraftClient client) {
+
         switch (state) {
             case CHECKING_INVENTORY -> {
                 itemSlot = getItemSlot(client);
@@ -85,9 +84,6 @@ public class UseItemExecutor {
                     state = UseItemState.GOING_TO_HOTBAR_SLOT;
                 } else {
                     state = UseItemState.OPENING_INVENTORY;
-                    slotsToClick.add(itemSlot);
-                    slotsToClick.add(1);
-                    slotsToClick.add(itemSlot);
                 }
             }
 
@@ -96,7 +92,15 @@ public class UseItemExecutor {
                     return;
                 }
 
-                Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[itemSlot]);
+                assert client.player != null;
+                startingSlot = client.player.getInventory().selectedSlot;
+
+                if (itemSlot > 9) {
+                    Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[defaultHotbarSlot]);
+                } else {
+                    Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[itemSlot]);
+                }
+
                 state = UseItemState.USING_ITEM;
             }
 
@@ -105,7 +109,16 @@ public class UseItemExecutor {
                     return;
                 }
 
-                Keybinds.asyncPressKeyAfterTick(client.options.useKey);
+                client.options.useKey.setPressed(true);
+                state = UseItemState.ITEM_IN_USE;
+            }
+
+            case ITEM_IN_USE -> {
+                if (waitBeforeAction()) {
+                    return;
+                }
+
+                client.options.useKey.setPressed(false);
                 state = UseItemState.GOING_BACK_TO_HOTBAR_SLOT;
             }
 
@@ -114,7 +127,13 @@ public class UseItemExecutor {
                     return;
                 }
 
-                Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[itemSlot]);
+                Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[startingSlot]);
+
+                if (!wasUsedHotbarSlotEmpty) {
+                    state = UseItemState.OPENING_INVENTORY_TO_MOVE_ITEM_BACK;
+                    return;
+                }
+
                 state = UseItemState.IDLE;
                 task.completed();
             }
@@ -133,20 +152,56 @@ public class UseItemExecutor {
                     return;
                 }
 
-                Integer nextSlot = slotsToClick.poll();
-                if (nextSlot != null) {
-                    try {
-                        SBUtils.leftClickOnSlot(nextSlot);
-                    } catch (TimeoutException ignored) {}
-                } else {
+                assert client.player != null;
+                wasUsedHotbarSlotEmpty = client.player.getInventory()
+                        .getStack(defaultHotbarSlot).getName().getString().equals("Air");
 
+                SBUtils.quickSwapSlotWithHotbar(itemSlot, defaultHotbarSlot);
+
+                state = UseItemState.CLOSING_INVENTORY;
+            }
+
+            case CLOSING_INVENTORY -> {
+                if (waitBeforeAction()) {
+                    return;
                 }
+
+                Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
+                state = UseItemState.GOING_TO_HOTBAR_SLOT;
+            }
+
+            case OPENING_INVENTORY_TO_MOVE_ITEM_BACK -> {
+                if (waitBeforeAction()) {
+                    return;
+                }
+
+                Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
+                state = UseItemState.MOVING_ITEM_BACK;
+            }
+
+            case MOVING_ITEM_BACK -> {
+                if (waitBeforeAction()) {
+                    return;
+                }
+
+                SBUtils.quickSwapSlotWithHotbar(itemSlot, defaultHotbarSlot);
+                state = UseItemState.CLOSING_INVENTORY_FINAL;
+            }
+
+            case CLOSING_INVENTORY_FINAL -> {
+                if (waitBeforeAction()) {
+                    return;
+                }
+
+                Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
+                state = UseItemState.IDLE;
+                task.completed();
             }
         }
     }
 
     private boolean waitBeforeAction() {
-        if (waitBeforeActionIterator++ < GlobalExecutorInfo.waitTicksBeforeAction) {
+        if (waitBeforeActionIterator++ < GlobalExecutorInfo.waitTicksBeforeAction / 2) {
             return true;
         }
         waitBeforeActionIterator = 0;
@@ -154,10 +209,14 @@ public class UseItemExecutor {
     }
 
     private int getItemSlot(MinecraftClient client) {
-        for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
-            if (MinecraftClient.getInstance().player.getInventory().getStack(i).getName().getString().equals(task.getItemName())) {
+        assert client.player != null;
+        PlayerInventory inventory = client.player.getInventory();
 
+        for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
+            if (inventory.getStack(i).getName().getString().equals(task.getItemName())) {
+                return i;
             }
         }
+        return -1;
     }
 }

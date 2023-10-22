@@ -43,6 +43,13 @@ public class SBUtils {
         client.interactionManager.clickSlot(CurrentInventory.getSyncId(), slotID, lmb, SlotActionType.PICKUP, client.player);
     }
 
+    public static void quickSwapSlotWithHotbar(int slotID, int hotbar) {
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        assert client.interactionManager != null;
+        client.interactionManager.clickSlot(CurrentInventory.getSyncId(), slotID, hotbar, SlotActionType.SWAP, client.player);
+    }
+
     // gets profile balance from tab, sums personal bank balance and coop bank
     public static long getBankBalance() {
         String bankLine = getTabPlayers().stream().filter(string -> string.contains("Bank")).collect(Collectors.joining());

@@ -141,6 +141,14 @@ public class ComplexFarmingTask {
         if (isExecuting()) {
             SkyblockBot.LOGGER.info("Can't start complexFarmingTask when it is already executing");
             return;
+        } else {
+            ((UseItem) useItem).setItemName("Bread");
+            currentTask = useItem;
+            currentTask.execute();
+        }
+
+        if(useItem.isExecuting()) {
+            return;
         }
 
         runWhenFarmCompleted.clear();
