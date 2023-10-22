@@ -37,6 +37,11 @@ public class BuyItemExecutor extends BuySellTaskExecutor {
     }
 
     public void execute(BuyItem task) {
+        if (!state.equals(BuyItemState.IDLE)) {
+            SkyblockBot.LOGGER.warn("Can't execute BuyItem when already running");
+            return;
+        }
+
         CompletableFuture.runAsync(AuctionBrowser.INSTANCE::loadAH);
         priceFinderRunning = false;
         currentClickRunning = false;
@@ -46,6 +51,11 @@ public class BuyItemExecutor extends BuySellTaskExecutor {
     }
 
     public void pause() {
+        if (state.equals(BuyItemState.IDLE) || state.equals(BuyItemState.PAUSED)) {
+            SkyblockBot.LOGGER.warn("Can't pause BuyItem when idle or already paused");
+            return;
+        }
+
         stateBeforePause = state;
         state = BuyItemState.PAUSED;
     }

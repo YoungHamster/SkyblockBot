@@ -15,6 +15,7 @@ import com.viktorx.skyblockbot.task.useItem.UseItem;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CompletableFuture;
 
 public class ComplexFarmingTask {
     public static final ComplexFarmingTask INSTANCE = new ComplexFarmingTask();
@@ -139,15 +140,6 @@ public class ComplexFarmingTask {
     public void execute() {
         if (isExecuting()) {
             SkyblockBot.LOGGER.info("Can't start complexFarmingTask when it is already executing");
-            return;
-        } else {
-            ((BuyBZItem) buyBZItem).setItemName("Cobblestone");
-            ((BuyBZItem) buyBZItem).setItemCount(10);
-            currentTask = buyBZItem;
-            currentTask.execute();
-        }
-
-        if(buyBZItem.isExecuting()) {
             return;
         }
 
@@ -302,8 +294,12 @@ public class ComplexFarmingTask {
     }
 
     public void loadRecordingAsync() {
-        synchronized (runWhenFarmCompleted) {
-            runWhenFarmCompleted.add(() -> farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE));
+        if(isExecuting()) {
+            synchronized (runWhenFarmCompleted) {
+                runWhenFarmCompleted.add(() -> farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE));
+            }
+        } else {
+            CompletableFuture.runAsync(() -> farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE));
         }
     }
 

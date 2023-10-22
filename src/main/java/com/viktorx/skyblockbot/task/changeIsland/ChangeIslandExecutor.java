@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.task.changeIsland;
 
+import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
@@ -18,6 +19,11 @@ public class ChangeIslandExecutor {
     }
 
     public void execute(ChangeIsland changeIsland) {
+        if (!state.equals(ChangeIslandState.IDLE)) {
+            SkyblockBot.LOGGER.warn("Can't execute ChangeIsland when already running");
+            return;
+        }
+
         this.changeIsland = changeIsland;
         waitBeforeAttemptTickCounter = 0;
         attemptCounter = 0;
@@ -25,11 +31,21 @@ public class ChangeIslandExecutor {
     }
 
     public void pause() {
+        if (state.equals(ChangeIslandState.IDLE) || state.equals(ChangeIslandState.PAUSED)) {
+            SkyblockBot.LOGGER.warn("Can't pause ChangeIsland when already paused or not running");
+            return;
+        }
+
         stateBeforePause = state;
         state = ChangeIslandState.PAUSED;
     }
 
     public void resume() {
+        if (!state.equals(ChangeIslandState.PAUSED)) {
+            SkyblockBot.LOGGER.warn("Can't resume ChangeIsland when not paused");
+            return;
+        }
+
         state = stateBeforePause;
     }
 
@@ -43,7 +59,7 @@ public class ChangeIslandExecutor {
 
     public void onTickChangeIsland(MinecraftClient client) {
 
-        switch(state) {
+        switch (state) {
             case SENDING_COMMAND -> {
                 GlobalExecutorInfo.worldLoaded.set(false);
                 assert client.player != null;

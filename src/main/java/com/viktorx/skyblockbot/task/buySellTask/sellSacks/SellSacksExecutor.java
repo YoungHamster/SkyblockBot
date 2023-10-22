@@ -24,6 +24,11 @@ public class SellSacksExecutor {
     }
 
     public void execute(SellSacks task) {
+        if (!state.equals(SellSacksState.IDLE)) {
+            SkyblockBot.LOGGER.warn("Can't execute SellSacks when already running");
+            return;
+        }
+
         this.task = task;
         waitTickCounter = 0;
         state = SellSacksState.SENDING_COMMAND;
@@ -31,8 +36,8 @@ public class SellSacksExecutor {
     }
 
     public void pause() {
-        if (state == SellSacksState.IDLE) {
-            SkyblockBot.LOGGER.info("Can't pause sell sacks executor when not executing");
+        if (state.equals(SellSacksState.IDLE) || state.equals(SellSacksState.PAUSED)) {
+            SkyblockBot.LOGGER.info("Can't pause sell sacks executor when not executing or already paused");
             return;
         }
 
@@ -78,7 +83,7 @@ public class SellSacksExecutor {
             }
 
             case SELLING -> {
-                if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeClick) {
+                if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeAction) {
                     return;
                 }
                 waitTickCounter = 0;
@@ -90,7 +95,7 @@ public class SellSacksExecutor {
             }
 
             case CONFIRMING -> {
-                if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeClick) {
+                if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeAction) {
                     return;
                 }
                 waitTickCounter = 0;
@@ -101,7 +106,7 @@ public class SellSacksExecutor {
             }
 
             case WAITING_BEFORE_CLOSING_MENU -> {
-                if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeClick) {
+                if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeAction) {
                     return;
                 }
                 waitTickCounter = 0;

@@ -33,14 +33,14 @@ public class Utils {
             }
 
             if (prevTickInventory.size() == 0) {
-                for (int i = 0; i < 40; i++) {
+                for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
                     ItemStack stack = client.player.getInventory().getStack(i);
                     prevTickInventory.add(new ImmutablePair<>(stack.getName().getString(), stack.getCount()));
                 }
                 return;
             }
 
-            for (int i = 0; i < 40; i++) {
+            for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
                 String itemName = client.player.getInventory().getStack(i).getName().getString();
                 if (itemName.equals(ItemNames.CARROT.getName()) ||
                         itemName.equals(ItemNames.RED_MUSHROOM.getName()) ||
@@ -69,7 +69,7 @@ public class Utils {
             }
 
             prevTickInventory.clear();
-            for (int i = 0; i < 40; i++) {
+            for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
                 ItemStack stack = client.player.getInventory().getStack(i);
                 prevTickInventory.add(new ImmutablePair<>(stack.getName().getString(), stack.getCount()));
             }

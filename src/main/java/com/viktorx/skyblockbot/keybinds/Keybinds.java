@@ -89,13 +89,8 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
-                asyncPressKeyAfterTick("T".getBytes()[0]);
-                asyncPressKeyAfterTick("A".getBytes()[0]);
-                asyncPressKeyAfterTick("B".getBytes()[0]);
-                asyncPressKeyAfterTick("C".getBytes()[0]);
-                /*if (!ComplexFarmingTask.INSTANCE.isExecuting()) {
-                    ComplexFarmingTask.INSTANCE.loadRecordingAsync();
-                }*/
+                ComplexFarmingTask.INSTANCE.loadRecordingAsync();
+                client.options.hotbarKeys[5].setPressed(true);
             }
 
             if (pauseTask.wasPressed()) {
@@ -144,7 +139,6 @@ public class Keybinds {
                 keyCode,
                 1,
                 0));
-        SkyblockBot.LOGGER.info("Pressing key " + keyCode);
 
         try {
             Thread.sleep(20); // press button for around 1 tick, maybe make it random later

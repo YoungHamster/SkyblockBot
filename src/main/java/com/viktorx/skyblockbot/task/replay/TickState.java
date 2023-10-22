@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.task.replay;
 
+import com.viktorx.skyblockbot.keybinds.Keybinds;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.util.math.Vec2f;
@@ -88,16 +89,10 @@ public class TickState {
         client.options.jumpKey.setPressed(jump);
 
         /*
-         * This code looks like shit,
-         * but I think it will work fine.
-         * Maybe refactor it later
+         * KeyBinding.setPressed(true) doesn't work for hotbar. This works
          */
         if (hotbarSlot != -1) {
-            client.options.hotbarKeys[hotbarSlot].setPressed(true);
-        } else {
-            for (KeyBinding hotbarKey : client.options.hotbarKeys) {
-                hotbarKey.setPressed(false);
-            }
+            Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[hotbarSlot]);
         }
     }
 

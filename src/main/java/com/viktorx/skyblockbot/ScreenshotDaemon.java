@@ -108,7 +108,7 @@ public class ScreenshotDaemon {
                         "⛏Current task: " + taskName
                                 + "\n\uD83E\uDD55Enchanted carrots: " + carrotCount
                                 + "\n\uD83C\uDF44Enchanted red mushrooms: " + redMushCount
-                                + "\n\uD83C\uDF44Enchanted brown mushrooms: " + brownMushCount
+                                + "\n\uD83C\uDF44\u200D\uD83D\uDFEBEnchanted brown mushrooms: " + brownMushCount
                                 + "\n\uD83D\uDFEBCropies: " + cropieCount
                                 + "\n\uD83D\uDCB0Projected 1h profit: " + projectedProfit
                                 + messages,

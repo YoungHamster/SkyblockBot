@@ -93,11 +93,11 @@ public abstract class BuySellTaskExecutor {
     }
 
     protected long getTimeToWaitBeforeClick() {
-        return GlobalExecutorInfo.waitTicksBeforeClick * 50;
+        return GlobalExecutorInfo.waitTicksBeforeAction * 50;
     }
 
     protected boolean waitBeforeCommand() {
-        if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeClick) {
+        if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeAction) {
             return true;
         }
         waitTickCounter = 0;

@@ -9,20 +9,24 @@ public class UseItem extends Task {
         this.itemName = itemName;
     }
 
-    public void execute() {
+    public String getItemName() {
+        return itemName;
+    }
 
+    public void execute() {
+        UseItemExecutor.INSTANCE.execute(this);
     }
 
     public void pause() {
-
+        UseItemExecutor.INSTANCE.pause();
     }
 
     public void resume() {
-
+        UseItemExecutor.INSTANCE.resume();
     }
 
     public void abort() {
-
+        UseItemExecutor.INSTANCE.abort();
     }
 
     public boolean isExecuting() {

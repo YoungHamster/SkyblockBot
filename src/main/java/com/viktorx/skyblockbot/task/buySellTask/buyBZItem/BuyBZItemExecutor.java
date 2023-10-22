@@ -31,6 +31,11 @@ public class BuyBZItemExecutor extends BuySellTaskExecutor {
     }
 
     public void execute(BuyBZItem task) {
+        if (!state.equals(BuyBZItemState.IDLE)) {
+            SkyblockBot.LOGGER.warn("Can't execute buyBZItem, already running");
+            return;
+        }
+
         this.task = task;
         waitBetweenLettersCounter = 0;
         waitTickCounter = 0;
@@ -40,6 +45,11 @@ public class BuyBZItemExecutor extends BuySellTaskExecutor {
     }
 
     public void pause() {
+        if(state.equals(BuyBZItemState.IDLE) || state.equals(BuyBZItemState.PAUSED)) {
+            SkyblockBot.LOGGER.warn("Can't pause buyBZItem when not running or paused");
+            return;
+        }
+
         stateBeforePause = state;
         state = BuyBZItemState.PAUSED;
     }
@@ -48,7 +58,7 @@ public class BuyBZItemExecutor extends BuySellTaskExecutor {
         if (state.equals(BuyBZItemState.PAUSED)) {
             state = stateBeforePause;
         } else {
-            SkyblockBot.LOGGER.info("Can't resume when not paused!");
+            SkyblockBot.LOGGER.warn("Can't resume when not paused!");
         }
     }
 
