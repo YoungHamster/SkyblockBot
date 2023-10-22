@@ -1,10 +1,13 @@
 package com.viktorx.skyblockbot.task;
 
+import net.minecraft.client.gui.screen.Screen;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GlobalExecutorInfo {
-    public static boolean worldLoaded = false;
-    public static boolean worldLoading = false;
+    public static AtomicBoolean worldLoaded = new AtomicBoolean(false);
+    public static AtomicBoolean worldLoading = new AtomicBoolean(false);
 
     public static final int waitTicksBeforeClick = 20;
 

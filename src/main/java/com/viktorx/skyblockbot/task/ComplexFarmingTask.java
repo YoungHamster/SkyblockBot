@@ -4,18 +4,17 @@ import com.viktorx.skyblockbot.ScreenshotDaemon;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
-import com.viktorx.skyblockbot.task.buyBZItem.BuyBZItem;
-import com.viktorx.skyblockbot.task.buyItem.BuyItem;
+import com.viktorx.skyblockbot.task.buySellTask.buyBZItem.BuyBZItem;
+import com.viktorx.skyblockbot.task.buySellTask.buyItem.BuyItem;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIsland;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.replay.Replay;
 import com.viktorx.skyblockbot.task.replay.ReplayBotSettings;
-import com.viktorx.skyblockbot.task.sellSacks.SellSacks;
+import com.viktorx.skyblockbot.task.buySellTask.sellSacks.SellSacks;
 import com.viktorx.skyblockbot.task.useItem.UseItem;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CompletableFuture;
 
 public class ComplexFarmingTask {
     public static final ComplexFarmingTask INSTANCE = new ComplexFarmingTask();
@@ -88,10 +87,10 @@ public class ComplexFarmingTask {
     }
 
     void whenFarmAborted() {
-        if (GlobalExecutorInfo.worldLoading) {
+        if (GlobalExecutorInfo.worldLoading.get()) {
             SkyblockBot.LOGGER.info("Warped out of garden. Trying to get back");
 
-            while (!GlobalExecutorInfo.worldLoaded) {
+            while (!GlobalExecutorInfo.worldLoaded.get()) {
                 try {
                     Thread.sleep(ChangeIslandSettings.ticksToWaitForChunks);
                 } catch (InterruptedException ignored) {
@@ -142,12 +141,13 @@ public class ComplexFarmingTask {
             SkyblockBot.LOGGER.info("Can't start complexFarmingTask when it is already executing");
             return;
         } else {
-            ((BuyItem) buyItem).setItemInfo("Diamond Sword", new String[0]);
-            currentTask = buyItem;
+            ((BuyBZItem) buyBZItem).setItemName("Cobblestone");
+            ((BuyBZItem) buyBZItem).setItemCount(10);
+            currentTask = buyBZItem;
             currentTask.execute();
         }
 
-        if(buyItem.isExecuting()) {
+        if(buyBZItem.isExecuting()) {
             return;
         }
 

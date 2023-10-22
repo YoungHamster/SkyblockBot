@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.task.sellSacks;
+package com.viktorx.skyblockbot.task.buySellTask.sellSacks;
 
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;

@@ -2,13 +2,9 @@ package com.viktorx.skyblockbot.mixins;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.viktorx.skyblockbot.CurrentInventory;
-import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.s2c.play.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -43,7 +39,7 @@ public class ClientPlayNetworkHandlerMixin {
          * Idk why, but this method gets called twice, once on render thread, and once on netty thread
          * So i have to skip one of those calls to get correct results
          */
-        if(RenderSystem.isOnRenderThread()) {
+        if (RenderSystem.isOnRenderThread()) {
             return;
         }
 
@@ -72,7 +68,7 @@ public class ClientPlayNetworkHandlerMixin {
             GlobalExecutorInfo.cropieCount.addAndGet(1);
         }
 
-        if(message.contains("Sacks") && message.contains("Last 30s.")) {
+        if (message.contains("Sacks") && message.contains("Last 30s.")) {
             int delta = 0;
             String[] split = message.split(" ");
 

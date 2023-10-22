@@ -1,26 +1,18 @@
 package com.viktorx.skyblockbot.keybinds;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.viktorx.skyblockbot.ScreenshotDaemon;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.mixins.IChatHudMixin;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
-import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.ComplexFarmingTask;
-import com.viktorx.skyblockbot.task.buyItem.BuyItemExecutor;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
-import com.viktorx.skyblockbot.task.sellSacks.SellSacks;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -33,7 +25,7 @@ public class Keybinds {
     private static KeyBinding pauseTask;
     private static boolean screenshotDaemonStarted = false;
 
-    private static final Queue<KeyBinding> tickKeyPressQueue = new LinkedBlockingQueue<>();
+    private static final Queue<Integer> tickKeyPressQueue = new LinkedBlockingQueue<>();
 
     public static void Init() {
         startStopBot = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -97,6 +89,10 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
+                asyncPressKeyAfterTick("T".getBytes()[0]);
+                asyncPressKeyAfterTick("A".getBytes()[0]);
+                asyncPressKeyAfterTick("B".getBytes()[0]);
+                asyncPressKeyAfterTick("C".getBytes()[0]);
                 /*if (!ComplexFarmingTask.INSTANCE.isExecuting()) {
                     ComplexFarmingTask.INSTANCE.loadRecordingAsync();
                 }*/
@@ -119,31 +115,48 @@ public class Keybinds {
 
     // puts keybinds in a queue where no more than one key gets pressed every tick
     public static void asyncPressKeyAfterTick(KeyBinding key) {
-        Keybinds.tickKeyPressQueue.add(key);
+        Keybinds.tickKeyPressQueue.add(((KeyBindingMixin) key).getBoundKey().getCode());
+    }
+    public static void asyncPressKeyAfterTick(int keyCode) {
+        Keybinds.tickKeyPressQueue.add(keyCode);
     }
 
     private static void asyncPressKeyAfterTick() {
-        KeyBinding key;
+        Integer key;
         key = Keybinds.tickKeyPressQueue.poll();
 
         if (key != null) {
-            blockingPressKey(key);
+            blockingPressCustomKey(key);
         }
     }
 
     public static void blockingPressKey(KeyBinding key) {
-        MinecraftClient client = MinecraftClient.getInstance();
         int keyCode = ((KeyBindingMixin) key).getBoundKey().getCode();
+        blockingPressCustomKey(keyCode);
+    }
 
-        client.keyboard.onKey(client.getWindow().getHandle(), keyCode, keyCode, 1, 0);
-        SkyblockBot.LOGGER.info("Pressing key");
+    public static void blockingPressCustomKey(int keyCode) {
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        RenderSystem.recordRenderCall(() -> client.keyboard.onKey(
+                client.getWindow().getHandle(),
+                keyCode,
+                keyCode,
+                1,
+                0));
+        SkyblockBot.LOGGER.info("Pressing key " + keyCode);
 
         try {
-            Thread.sleep(40); // press button for 2 ticks, maybe make it random later
+            Thread.sleep(20); // press button for around 1 tick, maybe make it random later
         } catch (InterruptedException e) {
             SkyblockBot.LOGGER.info("InterruptedException. Don't care");
         }
 
-        client.keyboard.onKey(client.getWindow().getHandle(), keyCode, keyCode, 0, 0);
+        RenderSystem.recordRenderCall(() -> client.keyboard.onKey(
+                client.getWindow().getHandle(),
+                keyCode,
+                keyCode,
+                0,
+                0));
     }
 }

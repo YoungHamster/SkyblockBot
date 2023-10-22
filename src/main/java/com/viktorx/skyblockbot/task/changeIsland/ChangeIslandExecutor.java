@@ -45,14 +45,14 @@ public class ChangeIslandExecutor {
 
         switch(state) {
             case SENDING_COMMAND -> {
-                GlobalExecutorInfo.worldLoaded = false;
+                GlobalExecutorInfo.worldLoaded.set(false);
                 assert client.player != null;
                 client.player.sendChatMessage(changeIsland.getCommand());
                 state = ChangeIslandState.WAITING_AFTER_COMMAND;
             }
 
             case WAITING_AFTER_COMMAND -> {
-                if (!GlobalExecutorInfo.worldLoading) {
+                if (!GlobalExecutorInfo.worldLoading.get()) {
                     if (waitBeforeAttemptTickCounter++ == ChangeIslandSettings.ticksToWaitBeforeAttempt) {
                         if (attemptCounter++ == ChangeIslandSettings.maxAttempts) {
                             changeIsland.aborted();
@@ -69,7 +69,7 @@ public class ChangeIslandExecutor {
             }
 
             case WAITING_FOR_WORLD_LOAD -> {
-                if (GlobalExecutorInfo.worldLoaded) {
+                if (GlobalExecutorInfo.worldLoaded.get()) {
                     state = ChangeIslandState.IDLE;
                     changeIsland.completed();
                 }

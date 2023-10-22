@@ -4,15 +4,13 @@
   "package": "com.viktorx.skyblockbot.mixins",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "PlayerListHudMixin",
-    "KeyBindingMixin",
-    "ClientPlayNetworkHandlerMixin",
     "ClientConnectionMixin",
+    "ClientPlayNetworkHandlerMixin",
+    "IChatHudMixin",
     "IClientPlayerEntityMixin",
+    "KeyBindingMixin",
     "MinecraftClientMixin",
-    "IChatHudMixin"
-  ],
-  "client": [
+    "PlayerListHudMixin"
   ],
   "injectors": {
     "defaultRequire": 1

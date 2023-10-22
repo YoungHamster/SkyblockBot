@@ -1,11 +1,11 @@
 package com.viktorx.skyblockbot;
 
 import com.viktorx.skyblockbot.keybinds.Keybinds;
-import com.viktorx.skyblockbot.task.buyBZItem.BuyBZItemExecutor;
-import com.viktorx.skyblockbot.task.buyItem.BuyItemExecutor;
+import com.viktorx.skyblockbot.task.buySellTask.buyBZItem.BuyBZItemExecutor;
+import com.viktorx.skyblockbot.task.buySellTask.buyItem.BuyItemExecutor;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandExecutor;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
-import com.viktorx.skyblockbot.task.sellSacks.SellSacksExecutor;
+import com.viktorx.skyblockbot.task.buySellTask.sellSacks.SellSacksExecutor;
 import com.viktorx.skyblockbot.task.useItem.UseItemExecutor;
 import net.fabricmc.api.ModInitializer;
 

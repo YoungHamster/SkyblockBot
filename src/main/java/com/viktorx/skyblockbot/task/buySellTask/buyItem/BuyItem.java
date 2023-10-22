@@ -1,9 +1,10 @@
-package com.viktorx.skyblockbot.task.buyItem;
+package com.viktorx.skyblockbot.task.buySellTask.buyItem;
 
+import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.task.Task;
 
 public class BuyItem extends Task {
-    private String itemName;
+    private String itemName = null;
     private String[] itemLoreKeyWords;
     private boolean paused = false;
     private long priceLimit = 100000;
@@ -11,15 +12,17 @@ public class BuyItem extends Task {
     public BuyItem() {
     }
 
-    public BuyItem setItemInfo(String itemName, String[] itemLoreKeyWords) {
-        this.itemName = itemName;
-        this.itemLoreKeyWords = itemLoreKeyWords;
-        return this;
+    public void setItemInfo(String itemName, String[] itemLoreKeyWords) {
+        if(!BuyItemExecutor.INSTANCE.isExecuting(this)) {
+            this.itemName = itemName;
+            this.itemLoreKeyWords = itemLoreKeyWords;
+        }
     }
 
-    public BuyItem setPriceLimit(long priceLimit) {
-        this.priceLimit = priceLimit;
-        return this;
+    public void setPriceLimit(long priceLimit) {
+        if(!BuyItemExecutor.INSTANCE.isExecuting(this)) {
+            this.priceLimit = priceLimit;
+        }
     }
 
     public long getPriceLimit() {
@@ -27,6 +30,11 @@ public class BuyItem extends Task {
     }
 
     public void execute() {
+        if(itemName == null) {
+            SkyblockBot.LOGGER.info("Can't execute BuyItem when itemName is null");
+            return;
+        }
+
         paused = false;
         BuyItemExecutor.INSTANCE.execute(this);
     }

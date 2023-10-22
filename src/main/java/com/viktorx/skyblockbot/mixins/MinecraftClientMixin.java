@@ -1,12 +1,10 @@
 package com.viktorx.skyblockbot.mixins;
 
-import com.viktorx.skyblockbot.ScreenshotDaemon;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.DownloadingTerrainScreen;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.util.math.MatrixStack;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,11 +20,11 @@ public class MinecraftClientMixin {
     @Inject(method = "setScreen", at = @At("TAIL"))
     public void detectWorldLoad(@Nullable Screen screen, CallbackInfo ci) {
         if (screen == null) {
-            GlobalExecutorInfo.worldLoading = false;
-            GlobalExecutorInfo.worldLoaded = true;
+            GlobalExecutorInfo.worldLoading.set(false);
+            GlobalExecutorInfo.worldLoaded.set(true);
         } else if (screen.getClass() == DownloadingTerrainScreen.class) {
-            GlobalExecutorInfo.worldLoading = true;
-            GlobalExecutorInfo.worldLoaded = false;
+                GlobalExecutorInfo.worldLoading.set(true);
+                GlobalExecutorInfo.worldLoaded.set(false);
         }
     }
 }

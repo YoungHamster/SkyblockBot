@@ -141,7 +141,7 @@ public class ReplayExecutor {
             }
         }
 
-        if(GlobalExecutorInfo.worldLoading) {
+        if(GlobalExecutorInfo.worldLoading.get()) {
             state = ReplayBotState.IDLE;
             abort();
             return;
