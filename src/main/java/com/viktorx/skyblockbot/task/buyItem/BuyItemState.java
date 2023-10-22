@@ -3,6 +3,7 @@ package com.viktorx.skyblockbot.task.buyItem;
 public enum BuyItemState {
     IDLE,
     LOADING_AUCTIONS,
+    LOOKING_FOR_AUCTION,
     SENDING_COMMAND,
     WAITING_FOR_MENU,
     BUYING,

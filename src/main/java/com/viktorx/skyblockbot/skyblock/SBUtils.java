@@ -195,7 +195,7 @@ public class SBUtils {
         List<Slot> slotList;
         MinecraftClient client = MinecraftClient.getInstance();
 
-        int numberOfTries = 100;
+        int numberOfTries = 20;
         int i = 0;
 
         do {

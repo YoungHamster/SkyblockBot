@@ -68,6 +68,7 @@ public class ComplexFarmingTask {
 
     void defaultWhenAborted() {
         if (canFarm()) {
+            SkyblockBot.LOGGER.warn(getCurrentTaskName() + " task aborted.");
             currentTask = farm;
             currentTask.execute();
         }
@@ -141,8 +142,9 @@ public class ComplexFarmingTask {
             SkyblockBot.LOGGER.info("Can't start complexFarmingTask when it is already executing");
             return;
         } else {
-            ((BuyItem) buyItem).setItemInfo(ItemNames.GOD_POT.getName(), new String[0]);
-            buyItem.execute();
+            ((BuyItem) buyItem).setItemInfo("Diamond Sword", new String[0]);
+            currentTask = buyItem;
+            currentTask.execute();
         }
 
         if(buyItem.isExecuting()) {

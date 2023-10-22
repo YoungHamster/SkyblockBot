@@ -9,7 +9,8 @@
     "ClientPlayNetworkHandlerMixin",
     "ClientConnectionMixin",
     "IClientPlayerEntityMixin",
-    "MinecraftClientMixin"
+    "MinecraftClientMixin",
+    "IChatHudMixin"
   ],
   "client": [
   ],
