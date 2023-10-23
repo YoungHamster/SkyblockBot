@@ -25,6 +25,8 @@ dependencies {
     shadow(implementation('mysql:mysql-connector-java:8.0.31'))
     // Telegram bot api
     shadow(implementation group: 'com.github.pengrad', name: 'java-telegram-bot-api', version: '6.9.1')
+    // Apache http client
+    shadow(implementation group: 'org.apache.httpcomponents.client5', name: 'httpclient5', version: '5.3-alpha1')
 
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"

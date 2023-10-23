@@ -1,38 +1,42 @@
 package com.viktorx.skyblockbot;
 
-import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.UpdatesListener;
-import com.pengrad.telegrambot.request.SendPhoto;
-import com.pengrad.telegrambot.response.SendResponse;
 import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.skyblock.flipping.PriceDatabase;
 import com.viktorx.skyblockbot.task.ComplexFarmingTask;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.util.ScreenshotRecorder;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.http.HttpResponse;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 
 public class ScreenshotDaemon {
     public static final ScreenshotDaemon INSTANCE = new ScreenshotDaemon();
 
     private final Timer timer = new Timer(true);
-    TelegramBot bot;
-    private final long chatId = 360813091;
+    private final long uid;
     private boolean started = false;
 
-    // 5 minutes
-    private final long delay = 1000 * 60 * 5;
-    private final long firstDelay = 3000; // 3 secs
     private int lastTotalSackCount = 0;
     private int lastRedMushCount = 0;
     private int lastBrownMushCount = 0;
     private int lastCropieCount = 0;
     private final List<String> messageQueue = new ArrayList<>();
+    private String botURL = "127.0.0.1";
+
+    private ScreenshotDaemon() {
+        Random random = new Random(System.currentTimeMillis());
+        uid = random.nextLong();
+    }
 
     public void start() {
         synchronized (this) {
@@ -45,24 +49,10 @@ public class ScreenshotDaemon {
 
         SkyblockBot.LOGGER.info("Starting screenshotDaemon");
         // Create your bot passing the token received from @BotFather
-        bot = new TelegramBot("531542929:AAEe3Ddw5OU38OvmOvxOEdgPd0dqxwzzIbM");
-
-        // Register for updates
-        bot.setUpdatesListener(updates -> {
-            // ... process updates
-            // return id of last processed update or confirm them all
-            return UpdatesListener.CONFIRMED_UPDATES_ALL;
-            // Create Exception Handler
-        }, e -> {
-            if (e.response() != null) {
-                // got bad response from telegram
-                e.response().errorCode();
-                SkyblockBot.LOGGER.info("Got bad response from telegram: " + e.response().description());
-            } else {
-                // probably network error
-                e.printStackTrace();
-            }
-        });
+        // 3 secs
+        long firstDelay = 3000;
+        // 5 minutes
+        long delay = 1000 * 60 * 5;
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
@@ -106,11 +96,11 @@ public class ScreenshotDaemon {
 
                 takeAndSendScreenshot(
                         "⛏Current task: " + taskName
-                                + "\n\uD83E\uDD55Enchanted carrots: " + carrotCount
-                                + "\n\uD83C\uDF44Enchanted red mushrooms: " + redMushCount
-                                + "\n\uD83C\uDF44Enchanted brown mushrooms: " + brownMushCount
-                                + "\n\uD83D\uDFEBCropies: " + cropieCount
-                                + "\n\uD83D\uDCB0Projected 1h profit: " + projectedProfit
+                                + "\n\uD83E\uDD55: " + carrotCount
+                                + "\n\uD83C\uDF44\uD83D\uDFE5: " + redMushCount
+                                + "\n\uD83C\uDF44\uD83D\uDFEB: " + brownMushCount
+                                + "\n\uD83D\uDFEB: " + cropieCount
+                                + "\n\uD83D\uDCB0 1h: " + projectedProfit
                                 + messages,
                         false);
             }
@@ -119,11 +109,35 @@ public class ScreenshotDaemon {
 
     public void takeAndSendScreenshot(String caption, boolean notify) {
 
-        ScreenshotRecorder.saveScreenshot(
-                new File(System.getProperty("user.dir")),
-                MinecraftClient.getInstance().getFramebuffer(),
-                text -> {
-                });
+        long timestamp = System.currentTimeMillis();
+        String filename = "screenshots/" + timestamp + "_" + uid + ".";
+        try {
+            BufferedWriter file = new BufferedWriter(new FileWriter(filename + "txt"));
+            file.write(caption);
+            file.close();
+        } catch (IOException e) {
+            SkyblockBot.LOGGER.warn(filename + "txt");
+            return;
+        }
+
+        byte[] screenshot;
+        try {
+            screenshot = takeScreenshot();
+        } catch (IOException e) {
+            SkyblockBot.LOGGER.warn("Couldn't take screenshot!!! IOException");
+            return;
+        }
+
+        HttpEntity entity = MultipartEntityBuilder.create()
+                .addTextBody("message", caption)
+                .addBinaryBody("photo", screenshot)
+                .build();
+
+        HttpPost request = new HttpPost(botURL);
+        request.setEntity(entity);
+
+        HttpClient client = HttpClientBuilder.create().build();
+        HttpResponse response = client.execute(request);
 
         // Waiting arbitrary amount of time because screenshots get taken asynchronously in minecraft
         try {
@@ -132,22 +146,11 @@ public class ScreenshotDaemon {
             throw new RuntimeException(e);
         }
 
-        File lastScreenshot = Utils.getLastModified("screenshots");
-        if (!lastScreenshot.exists()) {
-            SkyblockBot.LOGGER.info("Last screenshot doesn't exist for some reason");
-            return;
-        }
+    }
 
-        SendPhoto info = new SendPhoto(chatId, lastScreenshot)
-                .caption(caption).disableNotification(!notify);
-        SendResponse sendResponse = bot.execute(info);
-
-        if (sendResponse.isOk()) {
-            SkyblockBot.LOGGER.info("Sent screenshot. Response ok: " + sendResponse.isOk());
-        } else {
-            SkyblockBot.LOGGER.info("Sent screenshot. Response ok: " + sendResponse.isOk()
-                    + ", message: " + sendResponse.message());
-        }
+    private byte[] takeScreenshot() throws IOException {
+        NativeImage image = ScreenshotRecorder.takeScreenshot(MinecraftClient.getInstance().getFramebuffer());
+        return image.getBytes();
     }
 
     public void queueMessage(String message) {
