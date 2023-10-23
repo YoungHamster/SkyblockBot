@@ -4,8 +4,10 @@ import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
 import com.viktorx.skyblockbot.mixins.PlayerListHudMixin;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.screen.slot.Slot;
@@ -87,12 +89,17 @@ public class SBUtils {
             return 0;
         }
 
+        String time = godPotTime.split(" ")[0];
+
         if(godPotTime.contains("Hours") || godPotTime.contains("Hour")) {
-            return Long.parseLong(godPotTime.split(" ")[0]) * hour;
+            return Long.parseLong(time) * hour;
         } else if (godPotTime.contains("Minutes")) {
-            return Long.parseLong(godPotTime.split(" ")[0]) * minute;
+            return Long.parseLong(time) * minute;
         } else {
-            return Long.parseLong(godPotTime.split(" ")[0]) * second;
+            if(time.equals("1h")) {
+                return hour;
+            }
+            return Long.parseLong(time) * second;
         }
     }
 
@@ -235,6 +242,20 @@ public class SBUtils {
                 .filter(slot ->
                         slot.getStack().getName().getString().contains(itemStackName)
                 ).count() > 0;
+    }
+
+    public static boolean isItemInInventory(String itemStackName) {
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        assert client.player != null;
+        PlayerInventory inventory = client.player.getInventory();
+
+        for(int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
+            if (inventory.getStack(i).getName().getString().contains(itemStackName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void waitForMenuToOpen() {

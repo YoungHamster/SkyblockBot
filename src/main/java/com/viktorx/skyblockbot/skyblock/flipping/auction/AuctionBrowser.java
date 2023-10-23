@@ -75,8 +75,6 @@ public class AuctionBrowser {
             return null;
         }
 
-        long start = System.currentTimeMillis();
-
         long lowestPrice = -1;
         String lowestPriceUUID = null;
         Auction lowestPriceAuction = null;
@@ -107,9 +105,6 @@ public class AuctionBrowser {
          * Either I will buy, or someone else already bought it
          */
         auctions.remove(lowestPriceAuction);
-
-        long end = System.currentTimeMillis();
-        SkyblockBot.LOGGER.info("Found best auction! It took " + (end - start) + "ms. Price is " + lowestPrice);
 
         return "/viewauction " + lowestPriceUUID;
     }

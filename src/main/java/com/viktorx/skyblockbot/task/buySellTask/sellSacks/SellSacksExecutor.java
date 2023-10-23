@@ -4,12 +4,13 @@ import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
+import com.viktorx.skyblockbot.task.buySellTask.BuySellTaskExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
 import java.util.concurrent.TimeoutException;
 
-public class SellSacksExecutor {
+public class SellSacksExecutor extends BuySellTaskExecutor {
 
     public static SellSacksExecutor INSTANCE = new SellSacksExecutor();
 
@@ -21,6 +22,10 @@ public class SellSacksExecutor {
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickSellSacks);
+    }
+
+    protected void restart() {
+
     }
 
     public void execute(SellSacks task) {
@@ -59,7 +64,7 @@ public class SellSacksExecutor {
     }
 
     public boolean isExecuting(SellSacks task) {
-        return this.task.equals(task) && state != SellSacksState.IDLE;
+        return this.task.equals(task) && !state.equals(SellSacksState.IDLE);
     }
 
     public boolean isPaused() {
@@ -88,10 +93,7 @@ public class SellSacksExecutor {
                 }
                 waitTickCounter = 0;
 
-                clickOnSlotOrAbort(task.getSellStacksSlotName());
-
-                state = SellSacksState.WAITING_FOR_MENU;
-                nextState = SellSacksState.CONFIRMING;
+                clickOnSlotOrAbort(task.getSellStacksSlotName(), SellSacksState.WAITING_FOR_MENU, SellSacksState.CONFIRMING);
             }
 
             case CONFIRMING -> {
@@ -100,9 +102,7 @@ public class SellSacksExecutor {
                 }
                 waitTickCounter = 0;
 
-                clickOnSlotOrAbort(task.getConfirmSlotName());
-
-                state = SellSacksState.WAITING_BEFORE_CLOSING_MENU;
+                clickOnSlotOrAbort(task.getConfirmSlotName(), SellSacksState.WAITING_BEFORE_CLOSING_MENU, null);
             }
 
             case WAITING_BEFORE_CLOSING_MENU -> {
@@ -111,24 +111,24 @@ public class SellSacksExecutor {
                 }
                 waitTickCounter = 0;
 
-                clickOnSlotOrAbort(task.getClosingSlotName());
+                asyncCloseCurrentInventory();
 
                 SkyblockBot.LOGGER.info("Sold sacks!");
                 state = SellSacksState.IDLE;
                 task.completed();
             }
-
-            default -> {
-            }
         }
     }
 
-    private void clickOnSlotOrAbort(String slotName) {
+    private void clickOnSlotOrAbort(String slotName, SellSacksState stateVal, SellSacksState nextStateVal) {
         try {
             SBUtils.leftClickOnSlot(slotName);
         } catch (TimeoutException e) {
             state = SellSacksState.IDLE;
             task.aborted();
+        } finally {
+            state = stateVal;
+            nextState = nextStateVal;
         }
     }
 

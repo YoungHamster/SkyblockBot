@@ -21,8 +21,6 @@ public class SellSacks extends Task {
         SellSacksExecutor.INSTANCE.abort();
     }
 
-    public void saveToFile(String filename) {}
-
     public boolean isExecuting() {
         return SellSacksExecutor.INSTANCE.isExecuting(this);
     }

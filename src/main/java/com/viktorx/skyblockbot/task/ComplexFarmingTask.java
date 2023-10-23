@@ -203,23 +203,35 @@ public class ComplexFarmingTask {
                 }
 
                 if(SBUtils.getTimeLeftGodPot() < ComplexFarmingTaskSettings.godPotBuyThreshold) {
-                    if(!taskQueue.contains(buyItem)) {
-                        SkyblockBot.LOGGER.info("Queueing to buy god pot. Minutes left: " + SBUtils.getTimeLeftGodPot() / (1000 * 60));
+                    if(!taskQueue.contains(useItem) &&
+                            !currentTask.getClass().equals(buyItem.getClass()) &&
+                            !currentTask.getClass().equals(useItem.getClass())) {
 
-                        ((BuyItem) buyItem).setItemInfo(ItemNames.GOD_POT.getName(), new String[0]);
-                        taskQueue.add(buyItem);
+                        SkyblockBot.LOGGER.info("Queueing to use god pot. Minutes left: " + SBUtils.getTimeLeftGodPot() / (1000 * 60));
+
+                        if (!SBUtils.isItemInInventory(ItemNames.GOD_POT.getName())) {
+                            ((BuyItem) buyItem).setItemInfo(ItemNames.GOD_POT.getName(), new String[0]);
+                            taskQueue.add(buyItem);
+                        }
                         ((UseItem) useItem).setItemName(ItemNames.GOD_POT.getName());
                         taskQueue.add(useItem);
                     }
                 }
 
                 if(SBUtils.getTimeLeftCookieBuff() < ComplexFarmingTaskSettings.cookieBuyThreshold) {
-                    SkyblockBot.LOGGER.info("Queueing to buy cookie. Minutes left: " + SBUtils.getTimeLeftCookieBuff() / (1000 * 60));
+                    if(!taskQueue.contains(useItem) &&
+                            !currentTask.getClass().equals(buyBZItem.getClass()) &&
+                            !currentTask.getClass().equals(useItem.getClass())) {
 
-                    ((BuyBZItem) buyBZItem).setItemName(ItemNames.BOOSTER_COOKIE.getName());
-                    taskQueue.add(buyBZItem);
-                    ((UseItem) useItem).setItemName(ItemNames.BOOSTER_COOKIE.getName());
-                    taskQueue.add(useItem);
+                        SkyblockBot.LOGGER.info("Queueing to use cookie. Minutes left: " + SBUtils.getTimeLeftCookieBuff() / (1000 * 60));
+
+                        if(!SBUtils.isItemInInventory(ItemNames.BOOSTER_COOKIE.getName())) {
+                            ((BuyBZItem) buyBZItem).setItemName(ItemNames.BOOSTER_COOKIE.getName());
+                            taskQueue.add(buyBZItem);
+                        }
+                        ((UseItem) useItem).setItemName(ItemNames.BOOSTER_COOKIE.getName());
+                        taskQueue.add(useItem);
+                    }
                 }
             }
         },
@@ -234,6 +246,7 @@ public class ComplexFarmingTask {
             public void run() {
                 if (GlobalExecutorInfo.carrotCount.get() / 160 > GlobalExecutorInfo.totalSackCountLimit) {
                     if(!taskQueue.contains(sellSacks)) {
+                        SkyblockBot.LOGGER.info("Queueing to sell sacks");
                         taskQueue.add(sellSacks);
                     }
                 }

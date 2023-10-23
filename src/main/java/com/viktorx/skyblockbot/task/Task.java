@@ -1,5 +1,7 @@
 package com.viktorx.skyblockbot.task;
 
+import com.viktorx.skyblockbot.SkyblockBot;
+
 import java.util.concurrent.CompletableFuture;
 
 public abstract class Task {
@@ -16,10 +18,14 @@ public abstract class Task {
     public void completed() {
         if(whenCompleted != null)
             CompletableFuture.runAsync(whenCompleted);
+        else
+            SkyblockBot.LOGGER.warn("whenCompleted == null!!!!!!!");
     }
     public void aborted() {
         if(whenAborted != null)
             CompletableFuture.runAsync(whenAborted);
+        else
+            SkyblockBot.LOGGER.warn("whenAborted == null!!!!!!!");
     }
     public void whenCompleted(Runnable whenCompleted) {
         this.whenCompleted = whenCompleted;

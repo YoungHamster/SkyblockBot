@@ -115,7 +115,7 @@ public class BuyItemExecutor extends BuySellTaskExecutor {
 
                 if (auctionCommand == null) {
                     state = BuyItemState.RESTARTING;
-                    SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting!");
+                    SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 118");
                     return;
                 }
 
@@ -149,14 +149,14 @@ public class BuyItemExecutor extends BuySellTaskExecutor {
                     return;
                 }
 
-                if (isStringInRecentChat("You claimed")) {
+                if (isStringInRecentChat("You claimed", 5)) {
                     state = BuyItemState.IDLE;
                     task.completed();
-                } else if (isStringInRecentChat("Visit the Auction House")) {
+                } else if (isStringInRecentChat("Visit the Auction House", 5)) {
                     state = BuyItemState.CLAIMING_AUCTION;
                 } else {
                     state = BuyItemState.RESTARTING;
-                    SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting!");
+                    SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 159");
                 }
             }
 
@@ -206,8 +206,8 @@ public class BuyItemExecutor extends BuySellTaskExecutor {
 
             case WAITING_FOR_MENU -> {
                 if (checkForPossibleError()) {
-                    state = BuyItemState.RESTARTING;
-                    SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting!");
+                    SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 210");
+                    restart();
                     return;
                 }
                 if (CurrentInventory.syncIDChanged()) {
@@ -220,7 +220,7 @@ public class BuyItemExecutor extends BuySellTaskExecutor {
 
     private boolean checkForPossibleError() {
         for (String possibleError : possibleErrors) {
-            if (isStringInRecentChat(possibleError)) {
+            if (isStringInRecentChat(possibleError, 1)) {
                 return true;
             }
         }

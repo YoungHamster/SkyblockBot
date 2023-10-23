@@ -95,10 +95,10 @@ public class UseItemExecutor {
                 assert client.player != null;
                 startingSlot = client.player.getInventory().selectedSlot;
 
-                if (itemSlot > 9) {
-                    Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[defaultHotbarSlot]);
-                } else {
+                if (itemSlot < 9) {
                     Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[itemSlot]);
+                } else {
+                    Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[defaultHotbarSlot]);
                 }
 
                 state = UseItemState.USING_ITEM;
