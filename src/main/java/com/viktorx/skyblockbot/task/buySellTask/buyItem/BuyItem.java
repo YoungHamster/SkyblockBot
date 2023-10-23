@@ -7,7 +7,7 @@ public class BuyItem extends Task {
     private String itemName = null;
     private String[] itemLoreKeyWords;
     private boolean paused = false;
-    private long priceLimit = 100000;
+    private long priceLimit = 10000000;
 
     public BuyItem() {
     }

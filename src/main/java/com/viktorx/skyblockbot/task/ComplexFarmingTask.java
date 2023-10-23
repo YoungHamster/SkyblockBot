@@ -75,8 +75,6 @@ public class ComplexFarmingTask {
     }
 
     void whenFarmCompleted() {
-        ScreenshotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
-
         synchronized (runWhenFarmCompleted) {
             for (Runnable notTask : runWhenFarmCompleted) {
                 notTask.run();
@@ -141,14 +139,6 @@ public class ComplexFarmingTask {
         if (isExecuting()) {
             SkyblockBot.LOGGER.info("Can't start complexFarmingTask when it is already executing");
             return;
-        } else {
-            ((UseItem) useItem).setItemName("Bread");
-            currentTask = useItem;
-            currentTask.execute();
-        }
-
-        if(useItem.isExecuting()) {
-            return;
         }
 
         runWhenFarmCompleted.clear();
@@ -185,12 +175,14 @@ public class ComplexFarmingTask {
               synchronized (runWhenFarmCompleted) {
                   runWhenFarmCompleted.add(() -> {
                       SkyblockBot.LOGGER.info("Bot is taking a break");
+                      ScreenshotDaemon.INSTANCE.queueMessage("Bot is taking a break");
                       try {
                           Thread.sleep(ComplexFarmingTaskSettings.pauseDuration);
                       } catch (InterruptedException e) {
                           throw new RuntimeException(e);
                       }
                       SkyblockBot.LOGGER.info("Break is over, bot is farming again");
+                      ScreenshotDaemon.INSTANCE.queueMessage("Break is over, bot is farming again");
                   });
               }
             }

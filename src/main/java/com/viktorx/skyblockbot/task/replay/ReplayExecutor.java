@@ -94,7 +94,7 @@ public class ReplayExecutor {
 
     private void antiDetectDone() {
         ScreenshotDaemon.INSTANCE.takeAndSendScreenshot("Anti detect triggered!!!", true);
-        if(ReplayBotSettings.autoQuitWhenAntiDetect) {
+        if (ReplayBotSettings.autoQuitWhenAntiDetect) {
             MinecraftClient.getInstance().stop();
         }
     }
@@ -141,8 +141,7 @@ public class ReplayExecutor {
             }
         }
 
-        if(GlobalExecutorInfo.worldLoading.get()) {
-            state = ReplayBotState.IDLE;
+        if (GlobalExecutorInfo.worldLoading.get()) {
             abort();
             return;
         }
@@ -166,6 +165,7 @@ public class ReplayExecutor {
         tickIterator++;
         if (tickIterator == replay.size()) {
             printDebugInfo();
+            unpressButtons();
             state = ReplayBotState.IDLE;
             replay.completed();
         }
@@ -202,8 +202,8 @@ public class ReplayExecutor {
 
         if (distanceToStartPoint > ReplayBotSettings.maxDistanceToFirstPoint) {
             SkyblockBot.LOGGER.warn(
-                    "Can't start so far from first point. Expected x: " + expected.x  + " z:" + expected.z
-                    + ", actual x:" + actual.x + " z:" + actual.z);
+                    "Can't start so far from first point. Expected x: " + expected.x + " z:" + expected.z
+                            + ", actual x:" + actual.x + " z:" + actual.z);
             state = ReplayBotState.IDLE;
             abort();
             executeSem.release();
@@ -215,7 +215,7 @@ public class ReplayExecutor {
         this.replay = replay;
 
         itemsWhenStarted.clear();
-        for(int i = 0; i < 9; i++) {
+        for (int i = 0; i < 9; i++) {
             itemsWhenStarted.add(player.getInventory().getStack(i).getItem().getName().getString());
         }
 
@@ -228,6 +228,7 @@ public class ReplayExecutor {
         debugFullCounter = 0;
 
         antiDetectTriggeredTickCounter = 0;
+        unpressButtons();
         adjustHeadBeforeStarting();
 
         executeSem.release();
@@ -292,7 +293,7 @@ public class ReplayExecutor {
             String current = client.player.getInventory().getMainHandStack().getItem().getName().getString();
             if (!current.equals(expected)) {
                 SkyblockBot.LOGGER.warn("Anti-detection alg: server changed slot. Expected item in hand: " + expected
-                                        + ", current: " + current);
+                        + ", current: " + current);
                 return true;
             }
         }
@@ -319,7 +320,7 @@ public class ReplayExecutor {
             boolean isBlockAboveSolid = client.world.getBlockState(above).getMaterial().isSolid();
 
             if (isBlockSolid || isBlockAboveSolid) {
-                if(!client.world.getBlockState(blockPos).getBlock().getName().getString().equals("iron_door")) {
+                if (!client.world.getBlockState(blockPos).getBlock().getName().getString().equals("iron_door")) {
                     return false;
                 }
             }

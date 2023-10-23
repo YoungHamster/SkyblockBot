@@ -89,8 +89,8 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
-                ComplexFarmingTask.INSTANCE.loadRecordingAsync();
-                client.options.hotbarKeys[5].setPressed(true);
+                //ComplexFarmingTask.INSTANCE.loadRecordingAsync();
+                client.player.sendChatMessage("/warp dungeons");
             }
 
             if (pauseTask.wasPressed()) {
