@@ -1,7 +1,6 @@
 package com.viktorx.skyblockbot.keybinds;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.viktorx.skyblockbot.ScreenshotDaemon;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
 import com.viktorx.skyblockbot.task.ComplexFarmingTask;
@@ -23,7 +22,6 @@ public class Keybinds {
     private static KeyBinding startStopRecording;
     private static KeyBinding loadRecording;
     private static KeyBinding pauseTask;
-    private static boolean screenshotDaemonStarted = false;
 
     private static final Queue<Integer> tickKeyPressQueue = new LinkedBlockingQueue<>();
 
@@ -69,10 +67,6 @@ public class Keybinds {
             CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
 
             if (startStopBot.wasPressed()) {
-                if (!screenshotDaemonStarted) {
-                    screenshotDaemonStarted = true;
-                    ScreenshotDaemon.INSTANCE.start();
-                }
                 if (!ComplexFarmingTask.INSTANCE.isExecuting()) {
                     ComplexFarmingTask.INSTANCE.execute();
                 } else {

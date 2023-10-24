@@ -23,8 +23,6 @@ dependencies {
     // https://mvnrepository.com/artifact/mysql/mysql-connector-java
     // ебал я в рот вашу джаву с еёйными блять системами сборки. сука почему нельзя как в питоне????? да потому что тупые джависты блять
     shadow(implementation('mysql:mysql-connector-java:8.0.31'))
-    // Telegram bot api
-    shadow(implementation group: 'com.github.pengrad', name: 'java-telegram-bot-api', version: '6.9.1')
     // Apache http client
     shadow(implementation group: 'org.apache.httpcomponents.client5', name: 'httpclient5', version: '5.3-alpha1')
 

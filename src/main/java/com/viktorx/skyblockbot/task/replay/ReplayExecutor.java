@@ -1,6 +1,6 @@
 package com.viktorx.skyblockbot.task.replay;
 
-import com.viktorx.skyblockbot.ScreenshotDaemon;
+import com.viktorx.skyblockbot.tgBot.ScreenshotDaemon;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.movement.LookHelper;
