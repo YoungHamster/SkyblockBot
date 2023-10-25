@@ -2,6 +2,8 @@ plugins {
     id 'fabric-loom' version '0.12-SNAPSHOT'
     id 'maven-publish'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
 version = project.mod_version
@@ -19,6 +21,26 @@ repositories {
     }
 }
 
+configurations {
+    compileAndRuntime
+    compileAndRuntime.transitive = true
+    implementation.extendsFrom(compileAndRuntime)
+}
+
+private static def getJavaFxPlatform() {
+    def os = System.getProperty('os.name').toLowerCase(Locale.ENGLISH)
+    if (os.contains('win')) {
+        return 'win'
+    }
+    if (os.contains('nix') || os.contains('nux')) {
+        return 'linux'
+    }
+    if (os.contains('osx') || os.contains('mac')) {
+        return 'mac'
+    }
+    assert false: "unknown os: $os"
+}
+
 dependencies {
     // https://mvnrepository.com/artifact/mysql/mysql-connector-java
     // ебал я в рот вашу джаву с еёйными блять системами сборки. сука почему нельзя как в питоне????? да потому что тупые джависты блять
@@ -34,6 +56,11 @@ dependencies {
 
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // javafx
+    def jfxVersion = "21.0.1"
+    def jfxPlatform = getJavaFxPlatform()
+    compileAndRuntime "org.openjfx:javafx-base:${jfxVersion}:${jfxPlatform}"
 }
 
 processResources {
@@ -69,6 +96,11 @@ java {
     withSourcesJar()
 }
 
+javafx {
+    version = "21.0.1"
+    modules = [ 'javafx.base' ]
+}
+
 jar {
     from("LICENSE") {
         rename { "${it}_${project.archivesBaseName}" }
@@ -77,12 +109,16 @@ jar {
 
 shadowJar {
     configurations = [project.configurations.shadow]
-    archiveClassifier.set("dev")
+    archiveClassifier.set("dev")// Required by the 'shadowJar' task
+    project.setProperty("mainClassName", "com.your.MainClass")
 }
 
 remapJar {
     dependsOn(shadowJar)
     inputFile = tasks.shadowJar.archiveFile
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from { configurations.compileAndRuntime.collect { it.isDirectory() ? it : zipTree(it) } }
 }
 
 // configure the maven publication

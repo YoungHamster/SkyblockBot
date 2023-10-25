@@ -1,6 +1,6 @@
 package com.viktorx.skyblockbot.task.replay;
 
-import com.viktorx.skyblockbot.tgBot.ScreenshotDaemon;
+import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.movement.LookHelper;
@@ -24,8 +24,6 @@ import java.util.concurrent.Semaphore;
 public class ReplayExecutor {
 
     public static final ReplayExecutor INSTANCE = new ReplayExecutor();
-
-    private Semaphore executeSem = new Semaphore(1);
 
     private Replay replay;
     private int tickIterator;
@@ -93,7 +91,7 @@ public class ReplayExecutor {
     }
 
     private void antiDetectDone() {
-        ScreenshotDaemon.INSTANCE.takeAndSendScreenshot("Anti detect triggered!!!", true);
+        TGBotDaemon.INSTANCE.takeAndSendScreenshot("Anti detect triggered!!!", true);
         if (ReplayBotSettings.autoQuitWhenAntiDetect) {
             MinecraftClient.getInstance().stop();
         }
@@ -150,7 +148,7 @@ public class ReplayExecutor {
             state = ReplayBotState.NOT_IDLE;
             asyncPlayAlarmSound();
             state = ReplayBotState.ANTI_DETECT_TRIGGERED;
-            ScreenshotDaemon.INSTANCE.takeAndSendScreenshot("Anti detect triggered!!!", true);
+            TGBotDaemon.INSTANCE.takeAndSendScreenshot("Anti detect triggered!!!", true);
             return;
         }
 
@@ -172,12 +170,9 @@ public class ReplayExecutor {
     }
 
 
-    public void execute(Replay replay) throws InterruptedException {
-        executeSem.acquire();
-
+    public synchronized void execute(Replay replay) throws InterruptedException {
         if (!state.equals(ReplayBotState.IDLE)) {
             SkyblockBot.LOGGER.warn("Can't play while state = " + state.getName());
-            executeSem.release();
             return;
         }
 
@@ -187,11 +182,11 @@ public class ReplayExecutor {
             SkyblockBot.LOGGER.warn("can't start playing, nothing to play");
             state = ReplayBotState.IDLE;
             abort();
-            executeSem.release();
             return;
         }
 
         state = ReplayBotState.NOT_IDLE;
+        unpressButtons();
 
         assert MinecraftClient.getInstance().player != null;
 
@@ -206,20 +201,15 @@ public class ReplayExecutor {
                             + ", actual x:" + actual.x + " z:" + actual.z);
             state = ReplayBotState.IDLE;
             abort();
-            executeSem.release();
             return;
         }
 
         SkyblockBot.LOGGER.info("Starting playing");
 
-        this.replay = replay;
-
         itemsWhenStarted.clear();
         for (int i = 0; i < 9; i++) {
             itemsWhenStarted.add(player.getInventory().getStack(i).getItem().getName().getString());
         }
-
-        tickIterator = 0;
 
         debugPacketCounter = 0;
         debugOnGroundOnlyCounter = 0;
@@ -228,18 +218,18 @@ public class ReplayExecutor {
         debugFullCounter = 0;
 
         antiDetectTriggeredTickCounter = 0;
-        unpressButtons();
-        adjustHeadBeforeStarting();
+        tickIterator = 0;
 
-        executeSem.release();
+        adjustHeadBeforeStarting();
     }
 
     public void abort() {
         SkyblockBot.LOGGER.info("aborted playing");
+        state = ReplayBotState.IDLE;
+
         printDebugInfo();
         unpressButtons();
 
-        state = ReplayBotState.IDLE;
         replay.aborted();
     }
 

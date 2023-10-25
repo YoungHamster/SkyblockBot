@@ -7,7 +7,7 @@ import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandExecutor;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.task.buySellTask.sellSacks.SellSacksExecutor;
 import com.viktorx.skyblockbot.task.useItem.UseItemExecutor;
-import com.viktorx.skyblockbot.tgBot.ScreenshotDaemon;
+import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 import net.fabricmc.api.ModInitializer;
 
 import org.apache.logging.log4j.LogManager;
@@ -29,6 +29,6 @@ public class SkyblockBot implements ModInitializer {
         BuyBZItemExecutor.INSTANCE.Init();
         UseItemExecutor.INSTANCE.Init();
         Utils.InitItemCounter();
-        ScreenshotDaemon.INSTANCE.Init();
+        TGBotDaemon.INSTANCE.Init();
     }
 }
