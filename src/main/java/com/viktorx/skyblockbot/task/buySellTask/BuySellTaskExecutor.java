@@ -21,45 +21,8 @@ public abstract class BuySellTaskExecutor {
     private CompletableFuture<Boolean> currentClick;
     protected boolean currentClickRunning = false;
     protected int waitTickCounter = 0;
-    private List<Integer> detectedStringsInChatIds = new ArrayList<>();
 
     protected abstract void restart();
-
-    /**
-     *
-     * @param str self-explanatory
-     * @param maxBacktrack how many messages it will check in chat, starting from the most recent one
-     * @return true if recent messages in chat contain str, otherwise false
-     */
-    protected boolean isStringInRecentChat(String str, int maxBacktrack) {
-        ChatHud chat = MinecraftClient.getInstance().inGameHud.getChatHud();
-        List<ChatHudLine<Text>> messages = ((IChatHudMixin) chat).getMessages();
-        if (messages.size() == 0) {
-            SkyblockBot.LOGGER.warn("BuyItem ERROR! The message history is empty, it's weird");
-            return false;
-        }
-
-        int limit = Math.min(messages.size(), maxBacktrack);
-
-        /*
-         * Clearing out useless data so we don't leak memory when we run for long amounts of time
-         */
-        if(detectedStringsInChatIds.size() > messages.size()) {
-            detectedStringsInChatIds = detectedStringsInChatIds.subList(0, messages.size());
-        }
-
-        for (int i = 0; i < limit; i++) {
-            if(detectedStringsInChatIds.contains(messages.get(i).getId())) {
-                continue;
-            }
-            if (messages.get(i).getText().getString().contains(str)) {
-                detectedStringsInChatIds.add(messages.get(i).getId());
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     /*
      * Returns: true if done and clicked successfully, false if not done yet(or restarting)

@@ -1,9 +1,14 @@
 package com.viktorx.skyblockbot;
 
+import com.viktorx.skyblockbot.mixins.IChatHudMixin;
 import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.ChatHud;
+import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -18,6 +23,46 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Utils {
+
+
+    private static List<Integer> detectedStringsInChatIds = new ArrayList<>();
+
+    /**
+     *
+     * @param str self-explanatory
+     * @param maxBacktrack how many messages it will check in chat, starting from the most recent one
+     * @return true if recent messages in chat contain str, otherwise false
+     */
+    public static boolean isStringInRecentChat(String str, int maxBacktrack) {
+        ChatHud chat = MinecraftClient.getInstance().inGameHud.getChatHud();
+        List<ChatHudLine<Text>> messages = ((IChatHudMixin) chat).getMessages();
+        if (messages.size() == 0) {
+            SkyblockBot.LOGGER.warn("BuyItem ERROR! The message history is empty, it's weird");
+            return false;
+        }
+
+        int limit = Math.min(messages.size(), maxBacktrack);
+
+        /*
+         * Clearing out useless data so we don't leak memory when we run for long amounts of time
+         */
+        if(detectedStringsInChatIds.size() > messages.size()) {
+            detectedStringsInChatIds = detectedStringsInChatIds.subList(0, messages.size());
+        }
+
+        for (int i = 0; i < limit; i++) {
+            if(detectedStringsInChatIds.contains(messages.get(i).getId())) {
+                continue;
+            }
+            if (messages.get(i).getText().getString().contains(str)) {
+                detectedStringsInChatIds.add(messages.get(i).getId());
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static final List<Pair<String, Integer>> prevTickInventory = new ArrayList<>();
 
     public static void InitItemCounter() {

@@ -2,6 +2,7 @@ package com.viktorx.skyblockbot.task.buySellTask.buyItem;
 
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.skyblock.flipping.auction.AuctionBrowser;
 import com.viktorx.skyblockbot.task.Task;
 import com.viktorx.skyblockbot.task.buySellTask.BuySellTaskExecutor;
@@ -149,10 +150,10 @@ public class BuyItemExecutor extends BuySellTaskExecutor {
                     return;
                 }
 
-                if (isStringInRecentChat("You claimed", 5)) {
+                if (Utils.isStringInRecentChat("You claimed", 5)) {
                     state = BuyItemState.IDLE;
                     task.completed();
-                } else if (isStringInRecentChat("Visit the Auction House", 5)) {
+                } else if (Utils.isStringInRecentChat("Visit the Auction House", 5)) {
                     state = BuyItemState.CLAIMING_AUCTION;
                 } else {
                     state = BuyItemState.RESTARTING;
@@ -220,7 +221,7 @@ public class BuyItemExecutor extends BuySellTaskExecutor {
 
     private boolean checkForPossibleError() {
         for (String possibleError : possibleErrors) {
-            if (isStringInRecentChat(possibleError, 1)) {
+            if (Utils.isStringInRecentChat(possibleError, 1)) {
                 return true;
             }
         }

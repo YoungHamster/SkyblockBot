@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.task;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.buySellTask.buyBZItem.BuyBZItem;
@@ -11,7 +12,7 @@ import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.replay.Replay;
 import com.viktorx.skyblockbot.task.replay.ReplayBotSettings;
 import com.viktorx.skyblockbot.task.useItem.UseItem;
-import com.viktorx.skyblockbot.tgBot.ScreenshotDaemon;
+import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -20,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 public class ComplexFarmingTask {
     public static final ComplexFarmingTask INSTANCE = new ComplexFarmingTask();
 
+    private final Task getOutOfLimbo;
     private final Task getToSkyblock;
     private final Task getToGarden;
     private final Task sellSacks;
@@ -35,6 +37,10 @@ public class ComplexFarmingTask {
     private Timer checkSacksTimer;
 
     ComplexFarmingTask() {
+        this.getOutOfLimbo = new ChangeIsland("/lobby");
+        this.getOutOfLimbo.whenCompleted(this::whenGetOutOfLimboCompleted);
+        this.getOutOfLimbo.whenAborted(this::whenGetOutOfLimboAborted);
+
         this.getToSkyblock = new ChangeIsland("/play skyblock");
         this.getToSkyblock.whenCompleted(this::whenGetToSkyblockCompleted);
         this.getToSkyblock.whenAborted(this::whenGetToSkyblockAborted);
@@ -64,8 +70,26 @@ public class ComplexFarmingTask {
         this.useItem.whenAborted(this::defaultWhenAborted);
     }
 
+    void whenGetOutOfLimboCompleted() {
+        TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
+        currentTask = getToSkyblock;
+        currentTask.execute();
+    }
+
+    void whenGetOutOfLimboAborted() {
+        TGBotDaemon.INSTANCE.queueMessage("Failed task: " + getCurrentTaskName());
+        SkyblockBot.LOGGER.info("Failed to get out of limbo, waiting 10 minutes to retry");
+        Timer retryGetOutOfLimbo = new Timer(true);
+        retryGetOutOfLimbo.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                currentTask.execute();
+            }
+        }, ComplexFarmingTaskSettings.retryGetOutOfLimboDelay);
+    }
+
     void whenGetToSkyblockCompleted() {
-        ScreenshotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
+        TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
 
         if (!SBUtils.getIslandOrArea().contains(ComplexFarmingTaskSettings.gardenName)) {
             currentTask = getToGarden;
@@ -86,7 +110,7 @@ public class ComplexFarmingTask {
     }
 
     void defaultWhenCompleted() {
-        ScreenshotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
+        TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
 
         if (!taskQueue.isEmpty()) {
             currentTask = taskQueue.poll();
@@ -127,7 +151,11 @@ public class ComplexFarmingTask {
             if (SBUtils.isServerSkyblock()) {
                 currentTask = getToGarden;
             } else {
-                currentTask = getToSkyblock;
+                if(Utils.isStringInRecentChat("You were spawned in limbo", 3)) {
+                    currentTask = getOutOfLimbo;
+                } else {
+                    currentTask = getToSkyblock;
+                }
             }
             currentTask.execute();
         }
@@ -173,14 +201,14 @@ public class ComplexFarmingTask {
                                                       synchronized (runWhenFarmCompleted) {
                                                           runWhenFarmCompleted.add(() -> {
                                                               SkyblockBot.LOGGER.info("Bot is taking a break");
-                                                              ScreenshotDaemon.INSTANCE.queueMessage("Bot is taking a break");
+                                                              TGBotDaemon.INSTANCE.queueMessage("Bot is taking a break");
                                                               try {
                                                                   Thread.sleep(ComplexFarmingTaskSettings.pauseDuration);
                                                               } catch (InterruptedException e) {
                                                                   throw new RuntimeException(e);
                                                               }
                                                               SkyblockBot.LOGGER.info("Break is over, bot is farming again");
-                                                              ScreenshotDaemon.INSTANCE.queueMessage("Break is over, bot is farming again");
+                                                              TGBotDaemon.INSTANCE.queueMessage("Break is over, bot is farming again");
                                                           });
                                                       }
                                                   }

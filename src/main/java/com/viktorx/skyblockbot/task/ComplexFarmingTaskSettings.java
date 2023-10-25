@@ -7,4 +7,5 @@ public class ComplexFarmingTaskSettings {
     public static final long godPotBuyThreshold = 1000 * 60 * 30; // 30 minutes
     public static final long cookieBuyThreshold = godPotBuyThreshold;
     public static final String gardenName = "Plot";
+    public static final long retryGetOutOfLimboDelay = 1000 * 60 * 10;
 }
