@@ -10,8 +10,11 @@ import com.viktorx.skyblockbot.task.useItem.UseItemExecutor;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 import net.fabricmc.api.ModInitializer;
 
+import net.minecraft.client.MinecraftClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.FileNotFoundException;
 
 public class SkyblockBot implements ModInitializer {
 
@@ -21,6 +24,13 @@ public class SkyblockBot implements ModInitializer {
     @Override
     public void onInitialize() {
         LOGGER.info("Hello");
+        try {
+            GlobalSettingsManager.getInstance().loadSettings();
+        } catch (FileNotFoundException e) {
+            SkyblockBot.LOGGER.error("Couldn't load settings!!!");
+            MinecraftClient.getInstance().close();
+        }
+
         Keybinds.Init();
         ReplayExecutor.INSTANCE.Init();
         ChangeIslandExecutor.INSTANCE.Init();

@@ -18,7 +18,7 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 
-public class ComplexFarmingTask {
+public class ComplexFarmingTask extends Task {
     public static final ComplexFarmingTask INSTANCE = new ComplexFarmingTask();
 
     private final Task getOutOfLimbo;

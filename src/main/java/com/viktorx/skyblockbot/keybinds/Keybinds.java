@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.keybinds;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.viktorx.skyblockbot.GlobalSettingsManager;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
 import com.viktorx.skyblockbot.task.ComplexFarmingTask;
@@ -12,6 +13,7 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
+import java.io.FileNotFoundException;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -83,8 +85,12 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
-                //ComplexFarmingTask.INSTANCE.loadRecordingAsync();
-                client.player.sendChatMessage("/warp dungeons");
+                try {
+                    GlobalSettingsManager.getInstance().loadSettings();
+                } catch (FileNotFoundException e) {
+                    SkyblockBot.LOGGER.warn("Coudln't load settings");
+                }
+                ComplexFarmingTask.INSTANCE.loadRecordingAsync();
             }
 
             if (pauseTask.wasPressed()) {
@@ -135,7 +141,7 @@ public class Keybinds {
                 0));
 
         try {
-            Thread.sleep(20); // press button for around 1 tick, maybe make it random later
+            Thread.sleep(KeybindsSettings.buttonPressDelay); // press button for around 1 tick, maybe make it random later
         } catch (InterruptedException e) {
             SkyblockBot.LOGGER.info("InterruptedException. Don't care");
         }
