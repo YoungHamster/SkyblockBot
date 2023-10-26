@@ -325,7 +325,10 @@ public class ReplayExecutor {
             boolean isBlockAboveSolid = client.world.getBlockState(above).getMaterial().isSolid();
 
             if (isBlockSolid || isBlockAboveSolid) {
-                if (!client.world.getBlockState(blockPos).getBlock().getName().getString().equals("iron_door")) {
+                String blockName = client.world.getBlockState(blockPos).getBlock().getName().getString();
+                SkyblockBot.LOGGER.info("Block: " + blockName);
+                // TODO make this better
+                if (!blockName.equals("iron_door") && !blockName.contains("табличка")) {
                     return false;
                 }
             }
