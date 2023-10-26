@@ -57,6 +57,7 @@ public class GlobalSettingsManager {
         ReplayBotSettings.detectStucknessCoefficient = Double.parseDouble(settings.get("ReplayBot.detectStucknessCoefficient"));
         ReplayBotSettings.checkForCollisionsAdvanceTicks = Integer.parseInt(settings.get("ReplayBot.checkForCollisionsAdvanceTicks"));
         ReplayBotSettings.autoQuitWhenAntiDetect = Boolean.parseBoolean(settings.get("ReplayBot.autoQuitWhenAntiDetect"));
+        ReplayBotSettings.maxTicksToWaitForSpawn = Integer.parseInt(settings.get("ReplayBot.maxTicksToWaitForSpawn"));
 
         ComplexFarmingTaskSettings.pauseInterval = Long.parseLong(settings.get("ComplexFarmingTask.pauseInterval"));
         ComplexFarmingTaskSettings.pauseDuration = Long.parseLong(settings.get("ComplexFarmingTask.pauseDuration"));

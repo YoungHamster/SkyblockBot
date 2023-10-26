@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CompletableFuture;
 
 public class TGBotDaemon {
     public static final TGBotDaemon INSTANCE = new TGBotDaemon();
@@ -139,21 +140,26 @@ public class TGBotDaemon {
                 return;
             }
 
-            HttpPost request = new HttpPost(botURL + urlPath);
+            /*
+             * Send screenshot asynchronously because otherwise we will use render thread and game will freeze for some time
+             */
+            CompletableFuture.runAsync(() -> {
+                HttpPost request = new HttpPost(botURL + urlPath);
 
-            for(Pair<String, String> header : headers) {
-                request.setHeader(header.getKey(), header.getValue());
-            }
-            request.setHeader("notify", Boolean.toString(notify));
-            request.setEntity(EntityBuilder.create().setBinary(screenshot).build());
+                for (Pair<String, String> header : headers) {
+                    request.setHeader(header.getKey(), header.getValue());
+                }
+                request.setHeader("notify", Boolean.toString(notify));
+                request.setEntity(EntityBuilder.create().setBinary(screenshot).build());
 
-            HttpClient client = HttpClientBuilder.create().build();
-            try {
-                String value = client.execute(request, ResponseHandler.INSTANCE);
-                SkyblockBot.LOGGER.info("Sent info to TGBot! Respone: " + value);
-            } catch (IOException e) {
-                SkyblockBot.LOGGER.warn("Couldn't send info to TGBot for some reason");
-            }
+                HttpClient client = HttpClientBuilder.create().build();
+                try {
+                    String value = client.execute(request, ResponseHandler.INSTANCE);
+                    SkyblockBot.LOGGER.info("Sent info to TGBot! Respone: " + value);
+                } catch (IOException e) {
+                    SkyblockBot.LOGGER.warn("Couldn't send info to TGBot for some reason");
+                }
+            });
         });
     }
 

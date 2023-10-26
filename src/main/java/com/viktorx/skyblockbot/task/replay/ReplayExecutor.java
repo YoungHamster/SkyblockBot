@@ -189,12 +189,28 @@ public class ReplayExecutor {
 
         assert MinecraftClient.getInstance().player != null;
 
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
-        Vec3d expected = replay.getTickState(0).getPosition();
-        Vec3d actual = player.getPos();
-        double distanceToStartPoint = actual.subtract(expected).length();
+        /*
+         * This code is for situation when we die at the end of the farm to respawn at the start
+         * We have to wait and check every tick if our position is equal to the starting position
+         * If we wait for some time and it doesn't happen we abort the task
+         */
+        int waitTickCounter = 0;
+        boolean isPositionCorrect;
+        Vec3d expected;
+        Vec3d actual;
+        do {
+            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            expected = replay.getTickState(0).getPosition();
+            actual = player.getPos();
+            double distanceToStartPoint = actual.subtract(expected).length();
 
-        if (distanceToStartPoint > ReplayBotSettings.maxDistanceToFirstPoint) {
+            isPositionCorrect = distanceToStartPoint < ReplayBotSettings.maxDistanceToFirstPoint;
+
+            Thread.sleep(20);
+
+        } while (waitTickCounter++ < ReplayBotSettings.maxTicksToWaitForSpawn);
+
+        if(!isPositionCorrect) {
             SkyblockBot.LOGGER.warn(
                     "Can't start so far from first point. Expected x: " + expected.x + " z:" + expected.z
                             + ", actual x:" + actual.x + " z:" + actual.z);
@@ -207,7 +223,7 @@ public class ReplayExecutor {
 
         itemsWhenStarted.clear();
         for (int i = 0; i < 9; i++) {
-            itemsWhenStarted.add(player.getInventory().getStack(i).getItem().getName().getString());
+            itemsWhenStarted.add(MinecraftClient.getInstance().player.getInventory().getStack(i).getItem().getName().getString());
         }
 
         debugPacketCounter = 0;
