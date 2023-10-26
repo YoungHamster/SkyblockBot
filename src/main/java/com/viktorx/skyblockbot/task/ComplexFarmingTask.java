@@ -151,7 +151,8 @@ public class ComplexFarmingTask extends Task {
             if (SBUtils.isServerSkyblock()) {
                 currentTask = getToGarden;
             } else {
-                if(Utils.isStringInRecentChat("You were spawned in limbo", 3)) {
+                if(Utils.isStringInRecentChat("You were spawned in limbo", 3)
+                   || Utils.isStringInRecentChat("Вы АФК", 3)) {
                     currentTask = getOutOfLimbo;
                 } else {
                     currentTask = getToSkyblock;
@@ -196,23 +197,23 @@ public class ComplexFarmingTask extends Task {
         regularPauseTimer.scheduleAtFixedRate(new TimerTask() {
                                                   @Override
                                                   public void run() {
-                                                      SkyblockBot.LOGGER.info("When the current farm loop is done bot is going to take a break");
+              SkyblockBot.LOGGER.info("When the current farm loop is done bot is going to take a break");
 
-                                                      synchronized (runWhenFarmCompleted) {
-                                                          runWhenFarmCompleted.add(() -> {
-                                                              SkyblockBot.LOGGER.info("Bot is taking a break");
-                                                              TGBotDaemon.INSTANCE.queueMessage("Bot is taking a break");
-                                                              try {
-                                                                  Thread.sleep(ComplexFarmingTaskSettings.pauseDuration);
-                                                              } catch (InterruptedException e) {
-                                                                  throw new RuntimeException(e);
-                                                              }
-                                                              SkyblockBot.LOGGER.info("Break is over, bot is farming again");
-                                                              TGBotDaemon.INSTANCE.queueMessage("Break is over, bot is farming again");
-                                                          });
-                                                      }
-                                                  }
-                                              },
+              synchronized (runWhenFarmCompleted) {
+                  runWhenFarmCompleted.add(() -> {
+                      SkyblockBot.LOGGER.info("Bot is taking a break for " + ComplexFarmingTaskSettings.pauseDuration / 60000 + "minutes");
+                      TGBotDaemon.INSTANCE.queueMessage("Bot is taking a break");
+                      try {
+                          Thread.sleep(ComplexFarmingTaskSettings.pauseDuration);
+                      } catch (InterruptedException e) {
+                          throw new RuntimeException(e);
+                      }
+                      SkyblockBot.LOGGER.info("Break is over, bot is farming again");
+                      TGBotDaemon.INSTANCE.queueMessage("Break is over, bot is farming again");
+                  });
+              }
+          }
+      },
                 ComplexFarmingTaskSettings.pauseInterval, ComplexFarmingTaskSettings.pauseInterval);
 
         /*
@@ -232,6 +233,8 @@ public class ComplexFarmingTask extends Task {
                       SkyblockBot.LOGGER.info("Current task is null, can't check god pot and cookie");
                   }
 
+                  SkyblockBot.LOGGER.info("Time left god pot: " + SBUtils.getTimeLeftGodPot()
+                  + "\n Time left cookie: " + SBUtils.getTimeLeftCookieBuff());
                   if (SBUtils.getTimeLeftGodPot() < ComplexFarmingTaskSettings.godPotBuyThreshold) {
                       if (!taskQueue.contains(useItem) &&
                               !currentTask.getClass().equals(buyItem.getClass()) &&

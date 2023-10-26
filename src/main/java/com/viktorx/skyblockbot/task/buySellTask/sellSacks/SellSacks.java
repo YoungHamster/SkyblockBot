@@ -1,6 +1,10 @@
 package com.viktorx.skyblockbot.task.buySellTask.sellSacks;
 
+import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.Task;
+
+import java.util.concurrent.CompletableFuture;
 
 public class SellSacks extends Task {
 
@@ -19,6 +23,14 @@ public class SellSacks extends Task {
 
     public void abort() {
         SellSacksExecutor.INSTANCE.abort();
+    }
+
+    public void completed() {
+        GlobalExecutorInfo.totalSackCount.set(0);
+        if(whenCompleted != null)
+            CompletableFuture.runAsync(whenCompleted);
+        else
+            SkyblockBot.LOGGER.warn("whenCompleted == null!!!!!!!");
     }
 
     public boolean isExecuting() {

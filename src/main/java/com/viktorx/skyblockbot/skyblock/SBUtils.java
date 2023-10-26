@@ -1,7 +1,6 @@
 package com.viktorx.skyblockbot.skyblock;
 
 import com.viktorx.skyblockbot.CurrentInventory;
-import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
 import com.viktorx.skyblockbot.mixins.PlayerListHudMixin;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
@@ -85,18 +84,18 @@ public class SBUtils {
                 break;
             }
         }
-        if(godPotTime == null) {
+        if (godPotTime == null) {
             return 0;
         }
 
         String time = godPotTime.split(" ")[0];
 
-        if(godPotTime.contains("Hours") || godPotTime.contains("Hour")) {
+        if (godPotTime.contains("Hours") || godPotTime.contains("Hour")) {
             return Long.parseLong(time) * hour;
         } else if (godPotTime.contains("Minutes")) {
             return Long.parseLong(time) * minute;
         } else {
-            if(time.equals("1h")) {
+            if (time.equals("1h")) {
                 return hour;
             }
             return Long.parseLong(time) * second;
@@ -116,13 +115,15 @@ public class SBUtils {
                 break;
             }
         }
-        if(cookieTime == null) {
+        if (cookieTime == null) {
             return 0;
         }
 
-        if (cookieTime.contains("days") || cookieTime.contains("day")) {
+        if (cookieTime.contains("Less than an hour")) {
+            return 0;
+        } else if (cookieTime.contains("days") || cookieTime.contains("day")) {
             return Long.parseLong(cookieTime.split(" ")[0]) * day;
-        } else if(cookieTime.contains("hours") || cookieTime.contains("hour")) {
+        } else if (cookieTime.contains("hours") || cookieTime.contains("hour")) {
             return Long.parseLong(cookieTime.split(" ")[0]) * hour;
         } else if (cookieTime.contains("minutes")) {
             return Long.parseLong(cookieTime.split(" ")[0]) * minute;
@@ -250,7 +251,7 @@ public class SBUtils {
         assert client.player != null;
         PlayerInventory inventory = client.player.getInventory();
 
-        for(int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
+        for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
             if (inventory.getStack(i).getName().getString().contains(itemStackName)) {
                 return true;
             }

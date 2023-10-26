@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Semaphore;
 
 public class ReplayExecutor {
 
@@ -128,10 +127,11 @@ public class ReplayExecutor {
 
     private void onTickPlay(MinecraftClient client) {
         if (!state.equals(ReplayBotState.PLAYING)) {
-            if (state.equals(ReplayBotState.ADJUSTING_HEAD_BEFORE_STARTING)) {
+            if (state.equals(ReplayBotState.PREPARING_TO_START)) {
                 if (!yawTask.isDone() || !pitchTask.isDone()) {
                     return;
                 } else {
+                    unpressButtons();
                     state = ReplayBotState.PLAYING;
                 }
             } else {
@@ -186,7 +186,6 @@ public class ReplayExecutor {
         }
 
         state = ReplayBotState.NOT_IDLE;
-        unpressButtons();
 
         assert MinecraftClient.getInstance().player != null;
 
@@ -220,7 +219,7 @@ public class ReplayExecutor {
         antiDetectTriggeredTickCounter = 0;
         tickIterator = 0;
 
-        adjustHeadBeforeStarting();
+        prepareToStart();
     }
 
     public void abort() {
@@ -413,6 +412,8 @@ public class ReplayExecutor {
     /* Used for recording only */
     private boolean detectAndCorrectLagBack(@NotNull ClientPlayerEntity player) {
         if (serverChangedPositionRotation) {
+            serverChangedPositionRotation = false;
+
             int bestFit = -1;
             double bestFitDistance = ReplayBotSettings.reactToLagbackThreshold;
 
@@ -435,11 +436,9 @@ public class ReplayExecutor {
                 SkyblockBot.LOGGER.info("Lagged back when recording, corrected! Best fit distance = " + bestFitDistance);
             } else {
                 SkyblockBot.LOGGER.warn("Lagged back when recording, can't correct, stopping the recording");
-                state = ReplayBotState.IDLE;
+                stopRecording();
                 return false;
             }
-
-            serverChangedPositionRotation = false;
         }
         return true;
     }
@@ -464,10 +463,10 @@ public class ReplayExecutor {
         ).setButtonsForClient(MinecraftClient.getInstance());
     }
 
-    private void adjustHeadBeforeStarting() {
+    private void prepareToStart() {
         pitchTask = LookHelper.changePitchSmoothAsync(replay.getTickState(0).getPitch(), 120.0f);
         yawTask = LookHelper.changeYawSmoothAsync(replay.getTickState(0).getYaw(), 120.0f);
-        state = ReplayBotState.ADJUSTING_HEAD_BEFORE_STARTING;
+        state = ReplayBotState.PREPARING_TO_START;
     }
 
     private void asyncPlayAlarmSound() {

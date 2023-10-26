@@ -20,12 +20,19 @@ public class SellSacksExecutor extends BuySellTaskExecutor {
     private SellSacksState stateBeforePause;
     private int waitTickCounter = 0;
 
+    SellSacksExecutor() {
+        possibleErrors.add("You may only use this command after");
+    }
+
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickSellSacks);
     }
 
     protected void restart() {
-
+        SkyblockBot.LOGGER.info("Restarting sellSacks");
+        blockingCloseCurrentInventory();
+        state = SellSacksState.IDLE;
+        execute(task);
     }
 
     public void execute(SellSacks task) {
@@ -82,6 +89,11 @@ public class SellSacksExecutor extends BuySellTaskExecutor {
             }
 
             case WAITING_FOR_MENU -> {
+                if (checkForPossibleError()) {
+                    SkyblockBot.LOGGER.warn("Error when selling sacks. Restarting!");
+                    restart();
+                    return;
+                }
                 if (CurrentInventory.syncIDChanged()) {
                     state = nextState;
                 }

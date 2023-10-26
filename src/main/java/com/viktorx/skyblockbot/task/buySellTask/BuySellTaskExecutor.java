@@ -2,6 +2,7 @@ package com.viktorx.skyblockbot.task.buySellTask;
 
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.mixins.IChatHudMixin;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
@@ -18,11 +19,21 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 public abstract class BuySellTaskExecutor {
+    protected final List<String> possibleErrors = new ArrayList<>();
     private CompletableFuture<Boolean> currentClick;
     protected boolean currentClickRunning = false;
     protected int waitTickCounter = 0;
 
     protected abstract void restart();
+
+    protected boolean checkForPossibleError() {
+        for (String possibleError : possibleErrors) {
+            if (Utils.isStringInRecentChat(possibleError, 1)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /*
      * Returns: true if done and clicked successfully, false if not done yet(or restarting)

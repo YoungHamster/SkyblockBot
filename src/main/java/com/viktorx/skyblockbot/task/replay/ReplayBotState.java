@@ -7,7 +7,7 @@ public enum ReplayBotState {
     PLAYING("playing"),
     PAUSED("paused"),
     ANTI_DETECT_TRIGGERED("anti_detect_triggered"),
-    ADJUSTING_HEAD_BEFORE_STARTING("adjusting_head_before_starting");
+    PREPARING_TO_START("adjusting_head_before_starting");
 
     private final String name;
 

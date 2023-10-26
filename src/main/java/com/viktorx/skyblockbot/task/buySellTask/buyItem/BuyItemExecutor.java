@@ -9,8 +9,6 @@ import com.viktorx.skyblockbot.task.buySellTask.BuySellTaskExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -22,10 +20,13 @@ public class BuyItemExecutor extends BuySellTaskExecutor {
     private BuyItemState nextState;
     private BuyItemState stateBeforePause;
     private BuyItem task;
-    private final List<String> possibleErrors = Arrays.asList("You cannot view this auction", "This auction wasn't found");
     private CompletableFuture<String> priceFinder;
     private boolean priceFinderRunning = false;
 
+    BuyItemExecutor() {
+        possibleErrors.add("You cannot view this auction");
+        possibleErrors.add("This auction wasn't found");
+    }
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickBuy);
@@ -217,14 +218,5 @@ public class BuyItemExecutor extends BuySellTaskExecutor {
             }
 
         }
-    }
-
-    private boolean checkForPossibleError() {
-        for (String possibleError : possibleErrors) {
-            if (Utils.isStringInRecentChat(possibleError, 1)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

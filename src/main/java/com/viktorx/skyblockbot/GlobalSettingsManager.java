@@ -59,12 +59,12 @@ public class GlobalSettingsManager {
         ReplayBotSettings.autoQuitWhenAntiDetect = Boolean.parseBoolean(settings.get("ReplayBot.autoQuitWhenAntiDetect"));
 
         ComplexFarmingTaskSettings.pauseInterval = Long.parseLong(settings.get("ComplexFarmingTask.pauseInterval"));
-        ComplexFarmingTaskSettings.pauseDuration = Long.parseLong(settings.get("ComplexFarmingTask.pauseInterval"));
-        ComplexFarmingTaskSettings.intervalBetweenRegularChecks = Long.parseLong(settings.get("ComplexFarmingTask.pauseInterval"));
-        ComplexFarmingTaskSettings.godPotBuyThreshold = Long.parseLong(settings.get("ComplexFarmingTask.pauseInterval"));
-        ComplexFarmingTaskSettings.cookieBuyThreshold = Long.parseLong(settings.get("ComplexFarmingTask.pauseInterval"));
+        ComplexFarmingTaskSettings.pauseDuration = Long.parseLong(settings.get("ComplexFarmingTask.pauseDuration"));
+        ComplexFarmingTaskSettings.intervalBetweenRegularChecks = Long.parseLong(settings.get("ComplexFarmingTask.intervalBetweenRegularChecks"));
+        ComplexFarmingTaskSettings.godPotBuyThreshold = Long.parseLong(settings.get("ComplexFarmingTask.godPotBuyThreshold"));
+        ComplexFarmingTaskSettings.cookieBuyThreshold = Long.parseLong(settings.get("ComplexFarmingTask.cookieBuyThreshold"));
         ComplexFarmingTaskSettings.gardenName = settings.get("ComplexFarmingTask.gardenName");
-        ComplexFarmingTaskSettings.retryGetOutOfLimboDelay = Long.parseLong(settings.get("ComplexFarmingTask.pauseInterval"));
+        ComplexFarmingTaskSettings.retryGetOutOfLimboDelay = Long.parseLong(settings.get("ComplexFarmingTask.retryGetOutOfLimboDelay"));
 
         GlobalExecutorInfo.waitTicksBeforeAction = Integer.parseInt(settings.get("GlobalExecutorInfo.waitTicksBeforeAction"));
         GlobalExecutorInfo.totalSackCountLimit = Integer.parseInt(settings.get("GlobalExecutorInfo.totalSackCountLimit"));
