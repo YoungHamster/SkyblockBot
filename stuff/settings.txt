@@ -1,0 +1,41 @@
+Keybinds
+Keybinds.buttonPressDelay: 20
+
+ReplayBot
+ReplayBot.DEFAULT_RECORDING_FILE: recording.bin
+ReplayBot.antiDetectTriggeredWaitTicks: 30
+ReplayBot.maxLagbackTicks: 50
+ReplayBot.maxLagbackTicksWhenRecording: 20
+ReplayBot.minDeltaToAdjust: 0.05
+ReplayBot.reactToLagbackThreshold: 0.75
+ReplayBot.antiDetectDeltaAngleThreshold: 15.0
+ReplayBot.maxDistanceToFirstPoint: 0.3
+ReplayBot.antiStucknessTickCount: 20
+ReplayBot.detectStucknessCoefficient: 0.1
+ReplayBot.checkForCollisionsAdvanceTicks: 4
+ReplayBot.autoQuitWhenAntiDetect: true
+
+ChangeIsland
+ChangeIsland.ticksToWaitForChunks: 80
+ChangeIsland.ticksToWaitBeforeAttempt: 80
+ChangeIsland.maxAttempts: 10
+
+BuySell
+BuySell.waitTicksBetweenLetters: 2
+
+ComplexFarmingTask
+ComplexFarmingTask.pauseInterval: 3600000
+ComplexFarmingTask.pauseDuration: 600000
+ComplexFarmingTask.intervalBetweenRegularChecks: 300000
+ComplexFarmingTask.godPotBuyThreshold: 1800000
+ComplexFarmingTask.cookieBuyThreshold: 1800000
+ComplexFarmingTask.gardenName: Plot
+ComplexFarmingTask.retryGetOutOfLimboDelay: 600000
+
+GlobalExecutorInfo
+GlobalExecutorInfo.waitTicksBeforeAction: 20
+GlobalExecutorInfo.totalSackCountLimit: 40000
+
+TGBotDaemon
+TGBotDaemon.firstDelay: 3000
+TGBotDaemon.delayBetweenUpdates: 600000
