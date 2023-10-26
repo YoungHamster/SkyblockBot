@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class SkyblockBot implements ModInitializer {
 
@@ -26,7 +27,7 @@ public class SkyblockBot implements ModInitializer {
         LOGGER.info("Hello");
         try {
             GlobalSettingsManager.getInstance().loadSettings();
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             SkyblockBot.LOGGER.error("Couldn't load settings!!!");
             MinecraftClient.getInstance().close();
         }

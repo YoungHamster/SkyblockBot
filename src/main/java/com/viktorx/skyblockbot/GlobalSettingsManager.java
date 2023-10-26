@@ -11,6 +11,7 @@ import com.viktorx.skyblockbot.tgBot.TGBotDaemonSettings;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,16 +25,17 @@ public class GlobalSettingsManager {
         return instance;
     }
 
-    public void loadSettings() throws FileNotFoundException {
+    public void loadSettings() throws IOException {
         Map<String, String> settings = new HashMap<>();
 
         BufferedReader reader = new BufferedReader(new FileReader("settings.txt"));
         reader.lines().forEach(line -> {
             if(line.contains(": ")) {
                 String[] tokens = line.split("[: ]");
-                settings.put(tokens[0], tokens[1]);
+                settings.put(tokens[0], tokens[2]);
             }
         });
+        reader.close();
 
         KeybindsSettings.buttonPressDelay = Integer.parseInt(settings.get("Keybinds.buttonPressDelay"));
 

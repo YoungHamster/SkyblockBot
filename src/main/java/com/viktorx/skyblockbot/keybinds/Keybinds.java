@@ -14,6 +14,7 @@ import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -87,7 +88,7 @@ public class Keybinds {
             if (loadRecording.wasPressed()) {
                 try {
                     GlobalSettingsManager.getInstance().loadSettings();
-                } catch (FileNotFoundException e) {
+                } catch (IOException e) {
                     SkyblockBot.LOGGER.warn("Coudln't load settings");
                 }
                 ComplexFarmingTask.INSTANCE.loadRecordingAsync();
