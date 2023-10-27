@@ -41,7 +41,14 @@ public class ReplayExecutor {
     public int debugPositionAndOnGroundCounter = 0;
     public int debugFullCounter = 0;
 
+    private final List<String> namesOfAllowedBlocks = new ArrayList<>();
+
     public void Init() {
+
+        namesOfAllowedBlocks.add("iron_door");
+        namesOfAllowedBlocks.add("табличка");
+        namesOfAllowedBlocks.add("Вода");
+
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickRec);
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickPlay);
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickAntiDetectTriggered);
@@ -208,7 +215,7 @@ public class ReplayExecutor {
 
             Thread.sleep(20);
 
-        } while (waitTickCounter++ < ReplayBotSettings.maxTicksToWaitForSpawn);
+        } while (waitTickCounter++ < ReplayBotSettings.maxTicksToWaitForSpawn && !isPositionCorrect);
 
         if(!isPositionCorrect) {
             SkyblockBot.LOGGER.warn(
@@ -326,9 +333,22 @@ public class ReplayExecutor {
 
             if (isBlockSolid || isBlockAboveSolid) {
                 String blockName = client.world.getBlockState(blockPos).getBlock().getName().getString();
+                String blockAboveName = client.world.getBlockState(above).getBlock().getName().getString();
                 SkyblockBot.LOGGER.info("Block: " + blockName);
-                // TODO make this better
-                if (!blockName.equals("iron_door") && !blockName.contains("табличка")) {
+
+                boolean isBlockAllowed = false;
+                boolean isBlockAboveAllowed = false;
+
+                for (String name : namesOfAllowedBlocks) {
+                    if(blockName.contains(name)) {
+                        isBlockAllowed = true;
+                    }
+                    if(blockAboveName.contains(name)) {
+                        isBlockAboveAllowed = true;
+                    }
+                }
+
+                if (isBlockSolid && !isBlockAllowed || isBlockAboveSolid && !isBlockAboveAllowed) {
                     return false;
                 }
             }
