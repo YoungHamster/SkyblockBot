@@ -1,11 +1,11 @@
 package com.viktorx.skyblockbot.task.replay;
 
-import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.Task;
+import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -23,25 +23,27 @@ import java.util.concurrent.CompletableFuture;
 public class ReplayExecutor {
 
     public static final ReplayExecutor INSTANCE = new ReplayExecutor();
-
+    private final List<String> itemsWhenStarted = new ArrayList<>();
+    private final List<TickState> lastNTicks = new ArrayList<>();
+    public boolean serverChangedPositionRotation = false;
+    public boolean serverChangedItem = false;
+    public boolean serverChangedSlot = false;
+    public int debugPacketCounter = 0;
+    public int debugOnGroundOnlyCounter = 0;
+    public int debugLookAndOnGroundCounter = 0;
+    public int debugPositionAndOnGroundCounter = 0;
+    public int debugFullCounter = 0;
     private Replay replay;
     private int tickIterator;
     private ReplayBotState state = ReplayBotState.IDLE;
     private CompletableFuture<Void> yawTask = null;
     private CompletableFuture<Void> pitchTask = null;
     private int antiDetectTriggeredTickCounter = 0;
-    private final List<String> itemsWhenStarted = new ArrayList<>();
-    public boolean serverChangedPositionRotation = false;
-    public boolean serverChangedItem = false;
-    public boolean serverChangedSlot = false;
-    private final List<TickState> lastNTicks = new ArrayList<>();
-    public int debugPacketCounter = 0;
-    public int debugOnGroundOnlyCounter = 0;
-    public int debugLookAndOnGroundCounter = 0;
-    public int debugPositionAndOnGroundCounter = 0;
-    public int debugFullCounter = 0;
+    private final List<String> whitelistedBlocks = new ArrayList<>();
 
     public void Init() {
+        whitelistedBlocks.add("oak_sign");
+        whitelistedBlocks.add("iron_door");
 
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickRec);
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickPlay);
@@ -187,6 +189,7 @@ public class ReplayExecutor {
         }
 
         state = ReplayBotState.NOT_IDLE;
+        tickIterator = 0;
 
         assert MinecraftClient.getInstance().player != null;
 
@@ -207,17 +210,36 @@ public class ReplayExecutor {
 
             isPositionCorrect = distanceToStartPoint < ReplayBotSettings.maxDistanceToFirstPoint;
 
-            Thread.sleep(20);
+            Thread.sleep(50);
 
         } while (waitTickCounter++ < ReplayBotSettings.maxTicksToWaitForSpawn && !isPositionCorrect);
 
-        if(!isPositionCorrect) {
-            SkyblockBot.LOGGER.warn(
-                    "Can't start so far from first point. Expected x: " + expected.x + " z:" + expected.z
-                            + ", actual x:" + actual.x + " z:" + actual.z);
-            state = ReplayBotState.IDLE;
-            abort();
-            return;
+        if (!isPositionCorrect) {
+            SkyblockBot.LOGGER.info("Trying to find fitting tick state away from the start");
+
+            double lowestDistance = ReplayBotSettings.maxDistanceToFirstPoint + 1.0d;
+            int lowestDistanceIterator = -1;
+            for(int i = 0; i < replay.tickStates.size(); i++) {
+                expected = replay.tickStates.get(i).getPosition();
+                double distanceToStartPoint = actual.subtract(expected).length();
+
+                if(distanceToStartPoint < lowestDistance) {
+                    lowestDistance = distanceToStartPoint;
+                    lowestDistanceIterator = i;
+                }
+            }
+
+            if(lowestDistance < ReplayBotSettings.maxDistanceToFirstPoint) {
+                SkyblockBot.LOGGER.info("Found tick to start from! Starting replay from " + lowestDistanceIterator + " tick state");
+                tickIterator = lowestDistanceIterator;
+            } else {
+                SkyblockBot.LOGGER.warn(
+                        "Can't start so far from first point. Expected x: " + expected.x + " z:" + expected.z
+                                + ", actual x:" + actual.x + " z:" + actual.z);
+                state = ReplayBotState.IDLE;
+                abort();
+                return;
+            }
         }
 
         SkyblockBot.LOGGER.info("Starting playing");
@@ -234,7 +256,6 @@ public class ReplayExecutor {
         debugFullCounter = 0;
 
         antiDetectTriggeredTickCounter = 0;
-        tickIterator = 0;
 
         prepareToStart();
     }
@@ -320,17 +341,34 @@ public class ReplayExecutor {
             BlockPos blockPos = new BlockPos(pos);
             BlockPos above = new BlockPos(blockPos).up();
 
-            assert client.world != null;
+            if (client.world == null) {
+                SkyblockBot.LOGGER.warn("client.world == null wtf????????");
+                return true;
+            }
 
             boolean isBlockSolid = client.world.getBlockState(blockPos).getMaterial().blocksMovement();
             boolean isBlockAboveSolid = client.world.getBlockState(above).getMaterial().blocksMovement();
 
             if (isBlockSolid || isBlockAboveSolid) {
-                String blockName = client.world.getBlockState(blockPos).getBlock().getName().getString();
-                String blockAboveName = client.world.getBlockState(above).getBlock().getName().getString();
-                SkyblockBot.LOGGER.info("Block: " + blockName);
+                String blockName = client.world.getBlockState(blockPos).getBlock().asItem().toString();
+                String blockAboveName = client.world.getBlockState(above).getBlock().asItem().toString();
 
-                return false;
+                for (String name : whitelistedBlocks) {
+                    if (blockName.equals(name)) {
+                        isBlockSolid = false;
+                    }
+                    if (blockAboveName.equals(name)) {
+                        isBlockAboveSolid = false;
+                    }
+                }
+
+                // Check again after accounting for whitelisted blocks
+                if (isBlockSolid || isBlockAboveSolid) {
+                    SkyblockBot.LOGGER.info("Block: " + blockName + " solid-" + isBlockSolid
+                            + "\nBlock above: " + blockAboveName + " solid-" + isBlockAboveSolid);
+
+                    return false;
+                }
             }
         }
         return true;
@@ -483,8 +521,8 @@ public class ReplayExecutor {
     }
 
     private void prepareToStart() {
-        pitchTask = LookHelper.changePitchSmoothAsync(replay.getTickState(0).getPitch(), 120.0f);
-        yawTask = LookHelper.changeYawSmoothAsync(replay.getTickState(0).getYaw(), 120.0f);
+        pitchTask = LookHelper.changePitchSmoothAsync(replay.getTickState(tickIterator).getPitch(), 120.0f);
+        yawTask = LookHelper.changeYawSmoothAsync(replay.getTickState(tickIterator).getYaw(), 120.0f);
         state = ReplayBotState.PREPARING_TO_START;
     }
 

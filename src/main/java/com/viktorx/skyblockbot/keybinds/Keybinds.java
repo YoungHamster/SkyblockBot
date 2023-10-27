@@ -90,6 +90,8 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
+                BlockPos blockPos = new BlockPos(client.player.getPos());
+                SkyblockBot.LOGGER.info("Material: " + client.world.getBlockState(blockPos).getBlock().asItem().toString());
                 try {
                     GlobalSettingsManager.getInstance().loadSettings();
                 } catch (IOException e) {

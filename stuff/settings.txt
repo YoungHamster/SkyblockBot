@@ -13,7 +13,7 @@ ReplayBot.maxDistanceToFirstPoint: 0.3
 ReplayBot.antiStucknessTickCount: 20
 ReplayBot.detectStucknessCoefficient: 0.1
 ReplayBot.checkForCollisionsAdvanceTicks: 4
-ReplayBot.autoQuitWhenAntiDetect: true
+ReplayBot.autoQuitWhenAntiDetect: True
 ReplayBot.maxTicksToWaitForSpawn: 200
 
 ChangeIsland
@@ -35,7 +35,7 @@ ComplexFarmingTask.gardenName: Plot
 ComplexFarmingTask.retryGetOutOfLimboDelay: 600000
 
 GlobalExecutorInfo
-GlobalExecutorInfo.debugMode: true
+GlobalExecutorInfo.debugMode: False
 GlobalExecutorInfo.waitTicksBeforeAction: 20
 GlobalExecutorInfo.totalSackCountLimit: 40000
 

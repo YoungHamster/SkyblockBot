@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Replay extends Task {
-    private final List<TickState> tickStates = new ArrayList<>();
+    protected final List<TickState> tickStates = new ArrayList<>();
 
     private static final long saveProtocolVersion = 696969;
 

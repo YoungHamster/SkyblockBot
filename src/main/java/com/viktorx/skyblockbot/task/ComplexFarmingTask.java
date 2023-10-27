@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 
 public class ComplexFarmingTask extends Task {
     public static final ComplexFarmingTask INSTANCE = new ComplexFarmingTask();
-
     private final Task getOutOfLimbo;
     private final Task getToSkyblock;
     private final Task getToGarden;
@@ -28,11 +27,11 @@ public class ComplexFarmingTask extends Task {
     private final Task buyItem;
     private final Task buyBZItem;
     private final Task useItem;
-    private final Task gardenGuestsTask;
+    private final Task gardenVisitorsTask;
     private final List<Runnable> runWhenFarmCompleted = new ArrayList<>();
     private final Queue<Task> taskQueue = new ArrayBlockingQueue<>(20);
-    private Task farm;
     private Task currentTask;
+    private Task farm;
     private List<Timer> timers = new ArrayList<>();
 
     ComplexFarmingTask() {
@@ -68,16 +67,18 @@ public class ComplexFarmingTask extends Task {
         this.useItem.whenCompleted(this::defaultWhenCompleted);
         this.useItem.whenAborted(this::defaultWhenAborted);
 
-        this.gardenGuestsTask = new ComplexGardenGuestsTask();
+        this.gardenVisitorsTask = new ComplexGardenVisitorsTask();
+        this.gardenVisitorsTask.whenCompleted(this::defaultWhenCompleted);
+        this.gardenVisitorsTask.whenAborted(this::whenGardenVisitorsAborted);
     }
 
-    void whenGetOutOfLimboCompleted() {
+    private void whenGetOutOfLimboCompleted() {
         TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
         currentTask = getToSkyblock;
         currentTask.execute();
     }
 
-    void whenGetOutOfLimboAborted() {
+    private void whenGetOutOfLimboAborted() {
         TGBotDaemon.INSTANCE.queueMessage("Failed task: " + getCurrentTaskName());
         SkyblockBot.LOGGER.info("Failed to get out of limbo, waiting 10 minutes to retry");
         Timer retryGetOutOfLimbo = new Timer(true);
@@ -89,7 +90,7 @@ public class ComplexFarmingTask extends Task {
         }, ComplexFarmingTaskSettings.retryGetOutOfLimboDelay);
     }
 
-    void whenGetToSkyblockCompleted() {
+    private void whenGetToSkyblockCompleted() {
         TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
 
         if (!SBUtils.getIslandOrArea().contains(ComplexFarmingTaskSettings.gardenName)) {
@@ -101,17 +102,17 @@ public class ComplexFarmingTask extends Task {
         currentTask.execute();
     }
 
-    void whenGetToSkyblockAborted() {
+    private void whenGetToSkyblockAborted() {
         SkyblockBot.LOGGER.info("Couldn't warp to skyblock!");
         currentTask = null;
     }
 
-    void whenGetToGardenAborted() {
+    private void whenGetToGardenAborted() {
         SkyblockBot.LOGGER.info("Couldn't warp to garden");
         currentTask = null;
     }
 
-    void defaultWhenCompleted() {
+    private void defaultWhenCompleted() {
         TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
 
         if (!taskQueue.isEmpty()) {
@@ -122,13 +123,13 @@ public class ComplexFarmingTask extends Task {
         currentTask.execute();
     }
 
-    void defaultWhenAborted() {
+    private void defaultWhenAborted() {
         SkyblockBot.LOGGER.warn(getCurrentTaskName() + " task aborted.");
         currentTask = farm;
         currentTask.execute();
     }
 
-    void whenFarmCompleted() {
+    private void whenFarmCompleted() {
         synchronized (runWhenFarmCompleted) {
             for (Runnable notTask : runWhenFarmCompleted) {
                 notTask.run();
@@ -139,7 +140,7 @@ public class ComplexFarmingTask extends Task {
         defaultWhenCompleted();
     }
 
-    void whenFarmAborted() {
+    private void whenFarmAborted() {
         if (GlobalExecutorInfo.worldLoading.get()) {
             SkyblockBot.LOGGER.info("Warped out of garden. Trying to get back");
 
@@ -153,8 +154,8 @@ public class ComplexFarmingTask extends Task {
             if (SBUtils.isServerSkyblock()) {
                 currentTask = getToGarden;
             } else {
-                if(Utils.isStringInRecentChat("You were spawned in limbo", 3)
-                   || Utils.isStringInRecentChat("Вы АФК", 3)) {
+                if (Utils.isStringInRecentChat("You were spawned in limbo", 3)
+                        || Utils.isStringInRecentChat("Вы АФК", 3)) {
                     currentTask = getOutOfLimbo;
                 } else {
                     currentTask = getToSkyblock;
@@ -162,6 +163,10 @@ public class ComplexFarmingTask extends Task {
             }
             currentTask.execute();
         }
+    }
+
+    private void whenGardenVisitorsAborted() {
+        SkyblockBot.LOGGER.warn("Garden visitors task aborted!!!!");
     }
 
     private void debugExecute() {
@@ -176,7 +181,7 @@ public class ComplexFarmingTask extends Task {
         }
 
         SkyblockBot.LOGGER.info("Debuge mode: " + GlobalExecutorInfo.debugMode.get());
-        if(GlobalExecutorInfo.debugMode.get()) {
+        if (GlobalExecutorInfo.debugMode.get()) {
             debugExecute();
             return;
         }
@@ -226,9 +231,9 @@ public class ComplexFarmingTask extends Task {
                 0, ComplexFarmingTaskSettings.intervalBetweenRegularChecks);
         timers.add(checkSacksTimer);
 
-        Timer checkGuestsTimer = new Timer(true);
-        checkGuestsTimer.scheduleAtFixedRate(new CheckGuestsTimerTask(),
-                0, ComplexFarmingTaskSettings.checkGuestsInterval);
+        Timer checkVisitorsTimer = new Timer(true);
+        checkVisitorsTimer.scheduleAtFixedRate(new CheckVisitorsTimerTask(),
+                0, ComplexFarmingTaskSettings.checkVisitorsInterval);
     }
 
     public void pause() {
@@ -249,7 +254,7 @@ public class ComplexFarmingTask extends Task {
         }
         currentTask = null;
 
-        for(Timer timer : timers) {
+        for (Timer timer : timers) {
             timer.cancel();
             timer.purge();
         }
@@ -365,13 +370,13 @@ public class ComplexFarmingTask extends Task {
         }
     }
 
-    private class CheckGuestsTimerTask extends TimerTask {
+    private class CheckVisitorsTimerTask extends TimerTask {
         @Override
         public void run() {
-            if(SBUtils.getGardenGuestCount() > 3) {
-                if (!taskQueue.contains(gardenGuestsTask)) {
+            if (SBUtils.getGardenVisitorCount() > 3) {
+                if (!taskQueue.contains(gardenVisitorsTask)) {
                     SkyblockBot.LOGGER.info("Queueing to handle garden guests");
-                    taskQueue.add(gardenGuestsTask);
+                    taskQueue.add(gardenVisitorsTask);
                 }
             }
         }

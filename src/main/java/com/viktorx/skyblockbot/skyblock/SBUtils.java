@@ -71,6 +71,16 @@ public class SBUtils {
         }
     }
 
+    public static int getGardenVisitorCount() {
+        String visitorLine = getTabPlayers().stream().filter(string -> string.contains("Visitors")).collect(Collectors.joining());
+
+        if (visitorLine.length() == 0) {
+            return 0;
+        } else {
+            return Integer.parseInt(visitorLine.substring(11, 12));
+        }
+    }
+
     /*
      * God pot time is written with capital letter
      */

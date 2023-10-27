@@ -59,7 +59,7 @@ public class GlobalSettingsManager {
         ReplayBotSettings.maxTicksToWaitForSpawn = Integer.parseInt(settings.get("ReplayBot.maxTicksToWaitForSpawn"));
 
         ComplexFarmingTaskSettings.pauseInterval = Long.parseLong(settings.get("ComplexFarmingTask.pauseInterval"));
-        ComplexFarmingTaskSettings.checkGuestsInterval = Long.parseLong(settings.get("ComplexFarmingTask.checkGuestsInterval"));
+        ComplexFarmingTaskSettings.checkVisitorsInterval = Long.parseLong(settings.get("ComplexFarmingTask.checkGuestsInterval"));
         ComplexFarmingTaskSettings.pauseDuration = Long.parseLong(settings.get("ComplexFarmingTask.pauseDuration"));
         ComplexFarmingTaskSettings.intervalBetweenRegularChecks = Long.parseLong(settings.get("ComplexFarmingTask.intervalBetweenRegularChecks"));
         ComplexFarmingTaskSettings.godPotBuyThreshold = Long.parseLong(settings.get("ComplexFarmingTask.godPotBuyThreshold"));
@@ -67,7 +67,7 @@ public class GlobalSettingsManager {
         ComplexFarmingTaskSettings.gardenName = settings.get("ComplexFarmingTask.gardenName");
         ComplexFarmingTaskSettings.retryGetOutOfLimboDelay = Long.parseLong(settings.get("ComplexFarmingTask.retryGetOutOfLimboDelay"));
 
-        GlobalExecutorInfo.debugMode.set(Boolean.parseBoolean(settings.get("GlobalExecutor.debugMode")));
+        GlobalExecutorInfo.debugMode.set(Boolean.parseBoolean(settings.get("GlobalExecutorInfo.debugMode")));
         GlobalExecutorInfo.waitTicksBeforeAction = Integer.parseInt(settings.get("GlobalExecutorInfo.waitTicksBeforeAction"));
         GlobalExecutorInfo.totalSackCountLimit = Integer.parseInt(settings.get("GlobalExecutorInfo.totalSackCountLimit"));
 
