@@ -168,6 +168,13 @@ public class ComplexFarmingTask extends Task {
             return;
         }
 
+        SkyblockBot.LOGGER.info("Debuge mode: " + GlobalExecutorInfo.debugMode.get());
+        if(GlobalExecutorInfo.debugMode.get()) {
+            currentTask = farm;
+            currentTask.execute();
+            return;
+        }
+
         runWhenFarmCompleted.clear();
         taskQueue.clear();
 

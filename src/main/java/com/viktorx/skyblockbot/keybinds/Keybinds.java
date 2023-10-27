@@ -11,10 +11,14 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.state.property.Property;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -86,6 +90,13 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
+
+                Vec3d pos = client.player.getPos();
+                pos = new Vec3d(pos.x, Math.rint(pos.y), pos.z);
+
+                BlockPos blockPos = new BlockPos(pos);
+                SkyblockBot.LOGGER.info("Blocks movement: " + client.world.getBlockState(blockPos).getMaterial().blocksMovement());
+
                 try {
                     GlobalSettingsManager.getInstance().loadSettings();
                 } catch (IOException e) {

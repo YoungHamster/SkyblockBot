@@ -328,8 +328,8 @@ public class ReplayExecutor {
 
             assert client.world != null;
 
-            boolean isBlockSolid = client.world.getBlockState(blockPos).getMaterial().isSolid();
-            boolean isBlockAboveSolid = client.world.getBlockState(above).getMaterial().isSolid();
+            boolean isBlockSolid = client.world.getBlockState(blockPos).getMaterial().blocksMovement();
+            boolean isBlockAboveSolid = client.world.getBlockState(above).getMaterial().blocksMovement();
 
             if (isBlockSolid || isBlockAboveSolid) {
                 String blockName = client.world.getBlockState(blockPos).getBlock().getName().getString();

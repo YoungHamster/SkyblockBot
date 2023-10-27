@@ -2,7 +2,7 @@ Keybinds
 Keybinds.buttonPressDelay: 20
 
 ReplayBot
-ReplayBot.DEFAULT_RECORDING_FILE: recording.bin
+ReplayBot.defaultRecordingFile: recording.bin
 ReplayBot.antiDetectTriggeredWaitTicks: 30
 ReplayBot.maxLagbackTicks: 50
 ReplayBot.maxLagbackTicksWhenRecording: 20
@@ -14,6 +14,7 @@ ReplayBot.antiStucknessTickCount: 20
 ReplayBot.detectStucknessCoefficient: 0.1
 ReplayBot.checkForCollisionsAdvanceTicks: 4
 ReplayBot.autoQuitWhenAntiDetect: true
+ReplayBot.maxTicksToWaitForSpawn: 200
 
 ChangeIsland
 ChangeIsland.ticksToWaitForChunks: 80
@@ -33,6 +34,7 @@ ComplexFarmingTask.gardenName: Plot
 ComplexFarmingTask.retryGetOutOfLimboDelay: 600000
 
 GlobalExecutorInfo
+GlobalExecutorInfo.debugMode: true
 GlobalExecutorInfo.waitTicksBeforeAction: 20
 GlobalExecutorInfo.totalSackCountLimit: 40000
 

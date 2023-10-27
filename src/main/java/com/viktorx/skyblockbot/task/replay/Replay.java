@@ -89,6 +89,8 @@ public class Replay extends Task {
     private void loadFromFile(String filename) {
         ByteBuffer file;
 
+        SkyblockBot.LOGGER.info("Loading recording from \"" + filename + "\"");
+
         try {
             InputStream is = new FileInputStream(filename);
             file = ByteBuffer.wrap(is.readAllBytes());

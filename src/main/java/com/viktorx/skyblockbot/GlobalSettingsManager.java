@@ -67,6 +67,7 @@ public class GlobalSettingsManager {
         ComplexFarmingTaskSettings.gardenName = settings.get("ComplexFarmingTask.gardenName");
         ComplexFarmingTaskSettings.retryGetOutOfLimboDelay = Long.parseLong(settings.get("ComplexFarmingTask.retryGetOutOfLimboDelay"));
 
+        GlobalExecutorInfo.debugMode.set(Boolean.parseBoolean(settings.get("GlobalExecutor.debugMode")));
         GlobalExecutorInfo.waitTicksBeforeAction = Integer.parseInt(settings.get("GlobalExecutorInfo.waitTicksBeforeAction"));
         GlobalExecutorInfo.totalSackCountLimit = Integer.parseInt(settings.get("GlobalExecutorInfo.totalSackCountLimit"));
 

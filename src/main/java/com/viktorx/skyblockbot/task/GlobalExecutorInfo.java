@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GlobalExecutorInfo {
+    public static AtomicBoolean debugMode = new AtomicBoolean(false);
     public static AtomicBoolean worldLoaded = new AtomicBoolean(false);
     public static AtomicBoolean worldLoading = new AtomicBoolean(false);
 
