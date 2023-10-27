@@ -2,6 +2,7 @@ package com.viktorx.skyblockbot.task;
 
 public class ComplexFarmingTaskSettings {
     public static long pauseInterval;
+    public static long checkGuestsInterval;
     public static long pauseDuration;
     public static long intervalBetweenRegularChecks;
     public static long godPotBuyThreshold;

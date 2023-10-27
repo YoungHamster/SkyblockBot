@@ -90,13 +90,6 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
-
-                Vec3d pos = client.player.getPos();
-                pos = new Vec3d(pos.x, Math.rint(pos.y), pos.z);
-
-                BlockPos blockPos = new BlockPos(pos);
-                SkyblockBot.LOGGER.info("Blocks movement: " + client.world.getBlockState(blockPos).getMaterial().blocksMovement());
-
                 try {
                     GlobalSettingsManager.getInstance().loadSettings();
                 } catch (IOException e) {

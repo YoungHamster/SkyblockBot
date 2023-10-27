@@ -9,7 +9,6 @@ import com.viktorx.skyblockbot.task.replay.ReplayBotSettings;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemonSettings;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
@@ -30,7 +29,7 @@ public class GlobalSettingsManager {
 
         BufferedReader reader = new BufferedReader(new FileReader("settings.txt"));
         reader.lines().forEach(line -> {
-            if(line.contains(": ")) {
+            if (line.contains(": ")) {
                 String[] tokens = line.split("[: ]");
                 settings.put(tokens[0], tokens[2]);
             }
@@ -60,6 +59,7 @@ public class GlobalSettingsManager {
         ReplayBotSettings.maxTicksToWaitForSpawn = Integer.parseInt(settings.get("ReplayBot.maxTicksToWaitForSpawn"));
 
         ComplexFarmingTaskSettings.pauseInterval = Long.parseLong(settings.get("ComplexFarmingTask.pauseInterval"));
+        ComplexFarmingTaskSettings.checkGuestsInterval = Long.parseLong(settings.get("ComplexFarmingTask.checkGuestsInterval"));
         ComplexFarmingTaskSettings.pauseDuration = Long.parseLong(settings.get("ComplexFarmingTask.pauseDuration"));
         ComplexFarmingTaskSettings.intervalBetweenRegularChecks = Long.parseLong(settings.get("ComplexFarmingTask.intervalBetweenRegularChecks"));
         ComplexFarmingTaskSettings.godPotBuyThreshold = Long.parseLong(settings.get("ComplexFarmingTask.godPotBuyThreshold"));

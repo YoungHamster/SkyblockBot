@@ -41,13 +41,7 @@ public class ReplayExecutor {
     public int debugPositionAndOnGroundCounter = 0;
     public int debugFullCounter = 0;
 
-    private final List<String> namesOfAllowedBlocks = new ArrayList<>();
-
     public void Init() {
-
-        namesOfAllowedBlocks.add("iron_door");
-        namesOfAllowedBlocks.add("табличка");
-        namesOfAllowedBlocks.add("Вода");
 
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickRec);
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickPlay);
@@ -336,21 +330,7 @@ public class ReplayExecutor {
                 String blockAboveName = client.world.getBlockState(above).getBlock().getName().getString();
                 SkyblockBot.LOGGER.info("Block: " + blockName);
 
-                boolean isBlockAllowed = false;
-                boolean isBlockAboveAllowed = false;
-
-                for (String name : namesOfAllowedBlocks) {
-                    if(blockName.contains(name)) {
-                        isBlockAllowed = true;
-                    }
-                    if(blockAboveName.contains(name)) {
-                        isBlockAboveAllowed = true;
-                    }
-                }
-
-                if (isBlockSolid && !isBlockAllowed || isBlockAboveSolid && !isBlockAboveAllowed) {
-                    return false;
-                }
+                return false;
             }
         }
         return true;

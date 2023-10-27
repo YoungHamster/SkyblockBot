@@ -28,13 +28,12 @@ public class ComplexFarmingTask extends Task {
     private final Task buyItem;
     private final Task buyBZItem;
     private final Task useItem;
+    private final Task gardenGuestsTask;
     private final List<Runnable> runWhenFarmCompleted = new ArrayList<>();
     private final Queue<Task> taskQueue = new ArrayBlockingQueue<>(20);
     private Task farm;
     private Task currentTask;
-    private Timer regularPauseTimer;
-    private Timer checkGodPotAndCookieTimer;
-    private Timer checkSacksTimer;
+    private List<Timer> timers = new ArrayList<>();
 
     ComplexFarmingTask() {
         this.getOutOfLimbo = new ChangeIsland("/lobby");
@@ -68,6 +67,8 @@ public class ComplexFarmingTask extends Task {
         this.useItem = new UseItem();
         this.useItem.whenCompleted(this::defaultWhenCompleted);
         this.useItem.whenAborted(this::defaultWhenAborted);
+
+        this.gardenGuestsTask = new ComplexGardenGuestsTask();
     }
 
     void whenGetOutOfLimboCompleted() {
@@ -94,7 +95,8 @@ public class ComplexFarmingTask extends Task {
         if (!SBUtils.getIslandOrArea().contains(ComplexFarmingTaskSettings.gardenName)) {
             currentTask = getToGarden;
         } else {
-            currentTask = farm;
+            defaultWhenCompleted();
+            return;
         }
         currentTask.execute();
     }
@@ -162,6 +164,11 @@ public class ComplexFarmingTask extends Task {
         }
     }
 
+    private void debugExecute() {
+        currentTask = farm;
+        currentTask.execute();
+    }
+
     public void execute() {
         if (isExecuting()) {
             SkyblockBot.LOGGER.info("Can't start complexFarmingTask when it is already executing");
@@ -170,8 +177,7 @@ public class ComplexFarmingTask extends Task {
 
         SkyblockBot.LOGGER.info("Debuge mode: " + GlobalExecutorInfo.debugMode.get());
         if(GlobalExecutorInfo.debugMode.get()) {
-            currentTask = farm;
-            currentTask.execute();
+            debugExecute();
             return;
         }
 
@@ -197,102 +203,32 @@ public class ComplexFarmingTask extends Task {
          * Basically every durationInMs we tell the farming bot to pause for 10 minutes when it's done the loop
          * After 10 minutes it tells itself to run again when loop is done and starts executing itself again
          *
-         * TLDR: pause for 10 minutes every 2 hours but only at the end of the farming loop
+         * TLDR: pause for 10 minutes every hour but only at the end of the farming loop
          */
-
-        regularPauseTimer = new Timer(true);
-        regularPauseTimer.scheduleAtFixedRate(new TimerTask() {
-                                                  @Override
-                                                  public void run() {
-              SkyblockBot.LOGGER.info("When the current farm loop is done bot is going to take a break");
-
-              synchronized (runWhenFarmCompleted) {
-                  runWhenFarmCompleted.add(() -> {
-                      SkyblockBot.LOGGER.info("Bot is taking a break for " + ComplexFarmingTaskSettings.pauseDuration / 60000 + "minutes");
-                      TGBotDaemon.INSTANCE.queueMessage("Bot is taking a break");
-                      try {
-                          Thread.sleep(ComplexFarmingTaskSettings.pauseDuration);
-                      } catch (InterruptedException e) {
-                          throw new RuntimeException(e);
-                      }
-                      SkyblockBot.LOGGER.info("Break is over, bot is farming again");
-                      TGBotDaemon.INSTANCE.queueMessage("Break is over, bot is farming again");
-                  });
-              }
-          }
-      },
+        Timer regularPauseTimer = new Timer(true);
+        regularPauseTimer.scheduleAtFixedRate(new RegularPauseTimerTask(),
                 ComplexFarmingTaskSettings.pauseInterval, ComplexFarmingTaskSettings.pauseInterval);
+        timers.add(regularPauseTimer);
 
         /*
          * Checks how much time is left of booster cookie and god potion, queues to buy and use them if necessary
          */
-
-        checkGodPotAndCookieTimer = new Timer(true);
-        checkGodPotAndCookieTimer.scheduleAtFixedRate(new TimerTask() {
-              @Override
-              public void run() {
-                  if (!SBUtils.isServerSkyblock()) {
-                      SkyblockBot.LOGGER.info("Server isn't skyblock. Skipping god pot and cookie check");
-                      return;
-                  }
-
-                  if (currentTask == null) {
-                      SkyblockBot.LOGGER.info("Current task is null, can't check god pot and cookie");
-                  }
-
-                  SkyblockBot.LOGGER.info("Time left god pot: " + SBUtils.getTimeLeftGodPot()
-                  + "\n Time left cookie: " + SBUtils.getTimeLeftCookieBuff());
-                  if (SBUtils.getTimeLeftGodPot() < ComplexFarmingTaskSettings.godPotBuyThreshold) {
-                      if (!taskQueue.contains(useItem) &&
-                              !currentTask.getClass().equals(buyItem.getClass()) &&
-                              !currentTask.getClass().equals(useItem.getClass())) {
-
-                          SkyblockBot.LOGGER.info("Queueing to use god pot. Minutes left: " + SBUtils.getTimeLeftGodPot() / (1000 * 60));
-
-                          if (!SBUtils.isItemInInventory(ItemNames.GOD_POT.getName())) {
-                              ((BuyItem) buyItem).setItemInfo(ItemNames.GOD_POT.getName(), new String[0]);
-                              taskQueue.add(buyItem);
-                          }
-                          ((UseItem) useItem).setItemName(ItemNames.GOD_POT.getName());
-                          taskQueue.add(useItem);
-                      }
-                  }
-
-                  if (SBUtils.getTimeLeftCookieBuff() < ComplexFarmingTaskSettings.cookieBuyThreshold) {
-                      if (!taskQueue.contains(useItem) &&
-                              !currentTask.getClass().equals(buyBZItem.getClass()) &&
-                              !currentTask.getClass().equals(useItem.getClass())) {
-
-                          SkyblockBot.LOGGER.info("Queueing to use cookie. Minutes left: " + SBUtils.getTimeLeftCookieBuff() / (1000 * 60));
-
-                          if (!SBUtils.isItemInInventory(ItemNames.BOOSTER_COOKIE.getName())) {
-                              ((BuyBZItem) buyBZItem).setItemName(ItemNames.BOOSTER_COOKIE.getName());
-                              taskQueue.add(buyBZItem);
-                          }
-                          ((UseItem) useItem).setItemName(ItemNames.BOOSTER_COOKIE.getName());
-                          taskQueue.add(useItem);
-                      }
-                  }
-              }
-          },
+        Timer checkGodPotAndCookieTimer = new Timer(true);
+        checkGodPotAndCookieTimer.scheduleAtFixedRate(new CheckGodPotAndCookieTimerTask(),
                 0, ComplexFarmingTaskSettings.intervalBetweenRegularChecks);
+        timers.add(checkGodPotAndCookieTimer);
 
         /*
          * Checks if sacks have lots of stuff and it's time to sell them, queues to sell them
          */
-        checkSacksTimer = new Timer(true);
-        checkSacksTimer.scheduleAtFixedRate(new TimerTask() {
-                                                @Override
-                                                public void run() {
-                                                    if (GlobalExecutorInfo.carrotCount.get() / 160 > GlobalExecutorInfo.totalSackCountLimit) {
-                                                        if (!taskQueue.contains(sellSacks)) {
-                                                            SkyblockBot.LOGGER.info("Queueing to sell sacks");
-                                                            taskQueue.add(sellSacks);
-                                                        }
-                                                    }
-                                                }
-                                            },
+        Timer checkSacksTimer = new Timer(true);
+        checkSacksTimer.scheduleAtFixedRate(new CheckSacksTimerTask(),
                 0, ComplexFarmingTaskSettings.intervalBetweenRegularChecks);
+        timers.add(checkSacksTimer);
+
+        Timer checkGuestsTimer = new Timer(true);
+        checkGuestsTimer.scheduleAtFixedRate(new CheckGuestsTimerTask(),
+                0, ComplexFarmingTaskSettings.checkGuestsInterval);
     }
 
     public void pause() {
@@ -312,24 +248,12 @@ public class ComplexFarmingTask extends Task {
             currentTask.abort();
         }
         currentTask = null;
-        try {
-            if (regularPauseTimer != null) {
-                regularPauseTimer.cancel();
-                regularPauseTimer.purge();
-            }
 
-            if (checkGodPotAndCookieTimer != null) {
-                checkGodPotAndCookieTimer.cancel();
-                checkGodPotAndCookieTimer.purge();
-            }
-
-            if (checkSacksTimer != null) {
-                checkSacksTimer.cancel();
-                checkSacksTimer.purge();
-            }
-        } catch (IllegalStateException e) {
-            SkyblockBot.LOGGER.info("Exception when aborting ComplexFarmingTask. Can't cancel regularPauseTimer because it is already cancelled");
+        for(Timer timer : timers) {
+            timer.cancel();
+            timer.purge();
         }
+        timers.clear();
     }
 
     public boolean isExecuting() {
@@ -358,5 +282,98 @@ public class ComplexFarmingTask extends Task {
         String[] foo = taskName.split("\\.");
         taskName = foo[foo.length - 1];
         return taskName;
+    }
+
+    private class RegularPauseTimerTask extends TimerTask {
+        @Override
+        public void run() {
+            SkyblockBot.LOGGER.info("When the current farm loop is done bot is going to take a break");
+
+            synchronized (runWhenFarmCompleted) {
+                runWhenFarmCompleted.add(() -> {
+                    SkyblockBot.LOGGER.info("Bot is taking a break for " + ComplexFarmingTaskSettings.pauseDuration / 60000 + "minutes");
+                    TGBotDaemon.INSTANCE.queueMessage("Bot is taking a break");
+                    try {
+                        Thread.sleep(ComplexFarmingTaskSettings.pauseDuration);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    SkyblockBot.LOGGER.info("Break is over, bot is farming again");
+                    TGBotDaemon.INSTANCE.queueMessage("Break is over, bot is farming again");
+                });
+            }
+        }
+    }
+
+    private class CheckGodPotAndCookieTimerTask extends TimerTask {
+        @Override
+        public void run() {
+            if (!SBUtils.isServerSkyblock()) {
+                SkyblockBot.LOGGER.info("Server isn't skyblock. Skipping god pot and cookie check");
+                return;
+            }
+
+            if (currentTask == null) {
+                SkyblockBot.LOGGER.info("Current task is null, can't check god pot and cookie");
+            }
+
+            SkyblockBot.LOGGER.info("Time left god pot: " + SBUtils.getTimeLeftGodPot()
+                    + "\n Time left cookie: " + SBUtils.getTimeLeftCookieBuff());
+            if (SBUtils.getTimeLeftGodPot() < ComplexFarmingTaskSettings.godPotBuyThreshold) {
+                if (!taskQueue.contains(useItem) &&
+                        !currentTask.getClass().equals(buyItem.getClass()) &&
+                        !currentTask.getClass().equals(useItem.getClass())) {
+
+                    SkyblockBot.LOGGER.info("Queueing to use god pot. Minutes left: " + SBUtils.getTimeLeftGodPot() / (1000 * 60));
+
+                    if (!SBUtils.isItemInInventory(ItemNames.GOD_POT.getName())) {
+                        ((BuyItem) buyItem).setItemInfo(ItemNames.GOD_POT.getName(), new String[0]);
+                        taskQueue.add(buyItem);
+                    }
+                    ((UseItem) useItem).setItemName(ItemNames.GOD_POT.getName());
+                    taskQueue.add(useItem);
+                }
+            }
+
+            if (SBUtils.getTimeLeftCookieBuff() < ComplexFarmingTaskSettings.cookieBuyThreshold) {
+                if (!taskQueue.contains(useItem) &&
+                        !currentTask.getClass().equals(buyBZItem.getClass()) &&
+                        !currentTask.getClass().equals(useItem.getClass())) {
+
+                    SkyblockBot.LOGGER.info("Queueing to use cookie. Minutes left: " + SBUtils.getTimeLeftCookieBuff() / (1000 * 60));
+
+                    if (!SBUtils.isItemInInventory(ItemNames.BOOSTER_COOKIE.getName())) {
+                        ((BuyBZItem) buyBZItem).setItemName(ItemNames.BOOSTER_COOKIE.getName());
+                        taskQueue.add(buyBZItem);
+                    }
+                    ((UseItem) useItem).setItemName(ItemNames.BOOSTER_COOKIE.getName());
+                    taskQueue.add(useItem);
+                }
+            }
+        }
+    }
+
+    private class CheckSacksTimerTask extends TimerTask {
+        @Override
+        public void run() {
+            if (GlobalExecutorInfo.carrotCount.get() / 160 > GlobalExecutorInfo.totalSackCountLimit) {
+                if (!taskQueue.contains(sellSacks)) {
+                    SkyblockBot.LOGGER.info("Queueing to sell sacks");
+                    taskQueue.add(sellSacks);
+                }
+            }
+        }
+    }
+
+    private class CheckGuestsTimerTask extends TimerTask {
+        @Override
+        public void run() {
+            if(SBUtils.getGardenGuestCount() > 3) {
+                if (!taskQueue.contains(gardenGuestsTask)) {
+                    SkyblockBot.LOGGER.info("Queueing to handle garden guests");
+                    taskQueue.add(gardenGuestsTask);
+                }
+            }
+        }
     }
 }

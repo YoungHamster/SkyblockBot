@@ -26,6 +26,7 @@ BuySell.waitTicksBetweenLetters: 2
 
 ComplexFarmingTask
 ComplexFarmingTask.pauseInterval: 3600000
+ComplexFarmingTask.checkGuestsInterval: 600000
 ComplexFarmingTask.pauseDuration: 600000
 ComplexFarmingTask.intervalBetweenRegularChecks: 300000
 ComplexFarmingTask.godPotBuyThreshold: 1800000

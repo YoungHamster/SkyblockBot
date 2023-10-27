@@ -6,6 +6,7 @@ import com.viktorx.skyblockbot.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -34,19 +35,14 @@ public class AuctionBrowser {
         auctions.clear();
         auctions.addAll(page.auctions);
 
-        List<Thread> threads = new ArrayList<>();
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (int i = 1; i < page.totalPages; i++) {
             int finalI = i;
-            threads.add(new Thread(() -> loadPageAsync(finalI)));
-            threads.get(threads.size() - 1).start();
+            futures.add(CompletableFuture.runAsync(() -> loadPageAsync(finalI)));
         }
 
-        for (Thread thr : threads) {
-            try {
-                thr.join();
-            } catch (InterruptedException e) {
-                SkyblockBot.LOGGER.info("Auction Browser interrupted exception. Wtf??? I was just loading auctions in parallel");
-            }
+        for (CompletableFuture<Void> future : futures) {
+            future.join();
         }
 
         loaded.set(true);
