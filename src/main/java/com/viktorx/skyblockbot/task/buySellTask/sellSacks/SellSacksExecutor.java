@@ -135,12 +135,11 @@ public class SellSacksExecutor extends BuySellTaskExecutor {
     private void clickOnSlotOrAbort(String slotName, SellSacksState stateVal, SellSacksState nextStateVal) {
         try {
             SBUtils.leftClickOnSlot(slotName);
+            state = stateVal;
+            nextState = nextStateVal;
         } catch (TimeoutException e) {
             state = SellSacksState.IDLE;
             task.aborted();
-        } finally {
-            state = stateVal;
-            nextState = nextStateVal;
         }
     }
 
