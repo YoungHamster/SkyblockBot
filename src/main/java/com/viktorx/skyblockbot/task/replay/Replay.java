@@ -2,6 +2,10 @@ package com.viktorx.skyblockbot.task.replay;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.task.Task;
+import com.viktorx.skyblockbot.task.replay.tickState.AnyKeyRecord;
+import com.viktorx.skyblockbot.task.replay.tickState.KeyboardKeyRecord;
+import com.viktorx.skyblockbot.task.replay.tickState.MouseKeyRecord;
+import com.viktorx.skyblockbot.task.replay.tickState.TickState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
@@ -12,11 +16,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Replay extends Task {
+    private static final long saveProtocolVersion = 42070;
     protected final List<TickState> tickStates = new ArrayList<>();
 
-    private static final long saveProtocolVersion = 696969;
-
-    public Replay(){}
+    public Replay() {
+    }
 
     public Replay(String filename) {
         loadFromFile(filename);
@@ -43,7 +47,17 @@ public class Replay extends Task {
     }
 
     public void saveToFile(String filename) {
-        ByteBuffer bb = ByteBuffer.allocate(8 + tickStates.size() * (TickState.getTickStateSize()));
+        /*
+         * With varying tickState size we have to calculate buffer size tick by tick
+         */
+        int bufferSize = 8 + tickStates.size() * TickState.getEmptyTickStateSize();
+        for (TickState tick : tickStates) {
+            for(AnyKeyRecord key : tick.getKeys()) {
+                bufferSize += key.getSize();
+            }
+        }
+
+        ByteBuffer bb = ByteBuffer.allocate(bufferSize);
 
         bb.putLong(saveProtocolVersion); // some unique number to represent save protocol version
 
@@ -54,16 +68,11 @@ public class Replay extends Task {
             bb.putFloat(state.getYaw());
             bb.putFloat(state.getPitch());
 
-            bb.put((byte) (state.isAttack() ? 1 : 0));
-            bb.put((byte) (state.isForward() ? 1 : 0));
-            bb.put((byte) (state.isBackward() ? 1 : 0));
-            bb.put((byte) (state.isRight() ? 1 : 0));
-            bb.put((byte) (state.isLeft() ? 1 : 0));
-            bb.put((byte) (state.isSneak() ? 1 : 0));
-            bb.put((byte) (state.isSprint() ? 1 : 0));
-            bb.put((byte) (state.isJump() ? 1 : 0));
+            bb.putInt(state.getKeys().size());
 
-            bb.putInt(state.getHotbarSlot());
+            for (AnyKeyRecord key : state.getKeys()) {
+                bb.put(key.getData());
+            }
         }
         try {
             OutputStream os = new FileOutputStream(filename, false);
@@ -100,15 +109,17 @@ public class Replay extends Task {
             return;
         }
 
-        if(!file.hasRemaining()) {
+        if (!file.hasRemaining()) {
             SkyblockBot.LOGGER.info("Can't load the recording, it's empty");
             return;
         }
 
         tickStates.clear();
 
-        if(file.getLong() != saveProtocolVersion) {
-            loadFromFileLegacy(file.rewind());
+        long recordingVersion = file.getLong();
+        if (recordingVersion != saveProtocolVersion) {
+            SkyblockBot.LOGGER.info("Recording ver: " + recordingVersion + ", save ver: " + saveProtocolVersion);
+            SkyblockBot.LOGGER.info("Recording file is deprecated, it is no longer supported, make new recording");
             return;
         }
 
@@ -116,40 +127,27 @@ public class Replay extends Task {
             Vec3d pos = new Vec3d(file.getDouble(), file.getDouble(), file.getDouble());
             Vec2f rot = new Vec2f(file.getFloat(), file.getFloat());
 
-            boolean isAttacking = file.get() == 1;
-            boolean forward = file.get() == 1;
-            boolean backward = file.get() == 1;
-            boolean right = file.get() == 1;
-            boolean left = file.get() == 1;
-            boolean sneak = file.get() == 1;
-            boolean sprint = file.get() == 1;
-            boolean jump = file.get() == 1;
-            int hotbarSlot = file.getInt();
-            tickStates.add(new TickState(pos, rot, isAttacking, forward,
-                    backward, right, left,
-                    sneak, sprint, jump, hotbarSlot)
+            int numberOfKeys = file.getInt();
+            List<AnyKeyRecord> keys = new ArrayList<>();
+
+            for (int i = 0; i < numberOfKeys; i++) {
+                byte keyType = file.get();
+
+                if(keyType == KeyboardKeyRecord.getType()) {
+                    keys.add(new KeyboardKeyRecord(file.getInt(), file.getInt(), file.getInt(), file.getInt()));
+                } else if (keyType == MouseKeyRecord.getType()) {
+                    keys.add(new MouseKeyRecord(file.getInt(), file.getInt(), file.getInt()));
+                } else {
+                    SkyblockBot.LOGGER.error("Illegal key type! " + keyType);
+                    tickStates.clear();
+                    return;
+                }
+            }
+
+            tickStates.add(new TickState(pos, rot, keys)
             );
         }
         SkyblockBot.LOGGER.info("Loaded the recording");
-    }
-
-    private void loadFromFileLegacy(ByteBuffer file) {
-        while (file.hasRemaining()) {
-            Vec3d pos = new Vec3d(file.getDouble(), file.getDouble(), file.getDouble());
-            Vec2f rot = new Vec2f(file.getFloat(), file.getFloat());
-
-            boolean isAttacking = file.get() == 1;
-            boolean forward = file.get() == 1;
-            boolean backward = file.get() == 1;
-            boolean right = file.get() == 1;
-            boolean left = file.get() == 1;
-            boolean sneak = file.get() == 1;
-            boolean sprint = file.get() == 1;
-            boolean jump = file.get() == 1;
-            tickStates.add(new TickState(pos, rot, isAttacking, forward,
-                    backward, right, left, sneak, sprint, jump, -1)
-            );
-        }
     }
 
     public void addTickState(TickState newState) {
@@ -165,7 +163,7 @@ public class Replay extends Task {
     }
 
     /* DANGEROUS */
-    public  void deleteFromIndexToIndex(int start, int end) {
+    public void deleteFromIndexToIndex(int start, int end) {
         tickStates.subList(start + 1, end).clear();
     }
 }

@@ -11,6 +11,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.util.ParticleUtil;
 import net.minecraft.state.property.Property;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -159,5 +160,9 @@ public class Keybinds {
                 keyCode,
                 0,
                 0));
+    }
+
+    public static int getStartStopRecrodingKeyCode() {
+        return ((KeyBindingMixin) startStopRecording).getBoundKey().getCode();
     }
 }

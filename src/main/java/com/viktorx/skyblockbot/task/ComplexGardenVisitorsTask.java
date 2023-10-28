@@ -2,7 +2,11 @@ package com.viktorx.skyblockbot.task;
 
 public class ComplexGardenVisitorsTask extends Task {
 
-
+    private Task goToVisitors;
+    private Task goBackToFarm;
+    private Task getVisitorDesiredItems;
+    private Task buyBZItem;
+    private Task giveVisitorItems;
 
     public void execute() {
     }

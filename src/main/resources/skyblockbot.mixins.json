@@ -14,5 +14,10 @@
   ],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "client": [
+    "IMouseMixin",
+    "KeyboardMixin",
+    "MouseMixin"
+  ]
 }

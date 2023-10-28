@@ -2,13 +2,19 @@ package com.viktorx.skyblockbot.task.replay;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
+import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.Task;
+import com.viktorx.skyblockbot.task.replay.tickState.AnyKeyRecord;
+import com.viktorx.skyblockbot.task.replay.tickState.KeyboardKeyRecord;
+import com.viktorx.skyblockbot.task.replay.tickState.MouseKeyRecord;
+import com.viktorx.skyblockbot.task.replay.tickState.TickState;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -18,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 
 public class ReplayExecutor {
@@ -26,6 +34,7 @@ public class ReplayExecutor {
     private final List<String> itemsWhenStarted = new ArrayList<>();
     private final List<TickState> lastNTicks = new ArrayList<>();
     private final List<String> whitelistedBlocks = new ArrayList<>();
+    private final Queue<AnyKeyRecord> newKeys = new ArrayBlockingQueue<>(15);
     public boolean serverChangedPositionRotation = false;
     public boolean serverChangedItem = false;
     public boolean serverChangedSlot = false;
@@ -111,7 +120,7 @@ public class ReplayExecutor {
         }
 
         asyncPlayAlarmSound();
-        replay.getTickState(tickIterator).setButtonsForClient(client);
+        replay.getTickState(tickIterator).setButtonsForClient();
 
         Vec2f prevRot = replay.getTickState(tickIterator - 1).getRotation();
         Vec2f currentRot = replay.getTickState(tickIterator).getRotation();
@@ -134,8 +143,6 @@ public class ReplayExecutor {
                 if (!yawTask.isDone() || !pitchTask.isDone()) {
                     return;
                 } else {
-                    unpressButtons();
-                    pressAllButtons();
                     unpressButtons();
                     state = ReplayBotState.PLAYING;
                 }
@@ -163,7 +170,7 @@ public class ReplayExecutor {
 
         tickState.setRotationForClient(client);
         tickState.setPositionForClient(client);
-        tickState.setButtonsForClient(client);
+        tickState.setButtonsForClient();
 
         tickIterator++;
         if (tickIterator == replay.size()) {
@@ -416,6 +423,7 @@ public class ReplayExecutor {
     private double getDistanceToExpectedPosition() {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
         Vec3d expected = replay.getTickState(tickIterator).getPosition();
+        assert player != null;
         Vec3d actual = player.getPos();
 
         return actual.subtract(expected).length();
@@ -506,40 +514,34 @@ public class ReplayExecutor {
     }
 
     private TickState getCurrentTickState() {
-        return new TickState();
+        List<AnyKeyRecord> keys = new ArrayList<>();
+        while (!newKeys.isEmpty()) {
+            keys.add(newKeys.poll());
+        }
+        return new TickState(keys);
     }
 
+    public void onKeyPress(AnyKeyRecord newKey) {
+        if (state.equals(ReplayBotState.RECORDING)) {
+            newKeys.add(newKey);
+        }
+    }
+
+    /*
+     * I could keep track of all presses and unpresses but it would be a lot of work, steal performance and be a pain altogether
+     * Instead i just unpress every button that i could want to be unpressed
+     */
     private void unpressButtons() {
-        new TickState(
-                new Vec3d(0, 0, 0),
-                new Vec2f(0, 0),
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                -1
-        ).setButtonsForClient(MinecraftClient.getInstance());
-    }
+        GameOptions options = MinecraftClient.getInstance().options;
+        new KeyboardKeyRecord(((KeyBindingMixin)options.forwardKey).getBoundKey().getCode(), 0, 0, 0).press();
+        new KeyboardKeyRecord(((KeyBindingMixin)options.backKey).getBoundKey().getCode(), 0, 0, 0).press();
+        new KeyboardKeyRecord(((KeyBindingMixin)options.leftKey).getBoundKey().getCode(), 0, 0, 0).press();
+        new KeyboardKeyRecord(((KeyBindingMixin)options.rightKey).getBoundKey().getCode(), 0, 0, 0).press();
+        new KeyboardKeyRecord(((KeyBindingMixin)options.sneakKey).getBoundKey().getCode(), 0, 0, 0).press();
+        new KeyboardKeyRecord(((KeyBindingMixin)options.jumpKey).getBoundKey().getCode(), 0, 0, 0).press();
 
-    // Doesn't actually press jump cause we don't want to randomly jump
-    private void pressAllButtons() {
-        new TickState(
-                new Vec3d(0, 0, 0),
-                new Vec2f(0, 0),
-                true,
-                true,
-                true,
-                true,
-                true,
-                true,
-                true,
-                false,
-                -1
-        ).setButtonsForClient(MinecraftClient.getInstance());
+        new MouseKeyRecord(((KeyBindingMixin)options.attackKey).getBoundKey().getCode(),  0, 0).press();
+        new MouseKeyRecord(((KeyBindingMixin)options.useKey).getBoundKey().getCode(),  0, 0).press();
     }
 
     private void prepareToStart() {
@@ -579,9 +581,7 @@ public class ReplayExecutor {
     }
 
     private void saveRecordingAsync(String filename) {
-        CompletableFuture.runAsync(() -> {
-            replay.saveToFile(filename);
-        });
+        CompletableFuture.runAsync(() -> replay.saveToFile(filename));
     }
 
     public synchronized void pause() {
