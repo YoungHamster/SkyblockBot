@@ -25,6 +25,7 @@ public class ReplayExecutor {
     public static final ReplayExecutor INSTANCE = new ReplayExecutor();
     private final List<String> itemsWhenStarted = new ArrayList<>();
     private final List<TickState> lastNTicks = new ArrayList<>();
+    private final List<String> whitelistedBlocks = new ArrayList<>();
     public boolean serverChangedPositionRotation = false;
     public boolean serverChangedItem = false;
     public boolean serverChangedSlot = false;
@@ -39,7 +40,6 @@ public class ReplayExecutor {
     private CompletableFuture<Void> yawTask = null;
     private CompletableFuture<Void> pitchTask = null;
     private int antiDetectTriggeredTickCounter = 0;
-    private final List<String> whitelistedBlocks = new ArrayList<>();
 
     public void Init() {
         whitelistedBlocks.add("oak_sign");
@@ -135,6 +135,8 @@ public class ReplayExecutor {
                     return;
                 } else {
                     unpressButtons();
+                    pressAllButtons();
+                    unpressButtons();
                     state = ReplayBotState.PLAYING;
                 }
             } else {
@@ -165,6 +167,8 @@ public class ReplayExecutor {
 
         tickIterator++;
         if (tickIterator == replay.size()) {
+            tickIterator = 0;
+
             printDebugInfo();
             unpressButtons();
             state = ReplayBotState.IDLE;
@@ -194,48 +198,31 @@ public class ReplayExecutor {
         assert MinecraftClient.getInstance().player != null;
 
         /*
-         * This code is for situation when we die at the end of the farm to respawn at the start
-         * We have to wait and check every tick if our position is equal to the starting position
-         * If we wait for some time and it doesn't happen we abort the task
+         * If tick 0 from replay isn't close to player's current position we attempt to find replay tick close enough
+         * to current position
+         * If we do we can just start for the middle of the replay instead of refusing to work
          */
-        int waitTickCounter = 0;
-        boolean isPositionCorrect;
-        Vec3d expected;
-        Vec3d actual;
-        do {
-            ClientPlayerEntity player = MinecraftClient.getInstance().player;
-            expected = replay.getTickState(0).getPosition();
-            actual = player.getPos();
-            double distanceToStartPoint = actual.subtract(expected).length();
-
-            isPositionCorrect = distanceToStartPoint < ReplayBotSettings.maxDistanceToFirstPoint;
-
-            Thread.sleep(50);
-
-        } while (waitTickCounter++ < ReplayBotSettings.maxTicksToWaitForSpawn && !isPositionCorrect);
-
-        if (!isPositionCorrect) {
+        if (!isPlayerInCorrectPosition()) {
             SkyblockBot.LOGGER.info("Trying to find fitting tick state away from the start");
 
             double lowestDistance = ReplayBotSettings.maxDistanceToFirstPoint + 1.0d;
             int lowestDistanceIterator = -1;
-            for(int i = 0; i < replay.tickStates.size(); i++) {
-                expected = replay.tickStates.get(i).getPosition();
-                double distanceToStartPoint = actual.subtract(expected).length();
+            for (int i = 0; i < replay.tickStates.size(); i++) {
+                tickIterator = i;
+                double distanceToStartPoint = getDistanceToExpectedPosition();
 
-                if(distanceToStartPoint < lowestDistance) {
+                if (distanceToStartPoint < lowestDistance) {
                     lowestDistance = distanceToStartPoint;
                     lowestDistanceIterator = i;
                 }
             }
+            tickIterator = lowestDistanceIterator;
 
-            if(lowestDistance < ReplayBotSettings.maxDistanceToFirstPoint) {
+            if (lowestDistance < ReplayBotSettings.maxDistanceToFirstPoint) {
                 SkyblockBot.LOGGER.info("Found tick to start from! Starting replay from " + lowestDistanceIterator + " tick state");
-                tickIterator = lowestDistanceIterator;
             } else {
                 SkyblockBot.LOGGER.warn(
-                        "Can't start so far from first point. Expected x: " + expected.x + " z:" + expected.z
-                                + ", actual x:" + actual.x + " z:" + actual.z);
+                        "Can't start so far from first point. Distance: " + getDistanceToExpectedPosition());
                 state = ReplayBotState.IDLE;
                 abort();
                 return;
@@ -260,7 +247,13 @@ public class ReplayExecutor {
         prepareToStart();
     }
 
-    public void abort() {
+    public synchronized void abort() {
+        if (state.equals(ReplayBotState.IDLE)) {
+            SkyblockBot.LOGGER.info("Can't abort replay, already idle");
+            return;
+        }
+        tickIterator = 0;
+
         SkyblockBot.LOGGER.info("aborted playing");
         state = ReplayBotState.IDLE;
 
@@ -416,6 +409,18 @@ public class ReplayExecutor {
         return true;
     }
 
+    public boolean isPlayerInCorrectPosition() {
+        return getDistanceToExpectedPosition() < ReplayBotSettings.maxDistanceToFirstPoint;
+    }
+
+    private double getDistanceToExpectedPosition() {
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        Vec3d expected = replay.getTickState(tickIterator).getPosition();
+        Vec3d actual = player.getPos();
+
+        return actual.subtract(expected).length();
+    }
+
     /*
      * This thing at the moment is only called when server lags back the player(not every tick)
      * But my guess right now is that it's still gonna do what I intend it to do,
@@ -520,6 +525,23 @@ public class ReplayExecutor {
         ).setButtonsForClient(MinecraftClient.getInstance());
     }
 
+    // Doesn't actually press jump cause we don't want to randomly jump
+    private void pressAllButtons() {
+        new TickState(
+                new Vec3d(0, 0, 0),
+                new Vec2f(0, 0),
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                false,
+                -1
+        ).setButtonsForClient(MinecraftClient.getInstance());
+    }
+
     private void prepareToStart() {
         pitchTask = LookHelper.changePitchSmoothAsync(replay.getTickState(tickIterator).getPitch(), 120.0f);
         yawTask = LookHelper.changeYawSmoothAsync(replay.getTickState(tickIterator).getYaw(), 120.0f);
@@ -562,7 +584,7 @@ public class ReplayExecutor {
         });
     }
 
-    public void pause() {
+    public synchronized void pause() {
         if (!state.equals(ReplayBotState.PLAYING)) {
             SkyblockBot.LOGGER.info("Can't pause when not playing");
             return;
@@ -573,7 +595,7 @@ public class ReplayExecutor {
         SkyblockBot.LOGGER.info("Paused");
     }
 
-    public void resume() {
+    public synchronized void resume() {
         if (!state.equals(ReplayBotState.PAUSED)) {
             SkyblockBot.LOGGER.info("Can't unpause when not paused");
             return;

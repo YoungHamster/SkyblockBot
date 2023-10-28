@@ -86,7 +86,7 @@ public class Replay extends Task {
         return ReplayExecutor.INSTANCE.isPaused();
     }
 
-    private void loadFromFile(String filename) {
+    public void loadFromFile(String filename) {
         ByteBuffer file;
 
         SkyblockBot.LOGGER.info("Loading recording from \"" + filename + "\"");
@@ -104,6 +104,8 @@ public class Replay extends Task {
             SkyblockBot.LOGGER.info("Can't load the recording, it's empty");
             return;
         }
+
+        tickStates.clear();
 
         if(file.getLong() != saveProtocolVersion) {
             loadFromFileLegacy(file.rewind());

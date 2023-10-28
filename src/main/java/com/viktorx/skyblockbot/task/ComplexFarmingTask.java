@@ -11,6 +11,7 @@ import com.viktorx.skyblockbot.task.changeIsland.ChangeIsland;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.replay.Replay;
 import com.viktorx.skyblockbot.task.replay.ReplayBotSettings;
+import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.task.useItem.UseItem;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 
@@ -28,11 +29,11 @@ public class ComplexFarmingTask extends Task {
     private final Task buyBZItem;
     private final Task useItem;
     private final Task gardenVisitorsTask;
+    private final Task farm;
     private final List<Runnable> runWhenFarmCompleted = new ArrayList<>();
     private final Queue<Task> taskQueue = new ArrayBlockingQueue<>(20);
+    private final List<Timer> timers = new ArrayList<>();
     private Task currentTask;
-    private Task farm;
-    private List<Timer> timers = new ArrayList<>();
 
     ComplexFarmingTask() {
         this.getOutOfLimbo = new ChangeIsland("/lobby");
@@ -130,6 +131,29 @@ public class ComplexFarmingTask extends Task {
     }
 
     private void whenFarmCompleted() {
+        /*
+         * This code is for situation when we die at the end of the farm to respawn at the start
+         * We have to wait and check every tick if our position is equal to the starting position
+         * If we wait for some time and it doesn't happen we abort the task
+         */
+        int waitTickCounter = 0;
+        boolean isPositionCorrect;
+        do {
+            isPositionCorrect = ReplayExecutor.INSTANCE.isPlayerInCorrectPosition();
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                SkyblockBot.LOGGER.warn("Interrupted while waiting for respawn after loop, wtf???????");
+                e.printStackTrace();
+            }
+        } while (waitTickCounter++ < ReplayBotSettings.maxTicksToWaitForSpawn && !isPositionCorrect);
+
+        if (!isPositionCorrect) {
+            SkyblockBot.LOGGER.error("Farm completed, we waited to respawn, but position isn't correct! Stopping ComplexFarmingTask");
+            currentTask = null;
+            return;
+        }
+
         synchronized (runWhenFarmCompleted) {
             for (Runnable notTask : runWhenFarmCompleted) {
                 notTask.run();
@@ -272,10 +296,10 @@ public class ComplexFarmingTask extends Task {
     public void loadRecordingAsync() {
         if (isExecuting()) {
             synchronized (runWhenFarmCompleted) {
-                runWhenFarmCompleted.add(() -> farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE));
+                runWhenFarmCompleted.add(() -> farm.loadFromFile(ReplayBotSettings.DEFAULT_RECORDING_FILE));
             }
         } else {
-            CompletableFuture.runAsync(() -> farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE));
+            CompletableFuture.runAsync(() -> farm.loadFromFile(ReplayBotSettings.DEFAULT_RECORDING_FILE));
         }
     }
 
@@ -375,8 +399,8 @@ public class ComplexFarmingTask extends Task {
         public void run() {
             if (SBUtils.getGardenVisitorCount() > 3) {
                 if (!taskQueue.contains(gardenVisitorsTask)) {
-                    SkyblockBot.LOGGER.info("Queueing to handle garden guests");
-                    taskQueue.add(gardenVisitorsTask);
+                    //SkyblockBot.LOGGER.info("Queueing to handle garden guests");
+                    //taskQueue.add(gardenVisitorsTask);
                 }
             }
         }
