@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.task.buySellTask.sellSacks;
+package com.viktorx.skyblockbot.task.menuClickingTasks.sellSacks;
 
 public enum SellSacksState {
     IDLE,

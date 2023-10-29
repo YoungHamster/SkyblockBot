@@ -15,8 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ClientPlayNetworkHandlerMixin {
     @Inject(method = "onInventory", at = @At("HEAD"))
     public void interceptInventory(InventoryS2CPacket packet, CallbackInfo ci) {
-        CurrentInventory.setItemStacks(packet.getContents());
         CurrentInventory.setSyncID(packet.getSyncId());
+        CurrentInventory.setItemStacks(packet.getContents());
     }
 
     @Inject(method = "onPlayerPositionLook", at = @At("HEAD"))

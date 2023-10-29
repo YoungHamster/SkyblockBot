@@ -1,16 +1,11 @@
-package com.viktorx.skyblockbot.task.buySellTask;
+package com.viktorx.skyblockbot.task.menuClickingTasks;
 
 
-import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
-import com.viktorx.skyblockbot.mixins.IChatHudMixin;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.ChatHud;
-import net.minecraft.client.gui.hud.ChatHudLine;
-import net.minecraft.text.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,11 +13,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-public abstract class BuySellTaskExecutor {
+public abstract class AbstractMenuClickingExecutor {
     protected final List<String> possibleErrors = new ArrayList<>();
-    private CompletableFuture<Boolean> currentClick;
     protected boolean currentClickRunning = false;
     protected int waitTickCounter = 0;
+    private CompletableFuture<Boolean> currentClick;
 
     protected abstract void restart();
 
@@ -86,7 +81,7 @@ public abstract class BuySellTaskExecutor {
     }
 
     protected long getTimeToWaitBeforeClick() {
-        return GlobalExecutorInfo.waitTicksBeforeAction * 50;
+        return GlobalExecutorInfo.waitTicksBeforeAction * 50L;
     }
 
     protected boolean waitBeforeCommand() {
@@ -96,5 +91,4 @@ public abstract class BuySellTaskExecutor {
         waitTickCounter = 0;
         return false;
     }
-
 }

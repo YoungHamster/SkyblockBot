@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.task.buySellTask.buyItem;
+package com.viktorx.skyblockbot.task.menuClickingTasks.buyItem;
 
 public enum BuyItemState {
     IDLE,

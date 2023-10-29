@@ -2,14 +2,14 @@ package com.viktorx.skyblockbot.skyblock;
 
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
 import com.viktorx.skyblockbot.mixins.PlayerListHudMixin;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
@@ -86,6 +86,11 @@ public class SBUtils {
         } else {
             return Integer.parseInt(visitorLine.substring(11, 12));
         }
+    }
+
+    public static boolean isGardenVisitorInQueue(String name) {
+        String visitorLine = getTabPlayers().stream().filter(string -> string.contains(name)).collect(Collectors.joining());
+        return visitorLine.length() == 0;
     }
 
     /*
@@ -206,6 +211,35 @@ public class SBUtils {
 
         assert client.player != null;
         return client.player.currentScreenHandler.slots.get(slot).getStack().getName().getString();
+    }
+
+    public static List<String> getSlotLore(String itemName) throws TimeoutException {
+        NbtCompound nbt = getSlot(itemName).getStack().getNbt();
+        if (nbt == null) {
+            SkyblockBot.LOGGER.info("Nbt is null! " + getSlot(itemName).id);
+            return null;
+        }
+
+        nbt = nbt.getCompound("display");
+        if (nbt == null) {
+            SkyblockBot.LOGGER.info("display is null! " + getSlot(itemName).id);
+            return null;
+        }
+
+        List<String> lines = new ArrayList<>();
+        nbt.getList("Lore", NbtElement.STRING_TYPE).forEach(elem -> {
+            String str = elem.asString();
+            String token = "text\":\"";
+            StringBuilder loreLine = new StringBuilder();
+            while (str.contains(token)) {
+                str = str.substring(str.indexOf(token) + token.length());
+
+                loreLine.append(str.substring(0, str.indexOf("\"")));
+            }
+            lines.add(loreLine.toString());
+        });
+
+        return lines;
     }
 
     // same as 'getAllSlots' but returns first of list of slots

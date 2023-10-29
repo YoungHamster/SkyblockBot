@@ -4,9 +4,9 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
-import com.viktorx.skyblockbot.task.buySellTask.buyBZItem.BuyBZItem;
-import com.viktorx.skyblockbot.task.buySellTask.buyItem.BuyItem;
-import com.viktorx.skyblockbot.task.buySellTask.sellSacks.SellSacks;
+import com.viktorx.skyblockbot.task.menuClickingTasks.buyBZItem.BuyBZItem;
+import com.viktorx.skyblockbot.task.menuClickingTasks.buyItem.BuyItem;
+import com.viktorx.skyblockbot.task.menuClickingTasks.sellSacks.SellSacks;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIsland;
 import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.replay.Replay;
@@ -202,7 +202,7 @@ public class ComplexFarmingTask extends Task {
     }
 
     private void debugExecute() {
-        currentTask = sellSacks;
+        currentTask = gardenVisitorsTask;
         currentTask.execute();
     }
 
@@ -304,10 +304,16 @@ public class ComplexFarmingTask extends Task {
     public void loadRecordingAsync() {
         if (isExecuting()) {
             synchronized (runWhenFarmCompleted) {
-                runWhenFarmCompleted.add(() -> farm.loadFromFile(ReplayBotSettings.DEFAULT_RECORDING_FILE));
+                runWhenFarmCompleted.add(() -> {
+                    farm.loadFromFile(ReplayBotSettings.DEFAULT_RECORDING_FILE);
+                    ((ComplexGardenVisitorsTask) gardenVisitorsTask).reloadRecordings();
+                });
             }
         } else {
-            CompletableFuture.runAsync(() -> farm.loadFromFile(ReplayBotSettings.DEFAULT_RECORDING_FILE));
+            CompletableFuture.runAsync(() -> {
+                farm.loadFromFile(ReplayBotSettings.DEFAULT_RECORDING_FILE);
+                ((ComplexGardenVisitorsTask) gardenVisitorsTask).reloadRecordings();
+            });
         }
     }
 
@@ -407,8 +413,8 @@ public class ComplexFarmingTask extends Task {
         public void run() {
             if (SBUtils.getGardenVisitorCount() > 3) {
                 if (!taskQueue.contains(gardenVisitorsTask)) {
-                    //SkyblockBot.LOGGER.info("Queueing to handle garden guests");
-                    //taskQueue.add(gardenVisitorsTask);
+                    SkyblockBot.LOGGER.info("Queueing to handle garden guests");
+                    taskQueue.add(gardenVisitorsTask);
                 }
             }
         }

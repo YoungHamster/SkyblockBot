@@ -75,7 +75,11 @@ public class Replay extends Task {
             }
         }
         try {
-            OutputStream os = new FileOutputStream(filename, false);
+            File f = new File("replays");
+            if(!f.isDirectory()) {
+                f.mkdir();
+            }
+            OutputStream os = new FileOutputStream("replays\\\\" + filename, false);
 
             os.write(bb.array());
             os.close();
@@ -101,7 +105,7 @@ public class Replay extends Task {
         SkyblockBot.LOGGER.info("Loading recording from \"" + filename + "\"");
 
         try {
-            InputStream is = new FileInputStream(filename);
+            InputStream is = new FileInputStream("replays\\\\" + filename);
             file = ByteBuffer.wrap(is.readAllBytes());
             is.close();
         } catch (IOException e) {

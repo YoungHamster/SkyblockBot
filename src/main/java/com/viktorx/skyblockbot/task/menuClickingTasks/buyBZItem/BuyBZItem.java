@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.task.buySellTask.buyBZItem;
+package com.viktorx.skyblockbot.task.menuClickingTasks.buyBZItem;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.task.Task;

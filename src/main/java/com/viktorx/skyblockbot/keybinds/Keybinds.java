@@ -2,8 +2,12 @@ package com.viktorx.skyblockbot.keybinds;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.viktorx.skyblockbot.GlobalSettingsManager;
+import com.viktorx.skyblockbot.RayTraceStuff;
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.mixins.IMouseMixin;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
+import com.viktorx.skyblockbot.mixins.MouseMixin;
+import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.ComplexFarmingTask;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -11,6 +15,8 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import org.lwjgl.glfw.GLFW;
 
@@ -18,6 +24,7 @@ import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeoutException;
 
 public class Keybinds {
     private static final Queue<Integer> tickKeyPressQueue = new LinkedBlockingQueue<>();
@@ -85,8 +92,6 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
-                BlockPos blockPos = new BlockPos(client.player.getPos());
-                SkyblockBot.LOGGER.info("Material: " + client.world.getBlockState(blockPos).getBlock().asItem().toString());
                 try {
                     GlobalSettingsManager.getInstance().loadSettings();
                 } catch (IOException e) {
@@ -136,12 +141,24 @@ public class Keybinds {
     public static void blockingPressCustomKey(int keyCode) {
         MinecraftClient client = MinecraftClient.getInstance();
 
-        RenderSystem.recordRenderCall(() -> client.keyboard.onKey(
-                client.getWindow().getHandle(),
-                keyCode,
-                keyCode,
-                1,
-                0));
+        /*
+         * I guess this is shitty code, but i think it will work
+         * Instead of figuring out if it is a mouse button or keyboard key i just try to press it on both mouse and keyboard
+         */
+        if (keyCode < 32) {
+            ((IMouseMixin)client.mouse).callOnMouseButton(
+                    client.getWindow().getHandle(),
+                    keyCode,
+                    1,
+                    0);
+        } else {
+            client.keyboard.onKey(
+                    client.getWindow().getHandle(),
+                    keyCode,
+                    keyCode,
+                    1,
+                    0);
+        }
 
         try {
             Thread.sleep(KeybindsSettings.buttonPressDelay); // press button for around 1 tick, maybe make it random later
@@ -149,12 +166,20 @@ public class Keybinds {
             SkyblockBot.LOGGER.info("InterruptedException. Don't care");
         }
 
-        RenderSystem.recordRenderCall(() -> client.keyboard.onKey(
-                client.getWindow().getHandle(),
-                keyCode,
-                keyCode,
-                0,
-                0));
+        if(keyCode < 32) {
+            ((IMouseMixin)client.mouse).callOnMouseButton(
+                    client.getWindow().getHandle(),
+                    keyCode,
+                    1,
+                    0);
+        } else {
+            client.keyboard.onKey(
+                    client.getWindow().getHandle(),
+                    keyCode,
+                    keyCode,
+                    0,
+                    0);
+        }
     }
 
     public static int getStartStopRecrodingKeyCode() {

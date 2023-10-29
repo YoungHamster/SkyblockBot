@@ -1,18 +1,18 @@
-package com.viktorx.skyblockbot.task.buySellTask.buyItem;
+package com.viktorx.skyblockbot.task.menuClickingTasks.buyItem;
 
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.skyblock.flipping.auction.AuctionBrowser;
 import com.viktorx.skyblockbot.task.Task;
-import com.viktorx.skyblockbot.task.buySellTask.BuySellTaskExecutor;
+import com.viktorx.skyblockbot.task.menuClickingTasks.AbstractMenuClickingExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-public class BuyItemExecutor extends BuySellTaskExecutor {
+public class BuyItemExecutor extends AbstractMenuClickingExecutor {
 
     public static final BuyItemExecutor INSTANCE = new BuyItemExecutor();
 

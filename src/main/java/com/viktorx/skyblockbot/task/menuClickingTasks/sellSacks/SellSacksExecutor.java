@@ -1,16 +1,16 @@
-package com.viktorx.skyblockbot.task.buySellTask.sellSacks;
+package com.viktorx.skyblockbot.task.menuClickingTasks.sellSacks;
 
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
-import com.viktorx.skyblockbot.task.buySellTask.BuySellTaskExecutor;
+import com.viktorx.skyblockbot.task.menuClickingTasks.AbstractMenuClickingExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
 import java.util.concurrent.TimeoutException;
 
-public class SellSacksExecutor extends BuySellTaskExecutor {
+public class SellSacksExecutor extends AbstractMenuClickingExecutor {
 
     public static SellSacksExecutor INSTANCE = new SellSacksExecutor();
 

@@ -216,7 +216,7 @@ public class ReplayExecutor {
         if (!isPlayerInCorrectPosition()) {
             SkyblockBot.LOGGER.info("Trying to find fitting tick state away from the start");
 
-            double lowestDistance = ReplayBotSettings.maxDistanceToFirstPoint + 1.0d;
+            double lowestDistance = ReplayBotSettings.maxDistanceToFirstPoint;
             int lowestDistanceIterator = -1;
             for (int i = 0; i < replay.tickStates.size(); i++) {
                 tickIterator = i;
@@ -227,9 +227,9 @@ public class ReplayExecutor {
                     lowestDistanceIterator = i;
                 }
             }
-            tickIterator = lowestDistanceIterator;
 
             if (lowestDistance < ReplayBotSettings.maxDistanceToFirstPoint) {
+                tickIterator = lowestDistanceIterator;
                 SkyblockBot.LOGGER.info("Found tick to start from! Starting replay from " + lowestDistanceIterator + " tick state");
             } else {
                 SkyblockBot.LOGGER.warn(

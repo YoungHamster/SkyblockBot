@@ -1,24 +1,26 @@
-package com.viktorx.skyblockbot.task.buySellTask.buyBZItem;
+package com.viktorx.skyblockbot.task.menuClickingTasks.buyBZItem;
 
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.task.buySellTask.BuySellSettings;
-import com.viktorx.skyblockbot.task.buySellTask.BuySellTaskExecutor;
+import com.viktorx.skyblockbot.task.menuClickingTasks.BuySellSettings;
+import com.viktorx.skyblockbot.task.menuClickingTasks.AbstractMenuClickingExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
 import java.util.concurrent.CompletableFuture;
 
-public class BuyBZItemExecutor extends BuySellTaskExecutor {
+public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
     public static BuyBZItemExecutor INSTANCE = new BuyBZItemExecutor();
 
     private BuyBZItemState state = BuyBZItemState.IDLE;
     private BuyBZItemState nextState;
+    private BuyBZItemState prevState;
     private BuyBZItemState stateBeforePause;
     private BuyBZItem task;
     private int waitBetweenLettersCounter = 0;
     private int typingIterator = 0;
+    protected int waitForScreenLoadingCounter = 0;
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickBuy);
@@ -26,7 +28,7 @@ public class BuyBZItemExecutor extends BuySellTaskExecutor {
 
     protected void restart() {
         blockingCloseCurrentInventory();
-        SkyblockBot.LOGGER.warn("Can't buy from auction. Restarting task");
+        SkyblockBot.LOGGER.warn("Can't buy " + task.getItemName() + ". Restarting task");
         state = BuyBZItemState.RESTARTING;
     }
 
@@ -151,6 +153,7 @@ public class BuyBZItemExecutor extends BuySellTaskExecutor {
                     return;
                 }
 
+                prevState = state;
                 nextState = BuyBZItemState.ENTERING_AMOUNT;
                 state = BuyBZItemState.WAITING_FOR_SCREEN_CHANGE;
             }
@@ -199,6 +202,10 @@ public class BuyBZItemExecutor extends BuySellTaskExecutor {
                 }
                 if (client.currentScreen.getClass().equals(task.getSearchScreenClass())) {
                     state = nextState;
+                    return;
+                }
+                if(waitForScreenLoadingCounter++ > BuySellSettings.maxWaitForScreen) {
+                    state = prevState;
                 }
             }
 
@@ -216,7 +223,13 @@ public class BuyBZItemExecutor extends BuySellTaskExecutor {
         }
 
         assert MinecraftClient.getInstance().currentScreen != null;
-        MinecraftClient.getInstance().currentScreen.charTyped(str.charAt(typingIterator), 0);
+        if(!MinecraftClient.getInstance().currentScreen.charTyped(str.charAt(typingIterator), 0)) {
+            SkyblockBot.LOGGER.info("Sign Edit Screen didn't accept char: " + str.charAt(typingIterator) + ", finishing typing!!!");
+            typingIterator = 0;
+            return false;
+        } else {
+            SkyblockBot.LOGGER.info("Pressed: " + str.charAt(typingIterator));
+        }
 
         typingIterator++;
         return true;

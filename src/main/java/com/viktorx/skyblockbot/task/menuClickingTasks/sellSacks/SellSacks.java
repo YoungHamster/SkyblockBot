@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.task.buySellTask.sellSacks;
+package com.viktorx.skyblockbot.task.menuClickingTasks.sellSacks;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
