@@ -1,11 +1,13 @@
 package com.viktorx.skyblockbot.skyblock;
 
 import com.viktorx.skyblockbot.CurrentInventory;
+import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
 import com.viktorx.skyblockbot.mixins.PlayerListHudMixin;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.Scoreboard;
@@ -39,7 +41,12 @@ public class SBUtils {
     public static void leftClickOnSlot(int slotID) throws TimeoutException {
         MinecraftClient client = MinecraftClient.getInstance();
 
-        int lmb = ((KeyBindingMixin) client.options.attackKey).getBoundKey().getCode();
+        /*
+         * Hardcoding left mouse button because it will never change and it'll work fine
+         * Actually the previous method i used here didn't work when you change attack key in settings,
+         * because inventory doesn't care about settings, it only cares about default buttons
+         */
+        int lmb = 0;
         assert client.interactionManager != null;
         client.interactionManager.clickSlot(CurrentInventory.getSyncId(), slotID, lmb, SlotActionType.PICKUP, client.player);
     }

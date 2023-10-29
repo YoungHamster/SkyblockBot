@@ -143,9 +143,13 @@ public class ReplayExecutor {
                 if (!yawTask.isDone() || !pitchTask.isDone()) {
                     return;
                 } else {
-                    unpressButtons();
-                    state = ReplayBotState.PLAYING;
+                    pressButtons();
+                    state = ReplayBotState.UNPRESSING_BUTTONS_BEFORE_START;
                 }
+            } else if(state.equals(ReplayBotState.UNPRESSING_BUTTONS_BEFORE_START)) {
+                unpressButtons();
+                state = ReplayBotState.PLAYING;
+                return;
             } else {
                 return;
             }
@@ -533,15 +537,24 @@ public class ReplayExecutor {
      */
     private void unpressButtons() {
         GameOptions options = MinecraftClient.getInstance().options;
-        new KeyboardKeyRecord(((KeyBindingMixin)options.forwardKey).getBoundKey().getCode(), 0, 0, 0).press();
-        new KeyboardKeyRecord(((KeyBindingMixin)options.backKey).getBoundKey().getCode(), 0, 0, 0).press();
-        new KeyboardKeyRecord(((KeyBindingMixin)options.leftKey).getBoundKey().getCode(), 0, 0, 0).press();
-        new KeyboardKeyRecord(((KeyBindingMixin)options.rightKey).getBoundKey().getCode(), 0, 0, 0).press();
-        new KeyboardKeyRecord(((KeyBindingMixin)options.sneakKey).getBoundKey().getCode(), 0, 0, 0).press();
-        new KeyboardKeyRecord(((KeyBindingMixin)options.jumpKey).getBoundKey().getCode(), 0, 0, 0).press();
+        new KeyboardKeyRecord(((KeyBindingMixin) options.forwardKey).getBoundKey().getCode(), 0, 0, 0).press();
+        new KeyboardKeyRecord(((KeyBindingMixin) options.backKey).getBoundKey().getCode(), 0, 0, 0).press();
+        new KeyboardKeyRecord(((KeyBindingMixin) options.leftKey).getBoundKey().getCode(), 0, 0, 0).press();
+        new KeyboardKeyRecord(((KeyBindingMixin) options.rightKey).getBoundKey().getCode(), 0, 0, 0).press();
 
-        new MouseKeyRecord(((KeyBindingMixin)options.attackKey).getBoundKey().getCode(),  0, 0).press();
-        new MouseKeyRecord(((KeyBindingMixin)options.useKey).getBoundKey().getCode(),  0, 0).press();
+        new MouseKeyRecord(((KeyBindingMixin) options.attackKey).getBoundKey().getCode(), 0, 0).press();
+        new MouseKeyRecord(((KeyBindingMixin) options.useKey).getBoundKey().getCode(), 0, 0).press();
+    }
+
+    private void pressButtons() {
+        GameOptions options = MinecraftClient.getInstance().options;
+        new KeyboardKeyRecord(((KeyBindingMixin) options.forwardKey).getBoundKey().getCode(), 0, 1, 0).press();
+        new KeyboardKeyRecord(((KeyBindingMixin) options.backKey).getBoundKey().getCode(), 0, 1, 0).press();
+        new KeyboardKeyRecord(((KeyBindingMixin) options.leftKey).getBoundKey().getCode(), 0, 1, 0).press();
+        new KeyboardKeyRecord(((KeyBindingMixin) options.rightKey).getBoundKey().getCode(), 0, 1, 0).press();
+
+        new MouseKeyRecord(((KeyBindingMixin) options.attackKey).getBoundKey().getCode(), 1, 0).press();
+        new MouseKeyRecord(((KeyBindingMixin) options.useKey).getBoundKey().getCode(), 1, 0).press();
     }
 
     private void prepareToStart() {

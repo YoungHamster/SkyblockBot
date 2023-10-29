@@ -154,6 +154,14 @@ public class ComplexFarmingTask extends Task {
             return;
         }
 
+        // Now we wait half a second for stuff to load
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            SkyblockBot.LOGGER.warn("Interrupted while waiting for respawn after loop, wtf???????");
+            e.printStackTrace();
+        }
+
         synchronized (runWhenFarmCompleted) {
             for (Runnable notTask : runWhenFarmCompleted) {
                 notTask.run();
@@ -194,7 +202,7 @@ public class ComplexFarmingTask extends Task {
     }
 
     private void debugExecute() {
-        currentTask = farm;
+        currentTask = sellSacks;
         currentTask.execute();
     }
 

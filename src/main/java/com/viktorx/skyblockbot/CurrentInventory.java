@@ -18,9 +18,6 @@ public class CurrentInventory {
     }
 
     public static boolean syncIDChanged() {
-        SkyblockBot.LOGGER.info("SyncIdChanged was called");
-        new Exception("e").printStackTrace();
-
         boolean returnValue = syncIDChanged;
         syncIDChanged = false;
         return returnValue;

@@ -11,27 +11,21 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.util.ParticleUtil;
-import net.minecraft.state.property.Property;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Properties;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Keybinds {
+    private static final Queue<Integer> tickKeyPressQueue = new LinkedBlockingQueue<>();
     private static KeyBinding startStopBot;
     //private static KeyBinding printTestInfo;
     private static KeyBinding startStopRecording;
     private static KeyBinding loadRecording;
     private static KeyBinding pauseTask;
-
-    private static final Queue<Integer> tickKeyPressQueue = new LinkedBlockingQueue<>();
 
     public static void Init() {
         startStopBot = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -120,6 +114,7 @@ public class Keybinds {
     public static void asyncPressKeyAfterTick(KeyBinding key) {
         Keybinds.tickKeyPressQueue.add(((KeyBindingMixin) key).getBoundKey().getCode());
     }
+
     public static void asyncPressKeyAfterTick(int keyCode) {
         Keybinds.tickKeyPressQueue.add(keyCode);
     }
