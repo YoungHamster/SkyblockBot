@@ -2,8 +2,10 @@ package com.viktorx.skyblockbot.keybinds;
 
 import com.viktorx.skyblockbot.GlobalSettingsManager;
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
 import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
+import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.ComplexFarmingTask;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -11,6 +13,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
@@ -25,6 +28,7 @@ public class Keybinds {
     private static KeyBinding startStopRecording;
     private static KeyBinding loadRecording;
     private static KeyBinding pauseTask;
+    private static float targetYaw = 0;
 
     public static void Init() {
         startStopBot = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -84,6 +88,9 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
+                LookHelper.changeYawSmoothAsync(targetYaw, 90);
+                targetYaw += 45;
+
                 try {
                     GlobalSettingsManager.getInstance().loadSettings();
                 } catch (IOException e) {
@@ -110,10 +117,6 @@ public class Keybinds {
     // puts keybinds in a queue where no more than one key gets pressed every tick
     public static void asyncPressKeyAfterTick(KeyBinding key) {
         Keybinds.tickKeyPressQueue.add(((KeyBindingMixin) key).getBoundKey().getCode());
-    }
-
-    public static void asyncPressKeyAfterTick(int keyCode) {
-        Keybinds.tickKeyPressQueue.add(keyCode);
     }
 
     private static void asyncPressKeyAfterTick() {

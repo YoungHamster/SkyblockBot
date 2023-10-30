@@ -100,7 +100,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
                     return;
                 }
 
-                if (waitBeforeCommand()) {
+                if (waitBeforeAction()) {
                     return;
                 }
 
@@ -122,7 +122,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
                 }
 
                 assert client.player != null;
-                client.player.sendChatMessage(auctionCommand);
+                Utils.sendChatMessage(auctionCommand);
 
                 nextState = BuyItemState.BUYING;
                 state = BuyItemState.WAITING_FOR_MENU;
@@ -147,7 +147,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
             }
 
             case CHECKING_BUY_RESULT -> {
-                if (waitBeforeCommand()) {
+                if (waitBeforeAction()) {
                     return;
                 }
 
@@ -168,12 +168,12 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
             }
 
             case CLAIMING_AUCTION -> {
-                if (waitBeforeCommand()) {
+                if (waitBeforeAction()) {
                     return;
                 }
 
                 assert client.player != null;
-                client.player.sendChatMessage("/ah");
+                Utils.sendChatMessage("/ah");
 
                 nextState = BuyItemState.CLAIMING_AUCTION_VIEW_BIDS;
                 state = BuyItemState.WAITING_FOR_MENU;

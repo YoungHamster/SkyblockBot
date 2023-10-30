@@ -63,7 +63,7 @@ public class ClientPlayNetworkHandlerMixin {
         /*
          * Counting cropies
          */
-        String message = packet.getMessage().getString();
+        String message = packet.content().getString();
         if (message.contains("Cropie (Armor Set Bonus)")) {
             GlobalExecutorInfo.cropieCount.addAndGet(1);
         }

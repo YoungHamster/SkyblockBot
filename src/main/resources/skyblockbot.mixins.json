@@ -16,8 +16,9 @@
     "defaultRequire": 1
   },
   "client": [
+    "IAbstractSignEditScreenMixin",
+    "IMinecraftClientMixin",
     "ISelectionManagerMixin",
-    "ISignEditScreenMixin",
     "InputRelated.IMouseMixin",
     "InputRelated.KeyboardMixin",
     "InputRelated.MouseMixin"

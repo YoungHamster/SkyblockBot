@@ -1,12 +1,10 @@
 package com.viktorx.skyblockbot.mixins;
 
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import net.minecraft.network.ClientConnection;
-import net.minecraft.network.Packet;
+import net.minecraft.network.PacketCallbacks;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ClientConnectionMixin {
 
     @Inject(method = "sendImmediately", at = @At("HEAD"))
-    public void countPackets(Packet<?> packet, @Nullable GenericFutureListener<? extends Future<? super Void>> callback, CallbackInfo ci) {
+    public void countPackets(Packet<?> packet, PacketCallbacks callbacks, boolean flush, CallbackInfo ci) {
         if (packet.getClass().getName().equals(PlayerMoveC2SPacket.OnGroundOnly.class.getName())) {
             ReplayExecutor.INSTANCE.debugOnGroundOnlyCounter++;
         } else if (packet.getClass().getName().equals(PlayerMoveC2SPacket.LookAndOnGround.class.getName())) {

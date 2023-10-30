@@ -3,10 +3,7 @@ package com.viktorx.skyblockbot.skyblock;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.ScoreboardObjective;
-import net.minecraft.scoreboard.ScoreboardPlayerScore;
-import net.minecraft.scoreboard.Team;
+import net.minecraft.scoreboard.*;
 import net.minecraft.text.Texts;
 
 import java.util.ArrayList;
@@ -31,25 +28,25 @@ public class ScoreboardUtils {
      * if the worlds not loaded, scoreboard isnt present
      * or if the sidebar objective isnt created.
      */
-    public static List<String> getLines(int SLOT_ID) {
+    public static List<String> getLines(ScoreboardDisplaySlot slot) {
         List<String> lines = new ArrayList<>();
+        assert MinecraftClient.getInstance().world != null;
         Scoreboard scoreboard = MinecraftClient.getInstance().world.getScoreboard();
         if (scoreboard == null) {
             return lines;
         }
 
-        ScoreboardObjective objective = scoreboard.getObjectiveForSlot(SLOT_ID);
+        ScoreboardObjective objective = scoreboard.getObjectiveForSlot(slot);
 
         if (objective == null) {
             return lines;
         }
 
         Collection<ScoreboardPlayerScore> scores = scoreboard.getAllPlayerScores(objective);
-        List<ScoreboardPlayerScore> list = Lists.newArrayList(
-                scores.stream().filter(input -> input != null &&
-                        input.getPlayerName() != null &&
-                        !input.getPlayerName().startsWith("#")
-                ).collect(Collectors.toList()));
+        List<ScoreboardPlayerScore> list = scores.stream().filter(input -> input != null &&
+                input.getPlayerName() != null &&
+                !input.getPlayerName().startsWith("#")
+        ).collect(Collectors.toList());
 
         if (list.size() > 15) {
             scores = Lists.newArrayList(Iterables.skip(list, scores.size() - 15));

@@ -84,7 +84,7 @@ public abstract class AbstractMenuClickingExecutor {
         return GlobalExecutorInfo.waitTicksBeforeAction * 50L;
     }
 
-    protected boolean waitBeforeCommand() {
+    protected boolean waitBeforeAction() {
         if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeAction) {
             return true;
         }

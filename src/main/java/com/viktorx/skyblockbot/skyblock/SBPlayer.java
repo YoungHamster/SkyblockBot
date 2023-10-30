@@ -1,8 +1,10 @@
 package com.viktorx.skyblockbot.skyblock;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.skyblock.movementstuff.SBGoal;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Text;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -10,24 +12,22 @@ import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 public class SBPlayer {
+    private static final String SKYBLOCKBOT_TEST_INFO_PATH = "C:\\Users\\Nobody\\Desktop\\SBBotTestInfo.txt";
+    private final SBProfile profile = new SBProfile();
     private String currentServer;
-    private SBProfile profile = new SBProfile();
     private SBGoal goal;
 
-    private static final String SKYBLOCKBOT_TEST_INFO_PATH = "C:\\Users\\Nobody\\Desktop\\SBBotTestInfo.txt";
-
     public void run() throws TimeoutException {
-        MinecraftClient client = MinecraftClient.getInstance();
 
         if (!SBUtils.isServerSkyblock()) {
-            client.player.sendChatMessage("/l");
+            Utils.sendChatMessage("/l");
             try {
                 Thread.sleep(3000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
-            client.player.sendChatMessage("/play sb");
+            Utils.sendChatMessage("/play sb");
         }
 
         try {

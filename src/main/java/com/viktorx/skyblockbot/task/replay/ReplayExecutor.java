@@ -146,7 +146,7 @@ public class ReplayExecutor {
                     pressButtons();
                     state = ReplayBotState.UNPRESSING_BUTTONS_BEFORE_START;
                 }
-            } else if(state.equals(ReplayBotState.UNPRESSING_BUTTONS_BEFORE_START)) {
+            } else if (state.equals(ReplayBotState.UNPRESSING_BUTTONS_BEFORE_START)) {
                 unpressButtons();
                 state = ReplayBotState.PLAYING;
                 return;
@@ -342,7 +342,7 @@ public class ReplayExecutor {
             Vec3d pos = replay.getTickState(tickIterator + i).getPosition();
             pos = new Vec3d(pos.x, Math.rint(pos.y), pos.z);
 
-            BlockPos blockPos = new BlockPos(pos);
+            BlockPos blockPos = new BlockPos((int) pos.x, (int) pos.y, (int) pos.z);
             BlockPos above = new BlockPos(blockPos).up();
 
             if (client.world == null) {
@@ -350,8 +350,8 @@ public class ReplayExecutor {
                 return true;
             }
 
-            boolean isBlockSolid = client.world.getBlockState(blockPos).getMaterial().blocksMovement();
-            boolean isBlockAboveSolid = client.world.getBlockState(above).getMaterial().blocksMovement();
+            boolean isBlockSolid = client.world.getBlockState(blockPos).blocksMovement();
+            boolean isBlockAboveSolid = client.world.getBlockState(above).blocksMovement();
 
             if (isBlockSolid || isBlockAboveSolid) {
                 String blockName = client.world.getBlockState(blockPos).getBlock().asItem().toString();

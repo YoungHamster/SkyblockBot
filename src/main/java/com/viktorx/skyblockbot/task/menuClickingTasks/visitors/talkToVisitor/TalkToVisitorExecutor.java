@@ -77,14 +77,14 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
             }
 
             case CLICKING_ON_VISITOR -> {
-                if (!waitBeforeCommand()) {
+                if (!waitBeforeAction()) {
                     Keybinds.asyncPressKeyAfterTick(client.options.useKey);
                     state = TalkToVisitorState.CLICKING_ON_VISITOR_SECOND_TIME;
                 }
             }
 
             case CLICKING_ON_VISITOR_SECOND_TIME -> {
-                if (!waitBeforeCommand()) {
+                if (!waitBeforeAction()) {
                     Keybinds.asyncPressKeyAfterTick(client.options.useKey);
                     state = TalkToVisitorState.WAITING_FOR_MENU;
                 }
@@ -129,7 +129,7 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
             }
 
             case CLOSING_VISITOR -> {
-                if (!waitBeforeCommand()) {
+                if (!waitBeforeAction()) {
                     asyncCloseCurrentInventory();
                     state = TalkToVisitorState.IDLE;
                     task.completed();

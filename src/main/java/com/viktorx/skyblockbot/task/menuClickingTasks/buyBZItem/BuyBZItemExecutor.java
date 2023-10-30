@@ -2,14 +2,12 @@ package com.viktorx.skyblockbot.task.menuClickingTasks.buyBZItem;
 
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.mixins.ISelectionManagerMixin;
-import com.viktorx.skyblockbot.mixins.ISignEditScreenMixin;
+import com.viktorx.skyblockbot.Utils;
+import com.viktorx.skyblockbot.mixins.IAbstractSignEditScreenMixin;
 import com.viktorx.skyblockbot.task.menuClickingTasks.AbstractMenuClickingExecutor;
 import com.viktorx.skyblockbot.task.menuClickingTasks.BuySellSettings;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.SelectionManager;
-import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -22,7 +20,6 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
     private BuyBZItemState prevState;
     private BuyBZItemState stateBeforePause;
     private BuyBZItem task;
-    private int waitBetweenLettersCounter = 0;
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickBuy);
@@ -41,7 +38,6 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
         }
 
         this.task = task;
-        waitBetweenLettersCounter = 0;
         waitTickCounter = 0;
         currentClickRunning = false;
         state = BuyBZItemState.SENDING_COMMAND;
@@ -80,12 +76,12 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
     public void onTickBuy(MinecraftClient client) {
         switch (state) {
             case SENDING_COMMAND -> {
-                if (waitBeforeCommand()) {
+                if (waitBeforeAction()) {
                     return;
                 }
 
                 assert client.player != null;
-                client.player.sendChatMessage(task.getBZCommand());
+                Utils.sendChatMessage(task.getBZCommand());
 
                 nextState = BuyBZItemState.CLICKING_TO_SEARCH;
                 state = BuyBZItemState.WAITING_FOR_MENU;
@@ -101,7 +97,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
             }
 
             case SEARCHING -> {
-                if (waitBetweenLetters()) {
+                if (waitBeforeAction()) {
                     return;
                 }
 
@@ -158,7 +154,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
             }
 
             case ENTERING_AMOUNT -> {
-                if (waitBetweenLetters()) {
+                if (waitBeforeAction()) {
                     return;
                 }
 
@@ -216,18 +212,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
     private void typeIntoCurrentScreen(String str) {
         assert MinecraftClient.getInstance().currentScreen != null;
-        ISignEditScreenMixin screen = ((ISignEditScreenMixin) MinecraftClient.getInstance().currentScreen);
-        screen.getText()[0] = str;
-    }
-
-    /*
-     * wait 3 ticks between letters
-     */
-    private boolean waitBetweenLetters() {
-        if (waitBetweenLettersCounter++ < BuySellSettings.waitTicksBetweenLetters) {
-            return true;
-        }
-        waitBetweenLettersCounter = 0;
-        return false;
+        IAbstractSignEditScreenMixin screen = ((IAbstractSignEditScreenMixin) MinecraftClient.getInstance().currentScreen);
+        screen.getMessages()[0] = str;
     }
 }

@@ -38,7 +38,6 @@ public class GlobalSettingsManager {
 
         KeybindsSettings.buttonPressDelay = Integer.parseInt(settings.get("Keybinds.buttonPressDelay"));
 
-        BuySellSettings.waitTicksBetweenLetters = Integer.parseInt(settings.get("BuySell.waitTicksBetweenLetters"));
         BuySellSettings.maxWaitForScreen = Integer.parseInt(settings.get("BuySell.maxWaitForScreen"));
 
         ChangeIslandSettings.ticksToWaitForChunks = Integer.parseInt(settings.get("ChangeIsland.ticksToWaitForChunks"));

@@ -11,5 +11,5 @@ import java.util.List;
 @Mixin(ChatHud.class)
 public interface IChatHudMixin {
     @Accessor
-    List<ChatHudLine<Text>> getMessages();
+    List<ChatHudLine> getMessages();
 }

@@ -10,7 +10,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
@@ -188,14 +188,14 @@ public class SBUtils {
     // returns island or area that are displayed in sidebar(right scoreboard)
     public static String getIslandOrArea() {
         return ScoreboardUtils.
-                getLines(Scoreboard.SIDEBAR_DISPLAY_SLOT_ID)
+                getLines(ScoreboardDisplaySlot.SIDEBAR)
                 .stream().filter(string -> string.contains("⏣")).collect(Collectors.joining());
     }
 
     // returns purse value from sidebar(right scoreboard)
     public static long getPurse() {
         String purseLine = ScoreboardUtils.
-                getLines(Scoreboard.SIDEBAR_DISPLAY_SLOT_ID)
+                getLines(ScoreboardDisplaySlot.SIDEBAR)
                 .stream().filter(string -> string.contains("Purse")).collect(Collectors.joining());
 
         if (purseLine.length() == 0) {
@@ -234,7 +234,7 @@ public class SBUtils {
             while (str.contains(token)) {
                 str = str.substring(str.indexOf(token) + token.length());
 
-                loreLine.append(str.substring(0, str.indexOf("\"")));
+                loreLine.append(str, 0, str.indexOf("\""));
             }
             lines.add(loreLine.toString());
         });
@@ -290,10 +290,8 @@ public class SBUtils {
 
         assert client.player != null;
         return client.player.currentScreenHandler.slots
-                .stream()
-                .filter(slot ->
-                        slot.getStack().getName().getString().contains(itemStackName)
-                ).count() > 0;
+                .stream().anyMatch(slot ->
+                        slot.getStack().getName().getString().contains(itemStackName));
     }
 
     public static boolean isItemInInventory(String itemStackName) {

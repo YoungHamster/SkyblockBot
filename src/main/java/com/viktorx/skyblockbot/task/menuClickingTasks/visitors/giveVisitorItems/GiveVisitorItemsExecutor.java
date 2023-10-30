@@ -5,7 +5,6 @@ import com.viktorx.skyblockbot.RayTraceStuff;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.task.menuClickingTasks.AbstractMenuClickingExecutor;
-import com.viktorx.skyblockbot.task.menuClickingTasks.visitors.talkToVisitor.TalkToVisitorState;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 

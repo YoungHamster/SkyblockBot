@@ -1,12 +1,14 @@
 package com.viktorx.skyblockbot;
 
 import com.viktorx.skyblockbot.mixins.IChatHudMixin;
+import com.viktorx.skyblockbot.mixins.IMinecraftClientMixin;
 import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
@@ -35,7 +37,7 @@ public class Utils {
      */
     public static boolean isStringInRecentChat(String str, int maxBacktrack) {
         ChatHud chat = MinecraftClient.getInstance().inGameHud.getChatHud();
-        List<ChatHudLine<Text>> messages = ((IChatHudMixin) chat).getMessages();
+        List<ChatHudLine> messages = ((IChatHudMixin) chat).getMessages();
         if (messages.size() == 0) {
             SkyblockBot.LOGGER.warn("BuyItem ERROR! The message history is empty, it's weird");
             return false;
@@ -51,11 +53,11 @@ public class Utils {
         }
 
         for (int i = 0; i < limit; i++) {
-            if(detectedStringsInChatIds.contains(messages.get(i).getId())) {
+            if(detectedStringsInChatIds.contains(messages.get(i).signature().hashCode())) {
                 continue;
             }
-            if (messages.get(i).getText().getString().contains(str)) {
-                detectedStringsInChatIds.add(messages.get(i).getId());
+            if (messages.get(i).content().getString().contains(str)) {
+                detectedStringsInChatIds.add(messages.get(i).signature().hashCode());
                 return true;
             }
         }
@@ -119,6 +121,17 @@ public class Utils {
                 prevTickInventory.add(new ImmutablePair<>(stack.getName().getString(), stack.getCount()));
             }
         });
+    }
+
+    public static void sendChatMessage(String message) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if(client.currentScreen != null) {
+            SkyblockBot.LOGGER.error("Can't send chat message! Current screen isn't null, so i can't open chat screen");
+            return;
+        }
+
+        ((IMinecraftClientMixin) client).callOpenChatScreen(message);
+        client.currentScreen.keyPressed(InputUtil.GLFW_KEY_ENTER, 0, 0);
     }
 
     public static File getLastModified(String directoryFilePath) {

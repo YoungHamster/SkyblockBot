@@ -1,16 +1,16 @@
 package com.viktorx.skyblockbot.task.changeIsland;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
 public class ChangeIslandExecutor {
     public static ChangeIslandExecutor INSTANCE = new ChangeIslandExecutor();
-
-    private ChangeIsland changeIsland;
     ChangeIslandState state = ChangeIslandState.IDLE;
     ChangeIslandState stateBeforePause;
+    private ChangeIsland changeIsland;
     private int waitBeforeAttemptTickCounter;
     private int attemptCounter;
 
@@ -63,7 +63,7 @@ public class ChangeIslandExecutor {
             case SENDING_COMMAND -> {
                 GlobalExecutorInfo.worldLoaded.set(false);
                 assert client.player != null;
-                client.player.sendChatMessage(changeIsland.getCommand());
+                Utils.sendChatMessage(changeIsland.getCommand());
                 state = ChangeIslandState.WAITING_AFTER_COMMAND;
             }
 
@@ -76,7 +76,7 @@ public class ChangeIslandExecutor {
                         } else {
                             assert client.player != null;
                             waitBeforeAttemptTickCounter = 0;
-                            client.player.sendChatMessage(changeIsland.getCommand());
+                            Utils.sendChatMessage(changeIsland.getCommand());
                         }
                     }
                 } else {

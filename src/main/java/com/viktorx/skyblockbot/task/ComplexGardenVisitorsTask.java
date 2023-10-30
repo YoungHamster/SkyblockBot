@@ -50,7 +50,9 @@ public class ComplexGardenVisitorsTask extends Task {
     }
 
     private void whenGoToVisitorsAborted() {
-        // TODO
+        SkyblockBot.LOGGER.warn("GoToVisitors task aborted! Aborting complexGardenVisitors task");
+        this.aborted();
+        currentTask = null;
     }
 
     private void whenGoBackToFarmCompleted() {
@@ -86,7 +88,9 @@ public class ComplexGardenVisitorsTask extends Task {
     }
 
     private void whenTalkToVisitorAborted() {
-        // TODO
+        SkyblockBot.LOGGER.warn("TalkToVisitors task aborted! Aborting complexGardenVisitors task");
+        this.aborted();
+        currentTask = null;
     }
 
     private void whenBuyBZItemCompleted() {
@@ -95,7 +99,9 @@ public class ComplexGardenVisitorsTask extends Task {
     }
 
     private void whenBuyBZItemAborted() {
-        // TODO
+        SkyblockBot.LOGGER.warn("BuyBZItem task aborted! Aborting complexGardenVisitors task");
+        this.aborted();
+        currentTask = null;
     }
 
     private void whenGiveVisitorItemsCompleted() {
@@ -117,7 +123,9 @@ public class ComplexGardenVisitorsTask extends Task {
     }
 
     private void whenGiveVisitorItemsAborted() {
-        // TODO
+        SkyblockBot.LOGGER.warn("GiveVisitorsItems task aborted! Aborting complexGardenVisitors task");
+        this.aborted();
+        currentTask = null;
     }
 
     public void execute() {

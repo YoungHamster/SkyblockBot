@@ -4,6 +4,9 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec2f;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -16,7 +19,7 @@ public class LookHelper {
     public static float getYaw() {
         assert MinecraftClient.getInstance().player != null;
 
-        return Utils.normalize(MinecraftClient.getInstance().player.getYaw(), 0, 360);
+        return Utils.normalize(MinecraftClient.getInstance().player.getYaw(), -180, 180);
     }
 
     public static CompletableFuture<Void> changeYawSmoothAsync(float targetYaw, float degreesPerSecond) {
@@ -28,33 +31,19 @@ public class LookHelper {
     }
 
     public static void changeYawSmooth(float targetYaw, float degreesPerSecond) {
-        targetYaw = Utils.normalize(targetYaw, 0, 360);
-        float degreesPerMs = degreesPerSecond / 1000.0F;
-
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
 
-        float yawDirection = (targetYaw - LookHelper.getYaw()) / Math.abs(targetYaw - getYaw());
-        if(Math.abs(targetYaw - getYaw()) > 180) {
-            yawDirection = 1;
-        } else {
-            yawDirection = -1;
-        }
-        long time = System.currentTimeMillis();
+        float degreesPerStep = degreesPerSecond / 16.0F;
+        float deltaAngle = MathHelper.subtractAngles(getYaw(), targetYaw);
 
-        while (!LookHelper.isYawRoughlyClose(LookHelper.getYaw(), targetYaw)) {
-            long delta = System.currentTimeMillis() - time;
-            time += delta;
-            assert player != null;
+        int steps = (int) Math.abs(deltaAngle / degreesPerStep);
+        for(int i = 0; i < steps; i++) {
+            player.setYaw(player.getYaw() + deltaAngle / steps);
 
-            player.setYaw(LookHelper.getYaw() + delta * degreesPerMs * yawDirection);
             try {
-                Thread.sleep(5);
-            } catch (InterruptedException e) {
-                SkyblockBot.LOGGER.info("Exception in runBotThread, don't care");
-            }
+                Thread.sleep(16);
+            } catch (InterruptedException ignored) {}
         }
-
-        assert player != null;
         player.setYaw(targetYaw);
     }
 

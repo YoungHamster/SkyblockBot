@@ -2,6 +2,7 @@ package com.viktorx.skyblockbot.task.menuClickingTasks.sellSacks;
 
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.menuClickingTasks.AbstractMenuClickingExecutor;
@@ -83,7 +84,7 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
         switch (state) {
             case SENDING_COMMAND -> {
                 assert client.player != null;
-                client.player.sendChatMessage(task.getCommand());
+                Utils.sendChatMessage(task.getCommand());
                 state = SellSacksState.WAITING_FOR_MENU;
                 nextState = SellSacksState.SELLING;
             }
