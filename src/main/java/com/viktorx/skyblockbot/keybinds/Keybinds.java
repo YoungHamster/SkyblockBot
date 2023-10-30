@@ -2,10 +2,8 @@ package com.viktorx.skyblockbot.keybinds;
 
 import com.viktorx.skyblockbot.GlobalSettingsManager;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
 import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
-import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.ComplexFarmingTask;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -13,7 +11,6 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
@@ -28,7 +25,6 @@ public class Keybinds {
     private static KeyBinding startStopRecording;
     private static KeyBinding loadRecording;
     private static KeyBinding pauseTask;
-    private static float targetYaw = 0;
 
     public static void Init() {
         startStopBot = KeyBindingHelper.registerKeyBinding(new KeyBinding(
@@ -88,9 +84,6 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
-                LookHelper.changeYawSmoothAsync(targetYaw, 90);
-                targetYaw += 45;
-
                 try {
                     GlobalSettingsManager.getInstance().loadSettings();
                 } catch (IOException e) {
@@ -141,7 +134,7 @@ public class Keybinds {
          * Instead of figuring out if it is a mouse button or keyboard key i just try to press it on both mouse and keyboard
          */
         if (keyCode < 32) {
-            ((IMouseMixin)client.mouse).callOnMouseButton(
+            ((IMouseMixin) client.mouse).callOnMouseButton(
                     client.getWindow().getHandle(),
                     keyCode,
                     1,
@@ -161,8 +154,8 @@ public class Keybinds {
             SkyblockBot.LOGGER.info("InterruptedException. Don't care");
         }
 
-        if(keyCode < 32) {
-            ((IMouseMixin)client.mouse).callOnMouseButton(
+        if (keyCode < 32) {
+            ((IMouseMixin) client.mouse).callOnMouseButton(
                     client.getWindow().getHandle(),
                     keyCode,
                     1,

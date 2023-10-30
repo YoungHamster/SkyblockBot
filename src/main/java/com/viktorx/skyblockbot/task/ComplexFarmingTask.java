@@ -199,10 +199,12 @@ public class ComplexFarmingTask extends Task {
 
     private void whenGardenVisitorsAborted() {
         SkyblockBot.LOGGER.warn("Garden visitors task aborted!!!!");
+        defaultWhenCompleted();
+        // TODO
     }
 
     private void debugExecute() {
-        currentTask = gardenVisitorsTask;
+        currentTask = farm;
         currentTask.execute();
     }
 
@@ -298,6 +300,9 @@ public class ComplexFarmingTask extends Task {
     }
 
     public boolean isPaused() {
+        if(currentTask == null) {
+            return false;
+        }
         return currentTask.isPaused();
     }
 

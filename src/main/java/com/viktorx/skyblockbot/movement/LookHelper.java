@@ -5,16 +5,10 @@ import com.viktorx.skyblockbot.Utils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec2f;
-import net.minecraft.util.math.Vec3d;
 
 import java.util.concurrent.CompletableFuture;
 
 public class LookHelper {
-
-    public static boolean isYawRoughlyClose(float yaw1, float yaw2) {
-        return Math.abs(yaw1 - yaw2) < 2.0F || Math.abs(Math.abs(yaw1 - yaw2) - 360) < 2.0F;
-    }
 
     public static float getYaw() {
         assert MinecraftClient.getInstance().player != null;
@@ -37,13 +31,16 @@ public class LookHelper {
         float deltaAngle = MathHelper.subtractAngles(getYaw(), targetYaw);
 
         int steps = (int) Math.abs(deltaAngle / degreesPerStep);
-        for(int i = 0; i < steps; i++) {
+        for (int i = 0; i < steps; i++) {
+            assert player != null;
             player.setYaw(player.getYaw() + deltaAngle / steps);
 
             try {
                 Thread.sleep(16);
-            } catch (InterruptedException ignored) {}
+            } catch (InterruptedException ignored) {
+            }
         }
+        assert player != null;
         player.setYaw(targetYaw);
     }
 

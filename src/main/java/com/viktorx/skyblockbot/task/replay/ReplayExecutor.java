@@ -113,7 +113,7 @@ public class ReplayExecutor {
             return;
         }
 
-        if (antiDetectTriggeredTickCounter++ == ReplayBotSettings.antiDetectTriggeredWaitTicks) {
+        if (antiDetectTriggeredTickCounter++ == ReplayBotSettings.antiDetectTriggeredWaitTicks || tickIterator == 0) {
             abort();
             antiDetectDone();
             return;
@@ -340,7 +340,7 @@ public class ReplayExecutor {
              * I want to round the Y correctly
              */
             Vec3d pos = replay.getTickState(tickIterator + i).getPosition();
-            pos = new Vec3d(pos.x, Math.rint(pos.y), pos.z);
+            pos = new Vec3d(Math.floor(pos.x), Math.rint(pos.y), Math.floor(pos.z));
 
             BlockPos blockPos = new BlockPos((int) pos.x, (int) pos.y, (int) pos.z);
             BlockPos above = new BlockPos(blockPos).up();
@@ -368,7 +368,9 @@ public class ReplayExecutor {
 
                 // Check again after accounting for whitelisted blocks
                 if (isBlockSolid || isBlockAboveSolid) {
-                    SkyblockBot.LOGGER.info("Block: " + blockName + " solid-" + isBlockSolid
+                    SkyblockBot.LOGGER.info(
+                            "Block at " + blockPos.getX() + " " + blockPos.getY() + " " + blockPos.getZ()
+                            + " : " + blockName + " solid-" + isBlockSolid
                             + "\nBlock above: " + blockAboveName + " solid-" + isBlockAboveSolid);
 
                     return false;

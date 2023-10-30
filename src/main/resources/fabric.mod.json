@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "sodium",
-  "version": "0.4.1+build.15",
+  "version": "0.5.3",
   "name": "Sodium",
   "description": "Sodium is a free and open-source optimization mod for Minecraft which improves frame rates and reduces lag spikes.",
   "authors": [
