@@ -1,6 +1,6 @@
 package com.viktorx.skyblockbot.task.replay.tickState;
 
-import com.viktorx.skyblockbot.mixins.IMouseMixin;
+import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
 

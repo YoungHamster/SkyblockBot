@@ -7,6 +7,8 @@ import com.viktorx.skyblockbot.task.replay.Replay;
 import com.viktorx.skyblockbot.task.menuClickingTasks.visitors.giveVisitorItems.GiveVisitorItems;
 import com.viktorx.skyblockbot.task.menuClickingTasks.visitors.talkToVisitor.TalkToVisitor;
 
+import java.util.concurrent.TimeoutException;
+
 public class ComplexGardenVisitorsTask extends Task {
 
     private static final String goToVisitorsRecName = "go_to_visitors.bin";
@@ -62,11 +64,24 @@ public class ComplexGardenVisitorsTask extends Task {
     }
 
     private void whenTalkToVisitorCompleted() {
-        ((BuyBZItem) buyBZItem).setItemName(((TalkToVisitor) talkToVisitor).getItemName());
-        ((BuyBZItem) buyBZItem).setItemCount(((TalkToVisitor) talkToVisitor).getItemCount());
+        String itemName = ((TalkToVisitor) talkToVisitor).getItemName();
+        int itemCount = ((TalkToVisitor) talkToVisitor).getItemCount();
+        ((BuyBZItem) buyBZItem).setItemName(itemName);
+        ((BuyBZItem) buyBZItem).setItemCount(itemCount);
         currentVisitor = ((TalkToVisitor) talkToVisitor).getVisitorName();
 
         currentTask = buyBZItem;
+
+        if(SBUtils.isItemInInventory(itemName)) {
+            try {
+                if(SBUtils.getSlot(itemName).getStack().getCount() >= itemCount) {
+                    currentTask = giveVisitorItems;
+                }
+            } catch (TimeoutException e) {
+                SkyblockBot.LOGGER.info("ComplexGardenVisitorsTask whenTalkToVisitorCompleted got TimeoutException\n" +
+                        "WTF?? Item is supposed to be in inventory at this point, so the shouldn't be a timeoutException");
+            }
+        }
         currentTask.execute();
     }
 

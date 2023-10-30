@@ -8,16 +8,18 @@
     "ClientPlayNetworkHandlerMixin",
     "IChatHudMixin",
     "IClientPlayerEntityMixin",
-    "KeyBindingMixin",
     "MinecraftClientMixin",
-    "PlayerListHudMixin"
+    "PlayerListHudMixin",
+    "InputRelated.KeyBindingMixin"
   ],
   "injectors": {
     "defaultRequire": 1
   },
   "client": [
-    "IMouseMixin",
-    "KeyboardMixin",
-    "MouseMixin"
+    "ISelectionManagerMixin",
+    "ISignEditScreenMixin",
+    "InputRelated.IMouseMixin",
+    "InputRelated.KeyboardMixin",
+    "InputRelated.MouseMixin"
   ]
 }

@@ -2,7 +2,7 @@ package com.viktorx.skyblockbot.task.replay;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
-import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
+import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.Task;

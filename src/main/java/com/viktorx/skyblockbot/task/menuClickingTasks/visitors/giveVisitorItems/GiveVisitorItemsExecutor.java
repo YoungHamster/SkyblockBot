@@ -75,6 +75,7 @@ public class GiveVisitorItemsExecutor extends AbstractMenuClickingExecutor {
                 assert client.world != null;
                 if (RayTraceStuff.rayTraceEntityFromPlayer(client.player, client.world, 4.0d) != null) {
                     Keybinds.asyncPressKeyAfterTick(client.options.useKey);
+                    SkyblockBot.LOGGER.info("GiveVisitorItems task executor clicked on visitor");
                     state = GiveVisitorItemsState.WAITING_FOR_MENU;
                 }
             }

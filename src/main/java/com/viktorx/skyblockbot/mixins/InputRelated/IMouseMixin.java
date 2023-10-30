@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.mixins;
+package com.viktorx.skyblockbot.mixins.InputRelated;
 
 import net.minecraft.client.Mouse;
 import net.minecraft.util.math.BlockPos;

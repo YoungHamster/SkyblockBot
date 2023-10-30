@@ -2,25 +2,27 @@ package com.viktorx.skyblockbot.task.menuClickingTasks.buyBZItem;
 
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.task.menuClickingTasks.BuySellSettings;
+import com.viktorx.skyblockbot.mixins.ISelectionManagerMixin;
+import com.viktorx.skyblockbot.mixins.ISignEditScreenMixin;
 import com.viktorx.skyblockbot.task.menuClickingTasks.AbstractMenuClickingExecutor;
+import com.viktorx.skyblockbot.task.menuClickingTasks.BuySellSettings;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.SelectionManager;
+import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.concurrent.CompletableFuture;
 
 public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
     public static BuyBZItemExecutor INSTANCE = new BuyBZItemExecutor();
-
+    protected int waitForScreenLoadingCounter = 0;
     private BuyBZItemState state = BuyBZItemState.IDLE;
     private BuyBZItemState nextState;
     private BuyBZItemState prevState;
     private BuyBZItemState stateBeforePause;
     private BuyBZItem task;
     private int waitBetweenLettersCounter = 0;
-    private int typingIterator = 0;
-    protected int waitForScreenLoadingCounter = 0;
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickBuy);
@@ -42,12 +44,11 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
         waitBetweenLettersCounter = 0;
         waitTickCounter = 0;
         currentClickRunning = false;
-        typingIterator = 0;
         state = BuyBZItemState.SENDING_COMMAND;
     }
 
     public void pause() {
-        if(state.equals(BuyBZItemState.IDLE) || state.equals(BuyBZItemState.PAUSED)) {
+        if (state.equals(BuyBZItemState.IDLE) || state.equals(BuyBZItemState.PAUSED)) {
             SkyblockBot.LOGGER.warn("Can't pause buyBZItem when not running or paused");
             return;
         }
@@ -104,9 +105,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                     return;
                 }
 
-                if (typeNextLetter(task.getItemName())) {
-                    return;
-                }
+                typeIntoCurrentScreen(task.getItemName());
 
                 assert client.currentScreen != null;
                 client.currentScreen.close();
@@ -163,9 +162,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                     return;
                 }
 
-                if (typeNextLetter(Integer.toString(task.getItemCount()))) {
-                    return;
-                }
+                typeIntoCurrentScreen(Integer.toString(task.getItemCount()));
 
                 assert client.currentScreen != null;
                 client.currentScreen.close();
@@ -204,35 +201,23 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                     state = nextState;
                     return;
                 }
-                if(waitForScreenLoadingCounter++ > BuySellSettings.maxWaitForScreen) {
+                if (waitForScreenLoadingCounter++ > BuySellSettings.maxWaitForScreen) {
                     state = prevState;
                 }
             }
 
             case COMPLETED -> {
+                SkyblockBot.LOGGER.info("BuyBZItem completed!");
                 state = BuyBZItemState.IDLE;
                 task.completed();
             }
         }
     }
 
-    private boolean typeNextLetter(String str) {
-        if (str.length() == typingIterator) {
-            typingIterator = 0;
-            return false;
-        }
-
+    private void typeIntoCurrentScreen(String str) {
         assert MinecraftClient.getInstance().currentScreen != null;
-        if(!MinecraftClient.getInstance().currentScreen.charTyped(str.charAt(typingIterator), 0)) {
-            SkyblockBot.LOGGER.info("Sign Edit Screen didn't accept char: " + str.charAt(typingIterator) + ", finishing typing!!!");
-            typingIterator = 0;
-            return false;
-        } else {
-            SkyblockBot.LOGGER.info("Pressed: " + str.charAt(typingIterator));
-        }
-
-        typingIterator++;
-        return true;
+        ISignEditScreenMixin screen = ((ISignEditScreenMixin) MinecraftClient.getInstance().currentScreen);
+        screen.getText()[0] = str;
     }
 
     /*

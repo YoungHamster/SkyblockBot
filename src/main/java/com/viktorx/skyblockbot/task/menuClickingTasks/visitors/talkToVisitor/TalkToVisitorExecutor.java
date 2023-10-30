@@ -130,7 +130,7 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
 
             case CLOSING_VISITOR -> {
                 if (!waitBeforeCommand()) {
-                    Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
+                    asyncCloseCurrentInventory();
                     state = TalkToVisitorState.IDLE;
                     task.completed();
                 }

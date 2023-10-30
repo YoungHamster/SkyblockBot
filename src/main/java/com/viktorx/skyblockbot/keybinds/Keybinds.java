@@ -1,13 +1,9 @@
 package com.viktorx.skyblockbot.keybinds;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.viktorx.skyblockbot.GlobalSettingsManager;
-import com.viktorx.skyblockbot.RayTraceStuff;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.mixins.IMouseMixin;
-import com.viktorx.skyblockbot.mixins.KeyBindingMixin;
-import com.viktorx.skyblockbot.mixins.MouseMixin;
-import com.viktorx.skyblockbot.skyblock.SBUtils;
+import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
+import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
 import com.viktorx.skyblockbot.task.ComplexFarmingTask;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -15,16 +11,12 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeoutException;
 
 public class Keybinds {
     private static final Queue<Integer> tickKeyPressQueue = new LinkedBlockingQueue<>();
