@@ -10,6 +10,7 @@ public enum AssembleCraftState {
     CLOSING_INVENTORY,
     WAITING_FOR_MENU,
     RESTARTING,
+    ABORTED,
     PAUSED;
 
 
