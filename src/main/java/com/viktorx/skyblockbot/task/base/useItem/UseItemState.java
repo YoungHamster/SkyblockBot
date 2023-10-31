@@ -1,0 +1,20 @@
+package com.viktorx.skyblockbot.task.base.useItem;
+
+public enum UseItemState {
+    IDLE,
+    CHECKING_INVENTORY,
+    GOING_TO_HOTBAR_SLOT,
+    USING_ITEM,
+    ITEM_IN_USE,
+    GOING_BACK_TO_HOTBAR_SLOT,
+    OPENING_INVENTORY,
+    MOVING_ITEM_TO_CORRECT_SLOT,
+    CLOSING_INVENTORY,
+    OPENING_INVENTORY_TO_MOVE_ITEM_BACK,
+    MOVING_ITEM_BACK,
+    CLOSING_INVENTORY_FINAL,
+    PAUSED;
+
+
+    UseItemState() {}
+}

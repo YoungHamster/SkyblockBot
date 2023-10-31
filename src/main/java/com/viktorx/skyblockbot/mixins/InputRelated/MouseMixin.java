@@ -1,8 +1,7 @@
 package com.viktorx.skyblockbot.mixins.InputRelated;
 
-import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
-import com.viktorx.skyblockbot.task.replay.tickState.MouseKeyRecord;
+import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
+import com.viktorx.skyblockbot.task.base.replay.tickState.MouseKeyRecord;
 import net.minecraft.client.Mouse;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

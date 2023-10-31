@@ -20,4 +20,5 @@ public class GlobalExecutorInfo {
     public static int totalSackCountLimit;
 
     public static final int inventorySlotCount = PlayerInventory.MAIN_SIZE;
+    public static final int sbMenuHotbarSlot = 8;
 }

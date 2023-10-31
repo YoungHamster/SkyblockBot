@@ -1,11 +1,11 @@
 package com.viktorx.skyblockbot;
 
 import com.viktorx.skyblockbot.keybinds.KeybindsSettings;
-import com.viktorx.skyblockbot.task.ComplexFarmingTaskSettings;
+import com.viktorx.skyblockbot.task.compound.FarmingTaskSettings;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
-import com.viktorx.skyblockbot.task.menuClickingTasks.BuySellSettings;
-import com.viktorx.skyblockbot.task.changeIsland.ChangeIslandSettings;
-import com.viktorx.skyblockbot.task.replay.ReplayBotSettings;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.BuySellSettings;
+import com.viktorx.skyblockbot.task.base.changeIsland.ChangeIslandSettings;
+import com.viktorx.skyblockbot.task.base.replay.ReplayBotSettings;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemonSettings;
 
 import java.io.BufferedReader;
@@ -58,14 +58,14 @@ public class GlobalSettingsManager {
         ReplayBotSettings.autoQuitWhenAntiDetect = Boolean.parseBoolean(settings.get("ReplayBot.autoQuitWhenAntiDetect"));
         ReplayBotSettings.maxTicksToWaitForSpawn = Integer.parseInt(settings.get("ReplayBot.maxTicksToWaitForSpawn"));
 
-        ComplexFarmingTaskSettings.pauseInterval = Long.parseLong(settings.get("ComplexFarmingTask.pauseInterval"));
-        ComplexFarmingTaskSettings.checkVisitorsInterval = Long.parseLong(settings.get("ComplexFarmingTask.checkGuestsInterval"));
-        ComplexFarmingTaskSettings.pauseDuration = Long.parseLong(settings.get("ComplexFarmingTask.pauseDuration"));
-        ComplexFarmingTaskSettings.intervalBetweenRegularChecks = Long.parseLong(settings.get("ComplexFarmingTask.intervalBetweenRegularChecks"));
-        ComplexFarmingTaskSettings.godPotBuyThreshold = Long.parseLong(settings.get("ComplexFarmingTask.godPotBuyThreshold"));
-        ComplexFarmingTaskSettings.cookieBuyThreshold = Long.parseLong(settings.get("ComplexFarmingTask.cookieBuyThreshold"));
-        ComplexFarmingTaskSettings.gardenName = settings.get("ComplexFarmingTask.gardenName");
-        ComplexFarmingTaskSettings.retryGetOutOfLimboDelay = Long.parseLong(settings.get("ComplexFarmingTask.retryGetOutOfLimboDelay"));
+        FarmingTaskSettings.pauseInterval = Long.parseLong(settings.get("ComplexFarmingTask.pauseInterval"));
+        FarmingTaskSettings.checkVisitorsInterval = Long.parseLong(settings.get("ComplexFarmingTask.checkGuestsInterval"));
+        FarmingTaskSettings.pauseDuration = Long.parseLong(settings.get("ComplexFarmingTask.pauseDuration"));
+        FarmingTaskSettings.intervalBetweenRegularChecks = Long.parseLong(settings.get("ComplexFarmingTask.intervalBetweenRegularChecks"));
+        FarmingTaskSettings.godPotBuyThreshold = Long.parseLong(settings.get("ComplexFarmingTask.godPotBuyThreshold"));
+        FarmingTaskSettings.cookieBuyThreshold = Long.parseLong(settings.get("ComplexFarmingTask.cookieBuyThreshold"));
+        FarmingTaskSettings.gardenName = settings.get("ComplexFarmingTask.gardenName");
+        FarmingTaskSettings.retryGetOutOfLimboDelay = Long.parseLong(settings.get("ComplexFarmingTask.retryGetOutOfLimboDelay"));
 
         GlobalExecutorInfo.debugMode.set(Boolean.parseBoolean(settings.get("GlobalExecutorInfo.debugMode")));
         GlobalExecutorInfo.waitTicksBeforeAction = Integer.parseInt(settings.get("GlobalExecutorInfo.waitTicksBeforeAction"));

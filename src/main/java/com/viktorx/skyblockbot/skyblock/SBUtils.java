@@ -294,6 +294,10 @@ public class SBUtils {
                         slot.getStack().getName().getString().contains(itemStackName));
     }
 
+    /**
+     * Only checks if stack name contains itemStackName
+     * isItemInInventory("Carrot") will return true even if there are only Enchanted Carrots in inventory
+     */
     public static boolean isItemInInventory(String itemStackName) {
         MinecraftClient client = MinecraftClient.getInstance();
 
@@ -306,6 +310,28 @@ public class SBUtils {
             }
         }
         return false;
+    }
+
+    /**
+     * Checks if stack name equals exactStackName
+     * isAmountInInventory("Carrot", 1) will return false if there are only Enchanted Carrots in inventory
+     */
+    public static boolean isAmountInInventory(String exactStackName, int minCount) {
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        assert client.player != null;
+        PlayerInventory inventory = client.player.getInventory();
+
+        int count = 0;
+
+        for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
+            ItemStack itemStack = inventory.getStack(i);
+            if (itemStack.getName().getString().equals(exactStackName)) {
+                count += itemStack.getCount();
+            }
+        }
+
+        return count >= minCount;
     }
 
     private static void waitForMenuToOpen() {
