@@ -4,8 +4,8 @@ import com.viktorx.skyblockbot.GlobalSettingsManager;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
 import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
-import com.viktorx.skyblockbot.task.ComplexFarmingTask;
-import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
+import com.viktorx.skyblockbot.task.compound.FarmingTask;
+import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
@@ -68,10 +68,10 @@ public class Keybinds {
             CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
 
             if (startStopBot.wasPressed()) {
-                if (!ComplexFarmingTask.INSTANCE.isExecuting()) {
-                    ComplexFarmingTask.INSTANCE.execute();
+                if (!FarmingTask.INSTANCE.isExecuting()) {
+                    FarmingTask.INSTANCE.execute();
                 } else {
-                    ComplexFarmingTask.INSTANCE.abort();
+                    FarmingTask.INSTANCE.abort();
                 }
             }
 
@@ -89,14 +89,14 @@ public class Keybinds {
                 } catch (IOException e) {
                     SkyblockBot.LOGGER.warn("Coudln't load settings");
                 }
-                ComplexFarmingTask.INSTANCE.loadRecordingAsync();
+                FarmingTask.INSTANCE.loadRecordingAsync();
             }
 
             if (pauseTask.wasPressed()) {
-                if (!ComplexFarmingTask.INSTANCE.isPaused()) {
-                    ComplexFarmingTask.INSTANCE.pause();
-                } else if (ComplexFarmingTask.INSTANCE.isPaused()) {
-                    ComplexFarmingTask.INSTANCE.resume();
+                if (!FarmingTask.INSTANCE.isPaused()) {
+                    FarmingTask.INSTANCE.pause();
+                } else if (FarmingTask.INSTANCE.isPaused()) {
+                    FarmingTask.INSTANCE.resume();
                 }
             }
 

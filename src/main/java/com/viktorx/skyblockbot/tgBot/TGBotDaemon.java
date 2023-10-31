@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.skyblock.flipping.PriceDatabase;
-import com.viktorx.skyblockbot.task.ComplexFarmingTask;
+import com.viktorx.skyblockbot.task.compound.FarmingTask;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import javafx.util.Pair;
 import net.minecraft.client.MinecraftClient;
@@ -89,7 +89,7 @@ public class TGBotDaemon {
                 + brownMushCount * brownMushPrice + cropieCount * cropiePrice)
                 * profitMultiplier);
 
-        String taskName = ComplexFarmingTask.INSTANCE.getCurrentTaskName();
+        String taskName = FarmingTask.INSTANCE.getCurrentTaskName();
 
         List<String> messages;
         synchronized (messageQueue) {

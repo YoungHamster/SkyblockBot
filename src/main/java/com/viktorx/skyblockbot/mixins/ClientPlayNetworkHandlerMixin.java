@@ -3,7 +3,7 @@ package com.viktorx.skyblockbot.mixins;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
-import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
+import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.*;
 import org.spongepowered.asm.mixin.Mixin;
