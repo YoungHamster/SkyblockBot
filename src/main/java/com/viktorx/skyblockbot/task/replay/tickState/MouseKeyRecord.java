@@ -20,10 +20,22 @@ public class MouseKeyRecord extends AnyKeyRecord {
         return 2;
     }
 
-    public void press() {
+    private void press(int action) {
         long window = MinecraftClient.getInstance().getWindow().getHandle();
         Mouse mouse = MinecraftClient.getInstance().mouse;
-        ((IMouseMixin) mouse).callOnMouseButton(window, key, action, modifiers);
+        ((IMouseMixin) mouse).callOnMouseButton(window, this.key, action, this.modifiers);
+    }
+
+    public void press() {
+        press(this.action);
+    }
+
+    public void firstPress() {
+        press(1);
+    }
+
+    public void unpress() {
+        press(0);
     }
 
     public byte[] getData() {

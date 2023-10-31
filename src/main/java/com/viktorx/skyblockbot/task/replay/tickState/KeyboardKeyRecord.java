@@ -20,9 +20,21 @@ public class KeyboardKeyRecord extends AnyKeyRecord {
         this.scancode = scancode;
     }
 
-    public void press() {
+    private void press(int action) {
         long window = MinecraftClient.getInstance().getWindow().getHandle();
-        MinecraftClient.getInstance().keyboard.onKey(window, key, scancode, action, modifiers);
+        MinecraftClient.getInstance().keyboard.onKey(window, this.key, this.scancode, action, this.modifiers);
+    }
+
+    public void press() {
+        press(this.action);
+    }
+
+    public void firstPress() {
+        press(1);
+    }
+
+    public void unpress() {
+        press(0);
     }
 
     public byte[] getData() {

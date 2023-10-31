@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.mixins.InputRelated;
 
+import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.task.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.task.replay.tickState.KeyboardKeyRecord;

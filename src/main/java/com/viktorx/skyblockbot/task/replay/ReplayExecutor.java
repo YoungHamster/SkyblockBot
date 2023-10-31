@@ -2,19 +2,15 @@ package com.viktorx.skyblockbot.task.replay;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
-import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.Task;
 import com.viktorx.skyblockbot.task.replay.tickState.AnyKeyRecord;
-import com.viktorx.skyblockbot.task.replay.tickState.KeyboardKeyRecord;
-import com.viktorx.skyblockbot.task.replay.tickState.MouseKeyRecord;
 import com.viktorx.skyblockbot.task.replay.tickState.TickState;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.option.GameOptions;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -22,9 +18,7 @@ import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 
@@ -35,6 +29,7 @@ public class ReplayExecutor {
     private final List<TickState> lastNTicks = new ArrayList<>();
     private final List<String> whitelistedBlocks = new ArrayList<>();
     private final Queue<AnyKeyRecord> newKeys = new ArrayBlockingQueue<>(15);
+    private final Map<Integer, AnyKeyRecord> currentlyPressedKeys = new HashMap<>();
     public boolean serverChangedPositionRotation = false;
     public boolean serverChangedItem = false;
     public boolean serverChangedSlot = false;
@@ -103,6 +98,8 @@ public class ReplayExecutor {
 
     private void antiDetectDone() {
         TGBotDaemon.INSTANCE.takeAndSendScreenshot("Anti detect triggered!!!", true);
+
+        unpressButtons();
         if (ReplayBotSettings.autoQuitWhenAntiDetect) {
             MinecraftClient.getInstance().stop();
         }
@@ -120,7 +117,7 @@ public class ReplayExecutor {
         }
 
         asyncPlayAlarmSound();
-        replay.getTickState(tickIterator).setButtonsForClient();
+        this.pressButtons(replay.getTickState(tickIterator));
 
         Vec2f prevRot = replay.getTickState(tickIterator - 1).getRotation();
         Vec2f currentRot = replay.getTickState(tickIterator).getRotation();
@@ -143,11 +140,9 @@ public class ReplayExecutor {
                 if (!yawTask.isDone() || !pitchTask.isDone()) {
                     return;
                 } else {
-                    pressButtons();
                     state = ReplayBotState.UNPRESSING_BUTTONS_BEFORE_START;
                 }
             } else if (state.equals(ReplayBotState.UNPRESSING_BUTTONS_BEFORE_START)) {
-                unpressButtons();
                 state = ReplayBotState.PLAYING;
                 return;
             } else {
@@ -174,7 +169,7 @@ public class ReplayExecutor {
 
         tickState.setRotationForClient(client);
         tickState.setPositionForClient(client);
-        tickState.setButtonsForClient();
+        this.pressButtons(tickState);
 
         tickIterator++;
         if (tickIterator == replay.size()) {
@@ -214,30 +209,7 @@ public class ReplayExecutor {
          * If we do we can just start for the middle of the replay instead of refusing to work
          */
         if (!isPlayerInCorrectPosition()) {
-            SkyblockBot.LOGGER.info("Trying to find fitting tick state away from the start");
-
-            double lowestDistance = ReplayBotSettings.maxDistanceToFirstPoint;
-            int lowestDistanceIterator = -1;
-            for (int i = 0; i < replay.tickStates.size(); i++) {
-                tickIterator = i;
-                double distanceToStartPoint = getDistanceToExpectedPosition();
-
-                if (distanceToStartPoint < lowestDistance) {
-                    lowestDistance = distanceToStartPoint;
-                    lowestDistanceIterator = i;
-                }
-            }
-
-            if (lowestDistance < ReplayBotSettings.maxDistanceToFirstPoint) {
-                tickIterator = lowestDistanceIterator;
-                SkyblockBot.LOGGER.info("Found tick to start from! Starting replay from " + lowestDistanceIterator + " tick state");
-            } else {
-                SkyblockBot.LOGGER.warn(
-                        "Can't start so far from first point. Distance: " + getDistanceToExpectedPosition());
-                state = ReplayBotState.IDLE;
-                abort();
-                return;
-            }
+            if (tryStartingFromMiddleOfRecording(replay)) return;
         }
 
         SkyblockBot.LOGGER.info("Starting playing");
@@ -258,18 +230,57 @@ public class ReplayExecutor {
         prepareToStart();
     }
 
+    private boolean tryStartingFromMiddleOfRecording(Replay replay) {
+        SkyblockBot.LOGGER.info("Trying to find fitting tick state away from the start");
+
+        double lowestDistance = ReplayBotSettings.maxDistanceToFirstPoint;
+        int lowestDistanceIterator = -1;
+        for (int i = 0; i < replay.tickStates.size(); i++) {
+            tickIterator = i;
+            double distanceToStartPoint = getDistanceToExpectedPosition();
+
+            if (distanceToStartPoint < lowestDistance) {
+                lowestDistance = distanceToStartPoint;
+                lowestDistanceIterator = i;
+            }
+        }
+
+        if (lowestDistance < ReplayBotSettings.maxDistanceToFirstPoint) {
+
+            tickIterator = lowestDistanceIterator;
+
+            /*
+             * Figure out which keys are pressed at the moment we start, press them before starting
+             */
+            Map<Integer, AnyKeyRecord> keys = findKeysPressedAtTick(tickIterator);
+            keys.forEach((key, value) -> {
+                value.firstPress();
+                currentlyPressedKeys.put(key, value);
+            });
+
+            SkyblockBot.LOGGER.info("Found tick to start from! Continuing replay from " + lowestDistanceIterator + " tick state");
+        } else {
+            SkyblockBot.LOGGER.warn(
+                    "Can't find fitting point. Distance to first point: " + getDistanceToExpectedPosition());
+            state = ReplayBotState.IDLE;
+            abort();
+            return true;
+        }
+        return false;
+    }
+
     public synchronized void abort() {
         if (state.equals(ReplayBotState.IDLE)) {
             SkyblockBot.LOGGER.info("Can't abort replay, already idle");
             return;
         }
+        unpressButtons();
         tickIterator = 0;
 
         SkyblockBot.LOGGER.info("aborted playing");
         state = ReplayBotState.IDLE;
 
         printDebugInfo();
-        unpressButtons();
 
         replay.aborted();
     }
@@ -370,8 +381,8 @@ public class ReplayExecutor {
                 if (isBlockSolid || isBlockAboveSolid) {
                     SkyblockBot.LOGGER.info(
                             "Block at " + blockPos.getX() + " " + blockPos.getY() + " " + blockPos.getZ()
-                            + " : " + blockName + " solid-" + isBlockSolid
-                            + "\nBlock above: " + blockAboveName + " solid-" + isBlockAboveSolid);
+                                    + " : " + blockName + " solid-" + isBlockSolid
+                                    + "\nBlock above: " + blockAboveName + " solid-" + isBlockAboveSolid);
 
                     return false;
                 }
@@ -413,7 +424,32 @@ public class ReplayExecutor {
                     return false;
                 }
                 tickIterator = bestTickIndex;
-                SkyblockBot.LOGGER.info("Adjusted for lagback. Min delta = " + minDelta);
+
+
+                /*
+                 * Figure out which keys are pressed at the tick we lagged back to, press them before continuing
+                 * Also unpress keys that weren't pressed at that tick
+                 */
+                Map<Integer, AnyKeyRecord> keys = findKeysPressedAtTick(tickIterator);
+
+                keys.forEach((key, value) -> {
+                    if(!currentlyPressedKeys.containsKey(key)) {
+                        currentlyPressedKeys.put(key, value);
+                        value.firstPress();
+                    }
+                });
+
+                List<Integer> keysToRemove = new ArrayList<>();
+                currentlyPressedKeys.forEach((key, value) -> {
+                    if(!keys.containsKey(key)) {
+                        value.unpress();
+                        keysToRemove.add(key);
+                    }
+                });
+                keysToRemove.forEach(currentlyPressedKeys::remove);
+
+
+                SkyblockBot.LOGGER.info("Adjusted for lagback. Min elta = " + minDelta);
                 return true;
             }
             /* If previous states aren't close to current position it must not be lagback, but teleport or something else */
@@ -538,25 +574,49 @@ public class ReplayExecutor {
      * Instead i just unpress every button that i could want to be unpressed
      */
     private void unpressButtons() {
-        GameOptions options = MinecraftClient.getInstance().options;
-        new KeyboardKeyRecord(((KeyBindingMixin) options.forwardKey).getBoundKey().getCode(), 0, 0, 0).press();
-        new KeyboardKeyRecord(((KeyBindingMixin) options.backKey).getBoundKey().getCode(), 0, 0, 0).press();
-        new KeyboardKeyRecord(((KeyBindingMixin) options.leftKey).getBoundKey().getCode(), 0, 0, 0).press();
-        new KeyboardKeyRecord(((KeyBindingMixin) options.rightKey).getBoundKey().getCode(), 0, 0, 0).press();
-
-        new MouseKeyRecord(((KeyBindingMixin) options.attackKey).getBoundKey().getCode(), 0, 0).press();
-        new MouseKeyRecord(((KeyBindingMixin) options.useKey).getBoundKey().getCode(), 0, 0).press();
+        currentlyPressedKeys.forEach((key, value) -> {
+            value.unpress();
+        });
+        currentlyPressedKeys.clear();
     }
 
-    private void pressButtons() {
-        GameOptions options = MinecraftClient.getInstance().options;
-        new KeyboardKeyRecord(((KeyBindingMixin) options.forwardKey).getBoundKey().getCode(), 0, 1, 0).press();
-        new KeyboardKeyRecord(((KeyBindingMixin) options.backKey).getBoundKey().getCode(), 0, 1, 0).press();
-        new KeyboardKeyRecord(((KeyBindingMixin) options.leftKey).getBoundKey().getCode(), 0, 1, 0).press();
-        new KeyboardKeyRecord(((KeyBindingMixin) options.rightKey).getBoundKey().getCode(), 0, 1, 0).press();
+    private void pressButtons(TickState tickState) {
+        List<AnyKeyRecord> tickKeys = tickState.getKeys();
 
-        new MouseKeyRecord(((KeyBindingMixin) options.attackKey).getBoundKey().getCode(), 1, 0).press();
-        new MouseKeyRecord(((KeyBindingMixin) options.useKey).getBoundKey().getCode(), 1, 0).press();
+        for (AnyKeyRecord key : tickKeys) {
+            /*
+             * We don't actually need to account for situation where key is already pressed, but not in the map of pressed keys
+             * because we ensure continuity of key presses from start to finish of execution
+             */
+            switch (key.getAction()) {
+                case 0 -> {
+                    currentlyPressedKeys.remove(key.getKey());
+                    key.press();
+                }
+
+                case 1 -> {
+                    currentlyPressedKeys.put(key.getKey(), key);
+                    key.press();
+                }
+
+                case 2 -> key.press();
+
+                default -> SkyblockBot.LOGGER.warn("Key action is not 0, 1 or 2, its: " + key.getAction());
+            }
+        }
+    }
+
+    private Map<Integer, AnyKeyRecord> findKeysPressedAtTick(int tickNumber) {
+        Map<Integer, AnyKeyRecord> keys = new HashMap<>();
+        for(TickState tick : replay.tickStates.subList(0, tickIterator)) {
+            for (AnyKeyRecord key : tick.getKeys()) {
+                switch(key.getAction()) {
+                    case 0 -> keys.remove(key.getKey());
+                    case 1 -> keys.put(key.getKey(), key);
+                }
+            }
+        }
+        return keys;
     }
 
     private void prepareToStart() {

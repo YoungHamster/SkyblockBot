@@ -139,6 +139,11 @@ public class ComplexFarmingTask extends Task {
         int waitTickCounter = 0;
         boolean isPositionCorrect;
         do {
+            // account for situation when user wants to abort task while this waiting is happening
+            if (currentTask == null) {
+                return;
+            }
+
             isPositionCorrect = ReplayExecutor.INSTANCE.isPlayerInCorrectPosition();
             try {
                 Thread.sleep(50);

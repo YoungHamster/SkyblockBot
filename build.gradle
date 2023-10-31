@@ -121,6 +121,13 @@ remapJar {
     from { configurations.compileAndRuntime.collect { it.isDirectory() ? it : zipTree(it) } }
 }
 
+task copyJarToBin(type: Copy) {
+    copy {
+        from 'build/libs/skyblock-bot-0.5-BETA.jar' // shortcut for createJar.outputs.files
+        into "C:/Users/Nobody/AppData/Roaming/.minecraft/mods"
+    }
+}
+
 // configure the maven publication
 publishing {
     publications {
