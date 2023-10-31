@@ -448,8 +448,7 @@ public class ReplayExecutor {
                 });
                 keysToRemove.forEach(currentlyPressedKeys::remove);
 
-
-                SkyblockBot.LOGGER.info("Adjusted for lagback. Min elta = " + minDelta);
+                SkyblockBot.LOGGER.info("Adjusted for lagback. Min delta = " + minDelta);
                 return true;
             }
             /* If previous states aren't close to current position it must not be lagback, but teleport or something else */
@@ -608,7 +607,7 @@ public class ReplayExecutor {
 
     private Map<Integer, AnyKeyRecord> findKeysPressedAtTick(int tickNumber) {
         Map<Integer, AnyKeyRecord> keys = new HashMap<>();
-        for(TickState tick : replay.tickStates.subList(0, tickIterator)) {
+        for(TickState tick : replay.tickStates.subList(0, tickNumber)) {
             for (AnyKeyRecord key : tick.getKeys()) {
                 switch(key.getAction()) {
                     case 0 -> keys.remove(key.getKey());

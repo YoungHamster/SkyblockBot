@@ -105,6 +105,10 @@ jar {
     from("LICENSE") {
         rename { "${it}_${project.archivesBaseName}" }
     }
+    copy {
+        from 'build/libs/skyblock-bot-0.5-BETA.jar' // shortcut for createJar.outputs.files
+        into "C:/Users/Nobody/AppData/Roaming/.minecraft/mods"
+    }
 }
 
 shadowJar {
@@ -122,9 +126,11 @@ remapJar {
 }
 
 task copyJarToBin(type: Copy) {
-    copy {
-        from 'build/libs/skyblock-bot-0.5-BETA.jar' // shortcut for createJar.outputs.files
-        into "C:/Users/Nobody/AppData/Roaming/.minecraft/mods"
+    doLast {
+        copy {
+            from 'build/libs/skyblock-bot-0.5-BETA.jar' // shortcut for createJar.outputs.files
+            into "C:/Users/Nobody/AppData/Roaming/.minecraft/mods"
+        }
     }
 }
 
