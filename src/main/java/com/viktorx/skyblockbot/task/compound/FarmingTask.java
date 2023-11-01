@@ -272,9 +272,9 @@ public class FarmingTask extends Task {
                 0, FarmingTaskSettings.intervalBetweenRegularChecks);
         timers.add(checkSacksTimer);
 
-        Timer checkVisitorsTimer = new Timer(true);
+        /*Timer checkVisitorsTimer = new Timer(true);
         checkVisitorsTimer.scheduleAtFixedRate(new CheckVisitorsTimerTask(),
-                0, FarmingTaskSettings.checkVisitorsInterval);
+                0, FarmingTaskSettings.checkVisitorsInterval);*/
     }
 
     public void pause() {

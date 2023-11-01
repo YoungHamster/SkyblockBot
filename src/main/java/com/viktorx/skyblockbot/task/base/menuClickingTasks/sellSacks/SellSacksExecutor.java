@@ -1,6 +1,5 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.sellSacks;
 
-import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
@@ -29,11 +28,17 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickSellSacks);
     }
 
+    @Override
     protected void restart() {
         SkyblockBot.LOGGER.info("Restarting sellSacks");
         blockingCloseCurrentInventory();
         state = SellSacksState.IDLE;
         execute(task);
+    }
+
+    @Override
+    protected void whenMenuOpened() {
+        state = nextState;
     }
 
     public void execute(SellSacks task) {
@@ -89,16 +94,7 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
                 nextState = SellSacksState.SELLING;
             }
 
-            case WAITING_FOR_MENU -> {
-                if (checkForPossibleError()) {
-                    SkyblockBot.LOGGER.warn("Error when selling sacks. Restarting!");
-                    restart();
-                    return;
-                }
-                if (CurrentInventory.syncIDChanged()) {
-                    state = nextState;
-                }
-            }
+            case WAITING_FOR_MENU -> waitForMenuOrRestart();
 
             case SELLING -> {
                 if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeAction) {

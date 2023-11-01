@@ -8,14 +8,13 @@ public class SetupMinionsForSkillsTask extends Task {
     private static final String buildPlaceForMinionsReplay = "build_place_for_minions";
     private Task currentTask;
     private final Task buildPlaceForMinions;
-    private final Task getSkills;
+    /*private final Task getSkills;
     private final Task buyBZItems;
-    private final Task craftItem;
+    private final Task craftItem;*/
 
     public SetupMinionsForSkillsTask() {
         buildPlaceForMinions = new Replay(buildPlaceForMinionsReplay);
-        buildPlaceForMinions.whenCompleted(whenBuildPlaceForMinionsCompleted);
-        buildPlaceForMinions.whenAborted(whenBuildPlaceForMinionsAborted);
+
     }
 
     public void execute() {

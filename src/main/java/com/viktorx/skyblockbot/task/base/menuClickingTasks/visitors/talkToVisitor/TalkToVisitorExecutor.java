@@ -1,11 +1,11 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.talkToVisitor;
 
-import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.RayTraceStuff;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
+import javafx.util.Pair;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
@@ -23,9 +23,15 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
     }
 
+    @Override
     protected void restart() {
         SkyblockBot.LOGGER.warn("TalkToVisitor task isn't meant to be restarted! Aborting");
         abort();
+    }
+
+    @Override
+    protected void whenMenuOpened() {
+        state = TalkToVisitorState.READING_DATA;
     }
 
     public void execute(TalkToVisitor task) {
@@ -90,11 +96,7 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
                 }
             }
 
-            case WAITING_FOR_MENU -> {
-                if (CurrentInventory.syncIDChanged()) {
-                    state = TalkToVisitorState.READING_DATA;
-                }
-            }
+            case WAITING_FOR_MENU -> waitForMenuOrRestart();
 
             case READING_DATA -> {
                 List<String> lore;
@@ -106,7 +108,7 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
                     return;
                 }
 
-                if(lore == null) {
+                if (lore == null) {
                     SkyblockBot.LOGGER.warn("Lore is null when executing talkToVisitor task, wtf???");
                     abort();
                     return;
@@ -115,15 +117,21 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
                 assert client.currentScreen != null;
                 task.setVisitorName(client.currentScreen.getTitle().getString());
 
-                String[] nameCount = lore.get(1).split(" x");
-                task.setItemName(nameCount[0].strip());
-                if(nameCount.length != 1) {
-                    task.setItemCount(Integer.parseInt(nameCount[1]));
-                } else {
-                    task.setItemCount(1);
-                }
+                /*
+                 * visitors can have more than one item required
+                 */
+                int visitorRequiredItemIterator = 1;
+                while (lore.get(visitorRequiredItemIterator).contains(" x")) {
+                    String[] nameCount = lore.get(visitorRequiredItemIterator).split(" x");
 
-                SkyblockBot.LOGGER.info("Visitor: " + task.getVisitorName() + ", name: " + task.getItemName() + ", itemCount: " + task.getItemCount());
+                    String name = nameCount[0].strip();
+                    int count = 1;
+                    if (nameCount.length != 1) {
+                        count = Integer.parseInt(nameCount[1]);
+                    }
+
+                    task.addItem(new Pair<>(name, count));
+                }
 
                 state = TalkToVisitorState.CLOSING_VISITOR;
             }

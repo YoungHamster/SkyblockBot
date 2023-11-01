@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks;
 
 
+import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
@@ -17,9 +18,21 @@ public abstract class AbstractMenuClickingExecutor {
     protected final List<String> possibleErrors = new ArrayList<>();
     protected boolean currentClickRunning = false;
     protected int waitTickCounter = 0;
+    protected int waitForMenuCounter = 0;
     private CompletableFuture<Boolean> currentClick;
 
     protected abstract void restart();
+    protected abstract void whenMenuOpened();
+
+    protected void waitForMenuOrRestart() {
+        if(CurrentInventory.syncIDChanged()) {
+            whenMenuOpened();
+        } else {
+            if(waitForMenuCounter > MenuClickersSettings.maxWaitForScreen) {
+                restart();
+            }
+        }
+    }
 
     protected boolean checkForPossibleError() {
         for (String possibleError : possibleErrors) {

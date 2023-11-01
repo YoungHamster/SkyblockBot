@@ -1,6 +1,5 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem;
 
-import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.skyblock.flipping.auction.AuctionBrowser;
@@ -32,10 +31,16 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickBuy);
     }
 
+    @Override
     protected void restart() {
         blockingCloseCurrentInventory();
         SkyblockBot.LOGGER.warn("Can't buy from auction. Restarting task");
         state = BuyItemState.RESTARTING;
+    }
+
+    @Override
+    protected void whenMenuOpened() {
+        state = nextState;
     }
 
     public void execute(BuyItem task) {
@@ -206,16 +211,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
                 task.completed();
             }
 
-            case WAITING_FOR_MENU -> {
-                if (checkForPossibleError()) {
-                    SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 210");
-                    restart();
-                    return;
-                }
-                if (CurrentInventory.syncIDChanged()) {
-                    state = nextState;
-                }
-            }
+            case WAITING_FOR_MENU -> waitForMenuOrRestart();
 
         }
     }

@@ -3,7 +3,7 @@ package com.viktorx.skyblockbot;
 import com.viktorx.skyblockbot.keybinds.KeybindsSettings;
 import com.viktorx.skyblockbot.task.compound.FarmingTaskSettings;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
-import com.viktorx.skyblockbot.task.base.menuClickingTasks.BuySellSettings;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.MenuClickersSettings;
 import com.viktorx.skyblockbot.task.base.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.base.replay.ReplayBotSettings;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemonSettings;
@@ -38,7 +38,7 @@ public class GlobalSettingsManager {
 
         KeybindsSettings.buttonPressDelay = Integer.parseInt(settings.get("Keybinds.buttonPressDelay"));
 
-        BuySellSettings.maxWaitForScreen = Integer.parseInt(settings.get("BuySell.maxWaitForScreen"));
+        MenuClickersSettings.maxWaitForScreen = Integer.parseInt(settings.get("BuySell.maxWaitForScreen"));
 
         ChangeIslandSettings.ticksToWaitForChunks = Integer.parseInt(settings.get("ChangeIsland.ticksToWaitForChunks"));
         ChangeIslandSettings.ticksToWaitBeforeAttempt = Integer.parseInt(settings.get("ChangeIsland.ticksToWaitBeforeAttempt"));

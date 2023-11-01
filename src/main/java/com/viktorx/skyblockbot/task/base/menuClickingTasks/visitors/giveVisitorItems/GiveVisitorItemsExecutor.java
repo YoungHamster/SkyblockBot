@@ -20,11 +20,18 @@ public class GiveVisitorItemsExecutor extends AbstractMenuClickingExecutor {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
     }
 
+    @Override
     protected void restart() {
         SkyblockBot.LOGGER.info("Restarting GiveVisitorItems");
         state = GiveVisitorItemsState.IDLE;
         execute(task);
     }
+
+    /**
+     * This executor doesn't use this method so I leave it empty
+     */
+    @Override
+    protected void whenMenuOpened() {}
 
     public void execute(GiveVisitorItems task) {
         if (!state.equals(GiveVisitorItemsState.IDLE)) {

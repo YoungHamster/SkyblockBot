@@ -1,11 +1,10 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem;
 
-import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.mixins.IAbstractSignEditScreenMixin;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
-import com.viktorx.skyblockbot.task.base.menuClickingTasks.BuySellSettings;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.MenuClickersSettings;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
@@ -25,10 +24,16 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickBuy);
     }
 
+    @Override
     protected void restart() {
         blockingCloseCurrentInventory();
         SkyblockBot.LOGGER.warn("Can't buy " + task.getItemName() + ". Restarting task");
         state = BuyBZItemState.RESTARTING;
+    }
+
+    @Override
+    protected void whenMenuOpened() {
+        state = nextState;
     }
 
     public void execute(BuyBZItem task) {
@@ -183,11 +188,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                 CompletableFuture.runAsync(() -> execute(task));
             }
 
-            case WAITING_FOR_MENU -> {
-                if (CurrentInventory.syncIDChanged()) {
-                    state = nextState;
-                }
-            }
+            case WAITING_FOR_MENU -> waitForMenuOrRestart();
 
             case WAITING_FOR_SCREEN_CHANGE -> {
                 if (client.currentScreen == null) {
@@ -197,7 +198,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                     state = nextState;
                     return;
                 }
-                if (waitForScreenLoadingCounter++ > BuySellSettings.maxWaitForScreen) {
+                if (waitForScreenLoadingCounter++ > MenuClickersSettings.maxWaitForScreen) {
                     state = prevState;
                 }
             }

@@ -16,14 +16,21 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
 
     private AssembleCraft task;
     private AssembleCraftState state = AssembleCraftState.IDLE;
+    private AssembleCraftState stateBeforePause;
     private AssembleCraftState nextState;
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
     }
 
+    @Override
     protected void restart() {
         state = AssembleCraftState.OPENING_SB_MENU;
+    }
+
+    @Override
+    protected void whenMenuOpened() {
+        state = nextState;
     }
 
     public void execute(AssembleCraft task) {
@@ -36,9 +43,33 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
         state = AssembleCraftState.CHECKING_INGRIDIENTS;
     }
 
+    public void pause() {
+        if (state.equals(AssembleCraftState.IDLE) || state.equals(AssembleCraftState.PAUSED)) {
+            SkyblockBot.LOGGER.warn("Can't pause talkToVisitor when already paused or not executing at all");
+            return;
+        }
+        stateBeforePause = state;
+        state = AssembleCraftState.PAUSED;
+    }
+
+    public void resume() {
+        if (!state.equals(AssembleCraftState.PAUSED)) {
+            SkyblockBot.LOGGER.warn("Can't resume talkToVisitor when not paused");
+            return;
+        }
+        state = stateBeforePause;
+    }
+
     public void abort() {
         state = AssembleCraftState.IDLE;
-        // TODO
+    }
+
+    public boolean isExecuting(AssembleCraft task) {
+        return !state.equals(AssembleCraftState.IDLE) && this.task == task;
+    }
+
+    public boolean isPaused() {
+        return state.equals(AssembleCraftState.PAUSED);
     }
 
     private void onTick(MinecraftClient client) {
@@ -75,7 +106,7 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
                 if (!waitBeforeAction()) {
                     try {
                         SBUtils.leftClickOnSlot(task.getCraftingTableSlotName());
-                        nextState = AssembleCraftState.COLLECTING_CRAFT;
+                        nextState = AssembleCraftState.PUTTING_ITEMS;
                         state = AssembleCraftState.WAITING_FOR_MENU;
                     } catch (TimeoutException e) {
                         SkyblockBot.LOGGER.warn("Can't click on crafting table slot! Restarting AssembleCraft tsak");
@@ -84,11 +115,25 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
                 }
             }
 
-            case COLLECTING_CRAFT -> {
-                if(!waitBeforeAction()) {
-                    if(!)
+            case PUTTING_ITEMS -> {
+                if (!waitBeforeAction()) {
+                    if (!putNextCraftItem()) {
+                        state = AssembleCraftState.COLLECTING_CRAFT;
+                    }
                 }
             }
+
+            case COLLECTING_CRAFT -> {
+                if (!waitBeforeAction()) {
+
+                }
+            }
+
+            case WAITING_FOR_MENU -> waitForMenuOrRestart();
         }
+    }
+
+    private boolean putNextCraftItem() {
+        return false;
     }
 }

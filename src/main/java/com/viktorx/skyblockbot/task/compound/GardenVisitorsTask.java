@@ -7,6 +7,7 @@ import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem.BuyBZItem;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.giveVisitorItems.GiveVisitorItems;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.talkToVisitor.TalkToVisitor;
 import com.viktorx.skyblockbot.task.base.replay.Replay;
+import javafx.util.Pair;
 
 import java.util.concurrent.TimeoutException;
 
@@ -67,8 +68,10 @@ public class GardenVisitorsTask extends Task {
     }
 
     private void whenTalkToVisitorCompleted() {
-        String itemName = ((TalkToVisitor) talkToVisitor).getItemName();
-        int itemCount = ((TalkToVisitor) talkToVisitor).getItemCount();
+        Pair<String, Integer> itemNameCount =  ((TalkToVisitor) talkToVisitor).getNextItem();
+        String itemName = itemNameCount.getKey();
+        int itemCount = itemNameCount.getValue();
+
         ((BuyBZItem) buyBZItem).setItemName(itemName);
         ((BuyBZItem) buyBZItem).setItemCount(itemCount);
         currentVisitor = ((TalkToVisitor) talkToVisitor).getVisitorName();
@@ -95,7 +98,16 @@ public class GardenVisitorsTask extends Task {
     }
 
     private void whenBuyBZItemCompleted() {
-        currentTask = giveVisitorItems;
+        if(((TalkToVisitor) talkToVisitor).isItemRemaining()) {
+            Pair<String, Integer> itemNameCount =  ((TalkToVisitor) talkToVisitor).getNextItem();
+            String itemName = itemNameCount.getKey();
+            int itemCount = itemNameCount.getValue();
+
+            ((BuyBZItem) buyBZItem).setItemName(itemName);
+            ((BuyBZItem) buyBZItem).setItemCount(itemCount);
+        } else {
+            currentTask = giveVisitorItems;
+        }
         currentTask.execute();
     }
 

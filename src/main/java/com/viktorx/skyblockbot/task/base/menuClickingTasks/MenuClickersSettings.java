@@ -1,5 +1,5 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks;
 
-public class BuySellSettings {
+public class MenuClickersSettings {
     public static int maxWaitForScreen;
 }

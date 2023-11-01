@@ -1,10 +1,12 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.talkToVisitor;
 
 import com.viktorx.skyblockbot.task.Task;
+import javafx.util.Pair;
+
+import java.util.List;
 
 public class TalkToVisitor extends Task {
-    private String itemName;
-    private int itemCount;
+    private List<Pair<String, Integer>> items;
     private String visitorName;
 
     public void execute() {
@@ -30,24 +32,22 @@ public class TalkToVisitor extends Task {
         return "Accept Offer";
     }
 
-    public String getItemName() {
-        return itemName;
+    public Pair<String, Integer> getNextItem() {
+        Pair<String, Integer> item = items.get(0);
+        items.remove(0);
+        return item;
     }
 
-    public int getItemCount() {
-        return itemCount;
+    public boolean isItemRemaining() {
+        return !items.isEmpty();
     }
 
     public String getVisitorName() {
         return visitorName;
     }
 
-    protected void setItemName(String itemName) {
-        this.itemName = itemName;
-    }
-
-    protected void setItemCount(int itemCount) {
-        this.itemCount = itemCount;
+    protected void addItem(Pair<String, Integer> newItem) {
+        items.add(newItem);
     }
 
     protected void setVisitorName(String visitorName) {
