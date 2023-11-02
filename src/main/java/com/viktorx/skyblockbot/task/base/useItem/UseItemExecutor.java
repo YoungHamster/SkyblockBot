@@ -23,6 +23,17 @@ public class UseItemExecutor extends BaseExecutor {
     private int waitBeforeActionIterator = 0;
 
     private UseItemExecutor() {
+        addState("CHECKING_INVENTORY");
+        addState("GOING_TO_HOTBAR_SLOT");
+        addState("USING_ITEM");
+        addState("ITEM_IN_USE");
+        addState("GOING_BACK_TO_HOTBAR_SLOT");
+        addState("OPENING_INVENTORY");
+        addState("MOVING_ITEM_TO_CORRECT_SLOT");
+        addState("CLOSING_INVENTORY");
+        addState("OPENING_INVENTORY_TO_MOVE_ITEM_BACK");
+        addState("MOVING_ITEM_BACK");
+        addState("CLOSING_INVENTORY_FINAL");
     }
 
     public void Init() {
@@ -34,29 +45,29 @@ public class UseItemExecutor extends BaseExecutor {
         this.task = (UseItem) task;
         waitBeforeActionIterator = 0;
         wasUsedHotbarSlotEmpty = true;
-        state = states.get("CHECKING_INVENTORY");
+        state = getState("CHECKING_INVENTORY");
     }
 
     private void onTick(MinecraftClient client) {
 
-        switch (state) {
-            case states.get("CHECKING_INVENTORY") -> {
+        switch (getState(state)) {
+            case "CHECKING_INVENTORY" -> {
                 itemSlot = getItemSlot(client);
                 if (itemSlot == -1) {
                     SkyblockBot.LOGGER.warn("Item " + task.getItemName() + " can't be found in inventory. Aborting UseItem.");
-                    state = UseItemState.IDLE;
+                    state = getState("IDLE");
                     task.aborted();
                     return;
                 }
 
                 if (itemSlot < 9) {
-                    state = UseItemState.GOING_TO_HOTBAR_SLOT;
+                    state = getState("GOING_TO_HOTBAR_SLOT");
                 } else {
-                    state = UseItemState.OPENING_INVENTORY;
+                    state = getState("OPENING_INVENTORY");
                 }
             }
 
-            case GOING_TO_HOTBAR_SLOT -> {
+            case "GOING_TO_HOTBAR_SLOT" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
@@ -70,28 +81,28 @@ public class UseItemExecutor extends BaseExecutor {
                     Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[defaultHotbarSlot]);
                 }
 
-                state = UseItemState.USING_ITEM;
+                state = getState("USING_ITEM");
             }
 
-            case USING_ITEM -> {
+            case "USING_ITEM" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
 
                 client.options.useKey.setPressed(true);
-                state = UseItemState.ITEM_IN_USE;
+                state = getState("ITEM_IN_USE");
             }
 
-            case ITEM_IN_USE -> {
+            case "ITEM_IN_USE" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
 
                 client.options.useKey.setPressed(false);
-                state = UseItemState.GOING_BACK_TO_HOTBAR_SLOT;
+                state = getState("GOING_BACK_TO_HOTBAR_SLOT");
             }
 
-            case GOING_BACK_TO_HOTBAR_SLOT -> {
+            case "GOING_BACK_TO_HOTBAR_SLOT" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
@@ -99,24 +110,24 @@ public class UseItemExecutor extends BaseExecutor {
                 Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[startingSlot]);
 
                 if (!wasUsedHotbarSlotEmpty) {
-                    state = UseItemState.OPENING_INVENTORY_TO_MOVE_ITEM_BACK;
+                    state = getState("OPENING_INVENTORY_TO_MOVE_ITEM_BACK");
                     return;
                 }
 
-                state = UseItemState.IDLE;
+                state = getState("IDLE");
                 task.completed();
             }
 
-            case OPENING_INVENTORY -> {
+            case "OPENING_INVENTORY" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
 
                 Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
-                state = UseItemState.MOVING_ITEM_TO_CORRECT_SLOT;
+                state = getState("MOVING_ITEM_TO_CORRECT_SLOT");
             }
 
-            case MOVING_ITEM_TO_CORRECT_SLOT -> {
+            case "MOVING_ITEM_TO_CORRECT_SLOT" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
@@ -127,43 +138,43 @@ public class UseItemExecutor extends BaseExecutor {
 
                 SBUtils.quickSwapSlotWithHotbar(itemSlot, defaultHotbarSlot);
 
-                state = UseItemState.CLOSING_INVENTORY;
+                state = getState("CLOSING_INVENTORY");
             }
 
-            case CLOSING_INVENTORY -> {
+            case "CLOSING_INVENTORY" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
 
                 Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
-                state = UseItemState.GOING_TO_HOTBAR_SLOT;
+                state = getState("GOING_TO_HOTBAR_SLOT");
             }
 
-            case OPENING_INVENTORY_TO_MOVE_ITEM_BACK -> {
+            case "OPENING_INVENTORY_TO_MOVE_ITEM_BACK" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
 
                 Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
-                state = UseItemState.MOVING_ITEM_BACK;
+                state = getState("MOVING_ITEM_BACK");
             }
 
-            case MOVING_ITEM_BACK -> {
+            case "MOVING_ITEM_BACK" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
 
                 SBUtils.quickSwapSlotWithHotbar(itemSlot, defaultHotbarSlot);
-                state = UseItemState.CLOSING_INVENTORY_FINAL;
+                state = getState("CLOSING_INVENTORY_FINAL");
             }
 
-            case CLOSING_INVENTORY_FINAL -> {
+            case "CLOSING_INVENTORY_FINAL" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
 
                 Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
-                state = UseItemState.IDLE;
+                state = getState("IDLE");
                 task.completed();
             }
         }

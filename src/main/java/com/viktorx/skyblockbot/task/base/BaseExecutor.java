@@ -7,16 +7,30 @@ import java.util.Map;
 
 public abstract class BaseExecutor {
 
-    protected final Map<String, Integer> states = new HashMap<>();
+    private final Map<String, Integer> states = new HashMap<>();
+    private final Map<Integer, String> reverseStates = new HashMap<>();
     protected BaseTask<?> task;
     protected int state;
     protected int stateBeforePause;
 
     public BaseExecutor() {
-        states.put("IDLE", 1);
-        states.put("PAUSED", 2);
+        addState("IDLE");
+        addState("PAUSED");
 
         state = states.get("IDLE");
+    }
+
+    protected void addState(String name) {
+        states.put(name, states.size());
+        reverseStates.put(reverseStates.size(), name);
+    }
+
+    protected int getState(String name) {
+        return states.get(name);
+    }
+
+    protected String getState(Integer i) {
+        return reverseStates.get(i);
     }
 
     public abstract <T extends BaseTask<?>> void whenExecute(T task);
