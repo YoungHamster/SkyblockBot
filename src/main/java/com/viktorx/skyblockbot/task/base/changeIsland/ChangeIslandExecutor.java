@@ -1,6 +1,5 @@
 package com.viktorx.skyblockbot.task.base.changeIsland;
 
-import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseExecutor;
@@ -10,96 +9,59 @@ import net.minecraft.client.MinecraftClient;
 
 public class ChangeIslandExecutor extends BaseExecutor {
     public static ChangeIslandExecutor INSTANCE = new ChangeIslandExecutor();
-    ChangeIslandState state = ChangeIslandState.IDLE;
-    ChangeIslandState stateBeforePause;
-    private ChangeIsland changeIsland;
+    private ChangeIsland task;
     private int waitBeforeAttemptTickCounter;
     private int attemptCounter;
+
+    private ChangeIslandExecutor() {
+        addState("SENDING_COMMAND");
+        addState("WAITING_AFTER_COMMAND");
+        addState("WAITING_FOR_WORLD_LOAD");
+    }
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickChangeIsland);
     }
 
     @Override
-    public <T extends BaseTask<?>> void execute(T changeIsland) {
-        if (!state.equals(ChangeIslandState.IDLE)) {
-            SkyblockBot.LOGGER.warn("Can't execute ChangeIsland when already running");
-            return;
-        }
-
-        this.changeIsland = (ChangeIsland) changeIsland;
+    public <T extends BaseTask<?>> void whenExecute(T task) {
+        this.task = (ChangeIsland) task;
         waitBeforeAttemptTickCounter = 0;
         attemptCounter = 0;
-        state = ChangeIslandState.SENDING_COMMAND;
-    }
-
-    @Override
-    public void pause() {
-        if (state.equals(ChangeIslandState.IDLE) || state.equals(ChangeIslandState.PAUSED)) {
-            SkyblockBot.LOGGER.warn("Can't pause ChangeIsland when already paused or not running");
-            return;
-        }
-
-        stateBeforePause = state;
-        state = ChangeIslandState.PAUSED;
-    }
-
-    @Override
-    public void resume() {
-        if (!state.equals(ChangeIslandState.PAUSED)) {
-            SkyblockBot.LOGGER.warn("Can't resume ChangeIsland when not paused");
-            return;
-        }
-
-        state = stateBeforePause;
-    }
-
-    @Override
-    public void abort() {
-        state = ChangeIslandState.IDLE;
-    }
-
-    @Override
-    public <T extends BaseTask<?>> boolean isExecuting(T task) {
-        return state != ChangeIslandState.IDLE && changeIsland == task;
-    }
-
-    @Override
-    public boolean isPaused() {
-        return state.equals(ChangeIslandState.PAUSED);
+        state = getState("SENDING_COMMAND");
     }
 
     public void onTickChangeIsland(MinecraftClient client) {
 
-        switch (state) {
-            case SENDING_COMMAND -> {
+        switch (getState(state)) {
+            case "SENDING_COMMAND" -> {
                 GlobalExecutorInfo.worldLoaded.set(false);
                 assert client.player != null;
-                Utils.sendChatMessage(changeIsland.getCommand());
-                state = ChangeIslandState.WAITING_AFTER_COMMAND;
+                Utils.sendChatMessage(task.getCommand());
+                state = getState("WAITING_AFTER_COMMAND");
             }
 
-            case WAITING_AFTER_COMMAND -> {
+            case "WAITING_AFTER_COMMAND" -> {
                 if (!GlobalExecutorInfo.worldLoading.get()) {
                     if (waitBeforeAttemptTickCounter++ == ChangeIslandSettings.ticksToWaitBeforeAttempt) {
                         if (attemptCounter++ == ChangeIslandSettings.maxAttempts) {
-                            changeIsland.aborted();
-                            state = ChangeIslandState.IDLE;
+                            task.aborted();
+                            state = getState("IDLE");
                         } else {
                             assert client.player != null;
                             waitBeforeAttemptTickCounter = 0;
-                            Utils.sendChatMessage(changeIsland.getCommand());
+                            Utils.sendChatMessage(task.getCommand());
                         }
                     }
                 } else {
-                    state = ChangeIslandState.WAITING_FOR_WORLD_LOAD;
+                    state = getState("WAITING_FOR_WORLD_LOAD");
                 }
             }
 
-            case WAITING_FOR_WORLD_LOAD -> {
+            case "WAITING_FOR_WORLD_LOAD" -> {
                 if (GlobalExecutorInfo.worldLoaded.get()) {
-                    state = ChangeIslandState.IDLE;
-                    changeIsland.completed();
+                    state = getState("IDLE");
+                    task.completed();
                 }
             }
         }

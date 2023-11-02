@@ -14,10 +14,7 @@ import java.util.concurrent.ExecutionException;
 public class BuyItemExecutor extends AbstractMenuClickingExecutor {
 
     public static final BuyItemExecutor INSTANCE = new BuyItemExecutor();
-
-    private BuyItemState state = BuyItemState.IDLE;
-    private BuyItemState nextState;
-    private BuyItemState stateBeforePause;
+    private int nextState;
     private BuyItem task;
     private CompletableFuture<String> priceFinder;
     private boolean priceFinderRunning = false;
@@ -25,6 +22,18 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
     BuyItemExecutor() {
         possibleErrors.add("You cannot view this auction");
         possibleErrors.add("This auction wasn't found");
+
+        addState("LOADING_AUCTIONS");
+        addState("SENDING_COMMAND");
+        addState("WAITING_FOR_MENU");
+        addState("BUYING");
+        addState("CONFIRMING_BUY");
+        addState("CHECKING_BUY_RESULT");
+        addState("RESTARTING"); // if item wasn't bought because some hypixel error, like someone else already bought it we restart
+        addState("CLAIMING_AUCTION"); // if item was bought, but didn't go to our inventory, we have to claim it
+        addState("CLAIMING_AUCTION_VIEW_BIDS");
+        addState("CLAIMING_AUCTION_BID");
+        addState("CLIAMING_AUCTION_CLAIM");
     }
 
     public void Init() {
@@ -35,7 +44,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
     protected void restart() {
         blockingCloseCurrentInventory();
         SkyblockBot.LOGGER.warn("Can't buy from auction. Restarting task");
-        state = BuyItemState.RESTARTING;
+        state = getState("RESTARTING");
     }
 
     @Override
@@ -44,63 +53,25 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
     }
 
     @Override
-    public <T extends BaseTask<?>> void execute(T task) {
-        if (!state.equals(BuyItemState.IDLE)) {
-            SkyblockBot.LOGGER.warn("Can't execute BuyItem when already running");
-            return;
-        }
-
+    public <T extends BaseTask<?>> void whenExecute(T task) {
         CompletableFuture.runAsync(AuctionBrowser.INSTANCE::loadAH);
         priceFinderRunning = false;
         currentClickRunning = false;
         waitTickCounter = 0;
-        state = BuyItemState.LOADING_AUCTIONS;
+        state = getState("LOADING_AUCTIONS");
         this.task = (BuyItem) task;
-    }
-
-    @Override
-    public void pause() {
-        if (state.equals(BuyItemState.IDLE) || state.equals(BuyItemState.PAUSED)) {
-            SkyblockBot.LOGGER.warn("Can't pause BuyItem when idle or already paused");
-            return;
-        }
-
-        stateBeforePause = state;
-        state = BuyItemState.PAUSED;
-    }
-
-    @Override
-    public void resume() {
-        if (state.equals(BuyItemState.PAUSED)) {
-            state = stateBeforePause;
-        }
-    }
-
-    @Override
-    public void abort() {
-        state = BuyItemState.IDLE;
-    }
-
-    @Override
-    public <T extends BaseTask<?>> boolean isExecuting(T task) {
-        return !state.equals(BuyItemState.IDLE) && this.task == task;
-    }
-
-    @Override
-    public boolean isPaused() {
-        return state.equals(BuyItemState.PAUSED);
     }
 
     public void onTickBuy(MinecraftClient client) {
 
-        switch (state) {
-            case LOADING_AUCTIONS -> {
+        switch (getState(state)) {
+            case "LOADING_AUCTIONS" -> {
                 if (AuctionBrowser.INSTANCE.isAHLoaded()) {
-                    state = BuyItemState.SENDING_COMMAND;
+                    state = getState("SENDING_COMMAND");
                 }
             }
 
-            case SENDING_COMMAND -> {
+            case "SENDING_COMMAND" -> {
                 if (!priceFinderRunning) {
                     priceFinder =
                             CompletableFuture.supplyAsync(
@@ -126,12 +97,12 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
                     auctionCommand = priceFinder.get();
                 } catch (InterruptedException | ExecutionException e) {
                     SkyblockBot.LOGGER.info("Some weird exception when buying item.");
-                    state = BuyItemState.IDLE;
+                    state = getState("IDLE");
                     task.aborted();
                 }
 
                 if (auctionCommand == null) {
-                    state = BuyItemState.RESTARTING;
+                    state = getState("RESTARTING");
                     SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 118");
                     return;
                 }
@@ -139,50 +110,50 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
                 assert client.player != null;
                 Utils.sendChatMessage(auctionCommand);
 
-                nextState = BuyItemState.BUYING;
-                state = BuyItemState.WAITING_FOR_MENU;
+                nextState = getState("BUYING");
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case BUYING -> {
+            case "BUYING" -> {
                 if (!asyncClickOrRestart(task.getBuySlotName())) {
                     return;
                 }
 
-                nextState = BuyItemState.CONFIRMING_BUY;
-                state = BuyItemState.WAITING_FOR_MENU;
+                nextState = getState("CONFIRMING_BUY");
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case CONFIRMING_BUY -> {
+            case "CONFIRMING_BUY" -> {
                 if (!asyncClickOrRestart(task.getConfirmSlotName())) {
                     return;
                 }
 
-                nextState = BuyItemState.CHECKING_BUY_RESULT;
-                state = BuyItemState.WAITING_FOR_MENU;
+                nextState = getState("CHECKING_BUY_RESULT");
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case CHECKING_BUY_RESULT -> {
+            case "CHECKING_BUY_RESULT" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
 
                 if (Utils.isStringInRecentChat("You claimed", 5)) {
-                    state = BuyItemState.IDLE;
+                    state = getState("IDLE");
                     task.completed();
                 } else if (Utils.isStringInRecentChat("Visit the Auction House", 5)) {
-                    state = BuyItemState.CLAIMING_AUCTION;
+                    state = getState("CLAIMING_AUCTION");
                 } else {
-                    state = BuyItemState.RESTARTING;
+                    state = getState("RESTARTING");
                     SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 159");
                 }
             }
 
-            case RESTARTING -> {
-                state = BuyItemState.IDLE;
+            case "RESTARTING" -> {
+                state = getState("IDLE");
                 CompletableFuture.runAsync(() -> execute(task));
             }
 
-            case CLAIMING_AUCTION -> {
+            case "CLAIMING_AUCTION" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
@@ -190,38 +161,38 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
                 assert client.player != null;
                 Utils.sendChatMessage("/ah");
 
-                nextState = BuyItemState.CLAIMING_AUCTION_VIEW_BIDS;
-                state = BuyItemState.WAITING_FOR_MENU;
+                nextState = getState("CLAIMING_AUCTION_VIEW_BIDS");
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case CLAIMING_AUCTION_VIEW_BIDS -> {
+            case "CLAIMING_AUCTION_VIEW_BIDS" -> {
                 if (!asyncClickOrRestart(task.getViewBidsSlotName())) {
                     return;
                 }
 
-                nextState = BuyItemState.CLAIMING_AUCTION_BID;
-                state = BuyItemState.WAITING_FOR_MENU;
+                nextState = getState("CLAIMING_AUCTION_BID");
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case CLAIMING_AUCTION_BID -> {
+            case "CLAIMING_AUCTION_BID" -> {
                 if (!asyncClickOrRestart(task.getItemName())) {
                     return;
                 }
 
-                nextState = BuyItemState.CLIAMING_AUCTION_CLAIM;
-                state = BuyItemState.WAITING_FOR_MENU;
+                nextState = getState("CLIAMING_AUCTION_CLAIM");
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case CLIAMING_AUCTION_CLAIM -> {
+            case "CLIAMING_AUCTION_CLAIM" -> {
                 if (!asyncClickOrRestart(task.getCollectAuctionSlotName())) {
                     return;
                 }
 
-                state = BuyItemState.IDLE;
+                state = getState("IDLE");
                 task.completed();
             }
 
-            case WAITING_FOR_MENU -> waitForMenuOrRestart();
+            case "WAITING_FOR_MENU" -> waitForMenuOrRestart();
 
         }
     }

@@ -16,9 +16,16 @@ import java.util.concurrent.TimeoutException;
 public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
     public static final TalkToVisitorExecutor INSTANCE = new TalkToVisitorExecutor();
 
-    private TalkToVisitorState state = TalkToVisitorState.IDLE;
-    private TalkToVisitorState stateBeforePause;
     private TalkToVisitor task;
+
+    private TalkToVisitorExecutor() {
+        addState("WAITING_FOR_VISITOR");
+        addState("CLICKING_ON_VISITOR");
+        addState("CLICKING_ON_VISITOR_SECOND_TIME");
+        addState("WAITING_FOR_MENU");
+        addState("READING_DATA");
+        addState("CLOSING_VISITOR");
+    }
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
@@ -32,80 +39,42 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
 
     @Override
     protected void whenMenuOpened() {
-        state = TalkToVisitorState.READING_DATA;
+        state = getState("READING_DATA");
     }
 
     @Override
-    public <T extends BaseTask<?>> void execute(T task) {
-        if (!state.equals(TalkToVisitorState.IDLE)) {
-            SkyblockBot.LOGGER.info("Can't execute talkToVisitor when already executing");
-            return;
-        }
+    public <T extends BaseTask<?>> void whenExecute(T task) {
         SkyblockBot.LOGGER.info("Executing talk to visitor!");
         this.task = (TalkToVisitor) task;
-        state = TalkToVisitorState.WAITING_FOR_VISITOR;
-    }
-
-    @Override
-    public void pause() {
-        if (state.equals(TalkToVisitorState.IDLE) || state.equals(TalkToVisitorState.PAUSED)) {
-            SkyblockBot.LOGGER.warn("Can't pause talkToVisitor when already paused or not executing at all");
-            return;
-        }
-        stateBeforePause = state;
-        state = TalkToVisitorState.PAUSED;
-    }
-
-    @Override
-    public void resume() {
-        if (!state.equals(TalkToVisitorState.PAUSED)) {
-            SkyblockBot.LOGGER.warn("Can't resume talkToVisitor when not paused");
-            return;
-        }
-        state = stateBeforePause;
-    }
-
-    @Override
-    public void abort() {
-        state = TalkToVisitorState.IDLE;
-    }
-
-    @Override
-    public <T extends BaseTask<?>> boolean isExecuting(T task) {
-        return !state.equals(TalkToVisitorState.IDLE) && this.task == task;
-    }
-
-    @Override
-    public boolean isPaused() {
-        return state.equals(TalkToVisitorState.PAUSED);
+        state = getState("WAITING_FOR_VISITOR");
     }
 
     private void onTick(MinecraftClient client) {
-        switch (state) {
-            case WAITING_FOR_VISITOR -> {
+        switch (getState(state)) {
+            case "WAITING_FOR_VISITOR" -> {
                 assert client.world != null;
                 if (RayTraceStuff.rayTraceEntityFromPlayer(client.player, client.world, 4.0d) != null) {
-                    state = TalkToVisitorState.CLICKING_ON_VISITOR;
+                    state = getState("CLICKING_ON_VISITOR");
                 }
             }
 
-            case CLICKING_ON_VISITOR -> {
+            case "CLICKING_ON_VISITOR" -> {
                 if (!waitBeforeAction()) {
                     Keybinds.asyncPressKeyAfterTick(client.options.useKey);
-                    state = TalkToVisitorState.CLICKING_ON_VISITOR_SECOND_TIME;
+                    state = getState("CLICKING_ON_VISITOR_SECOND_TIME");
                 }
             }
 
-            case CLICKING_ON_VISITOR_SECOND_TIME -> {
+            case "CLICKING_ON_VISITOR_SECOND_TIME" -> {
                 if (!waitBeforeAction()) {
                     Keybinds.asyncPressKeyAfterTick(client.options.useKey);
-                    state = TalkToVisitorState.WAITING_FOR_MENU;
+                    state = getState("WAITING_FOR_MENU");
                 }
             }
 
-            case WAITING_FOR_MENU -> waitForMenuOrRestart();
+            case "WAITING_FOR_MENU" -> waitForMenuOrRestart();
 
-            case READING_DATA -> {
+            case "READING_DATA" -> {
                 List<String> lore;
                 try {
                     lore = SBUtils.getSlotLore(task.getAcceptOfferStr());
@@ -140,13 +109,13 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
                     task.addItem(new Pair<>(name, count));
                 }
 
-                state = TalkToVisitorState.CLOSING_VISITOR;
+                state = getState("CLOSING_VISITOR");
             }
 
-            case CLOSING_VISITOR -> {
+            case "CLOSING_VISITOR" -> {
                 if (!waitBeforeAction()) {
                     asyncCloseCurrentInventory();
-                    state = TalkToVisitorState.IDLE;
+                    state = getState("IDLE");
                     task.completed();
                 }
             }

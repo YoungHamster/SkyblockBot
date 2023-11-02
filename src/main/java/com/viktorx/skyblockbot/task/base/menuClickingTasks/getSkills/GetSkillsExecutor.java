@@ -9,32 +9,7 @@ public class GetSkillsExecutor extends BaseExecutor {
 
 
     @Override
-    public <T extends BaseTask<?>> void execute(T task) {
+    public <T extends BaseTask<?>> void whenExecute(T task) {
 
-    }
-
-    @Override
-    public void pause() {
-
-    }
-
-    @Override
-    public void resume() {
-
-    }
-
-    @Override
-    public void abort() {
-
-    }
-
-    @Override
-    public <T extends BaseTask<?>> boolean isExecuting(T task) {
-        return false;
-    }
-
-    @Override
-    public boolean isPaused() {
-        return false;
     }
 }

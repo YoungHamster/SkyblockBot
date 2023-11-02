@@ -17,10 +17,20 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
     public static final AssembleCraftExecutor INSTANCE = new AssembleCraftExecutor();
 
     private AssembleCraft task;
-    private AssembleCraftState state = AssembleCraftState.IDLE;
-    private AssembleCraftState stateBeforePause;
-    private AssembleCraftState nextState;
+    private int nextState;
     private ItemPutter itemPutter;
+
+    private AssembleCraftExecutor() {
+        addState("CHECKING_INGREDIENTS");
+        addState("OPENING_SB_MENU");
+        addState("OPENING_CRAFTING_TABLE");
+        addState("PUTTING_ITEMS");
+        addState("COLLECTING_CRAFT");
+        addState("CLOSING_INVENTORY");
+        addState("WAITING_FOR_MENU");
+        addState("RESTARTING");
+        addState("ABORTED");
+    }
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
@@ -28,7 +38,7 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
 
     @Override
     protected void restart() {
-        state = AssembleCraftState.OPENING_SB_MENU;
+        state = getState("OPENING_SB_MENU");
     }
 
     @Override
@@ -37,65 +47,27 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
     }
 
     @Override
-    public <T extends BaseTask<?>> void execute(T task) {
-        if (!state.equals(AssembleCraftState.IDLE)) {
-            SkyblockBot.LOGGER.warn("Can't execute AssembleCraft task when it is already executing");
-            return;
-        }
-
+    public <T extends BaseTask<?>> void whenExecute(T task) {
         this.itemPutter = new ItemPutter();
         this.task = (AssembleCraft) task;
-        state = AssembleCraftState.CHECKING_INGRIDIENTS;
-    }
-
-    @Override
-    public void pause() {
-        if (state.equals(AssembleCraftState.IDLE) || state.equals(AssembleCraftState.PAUSED)) {
-            SkyblockBot.LOGGER.warn("Can't pause talkToVisitor when already paused or not executing at all");
-            return;
-        }
-        stateBeforePause = state;
-        state = AssembleCraftState.PAUSED;
-    }
-
-    @Override
-    public void resume() {
-        if (!state.equals(AssembleCraftState.PAUSED)) {
-            SkyblockBot.LOGGER.warn("Can't resume talkToVisitor when not paused");
-            return;
-        }
-        state = stateBeforePause;
-    }
-
-    @Override
-    public void abort() {
-        state = AssembleCraftState.IDLE;
-    }
-
-    @Override
-    public <T extends BaseTask<?>> boolean isExecuting(T task) {
-        return !state.equals(AssembleCraftState.IDLE) && this.task == task;
-    }
-
-    public boolean isPaused() {
-        return state.equals(AssembleCraftState.PAUSED);
+        state = getState("CHECKING_INGREDIENTS");
     }
 
     private void onTick(MinecraftClient client) {
-        switch (state) {
-            case CHECKING_INGRIDIENTS -> {
+        switch (getState(state)) {
+            case "CHECKING_INGREDIENTS" -> {
                 task.getRecipe().getIngredients().forEach(ingredient -> {
                     if (!SBUtils.isAmountInInventory(ingredient.getKey(), ingredient.getValue())) {
-                        state = AssembleCraftState.ABORTED;
+                        state = getState("ABORTED");
                     }
                 });
 
-                if (state.equals(AssembleCraftState.ABORTED)) {
+                if (state == getState("ABORTED")) {
                     abort();
                     return;
                 }
 
-                state = AssembleCraftState.OPENING_SB_MENU;
+                state = getState("OPENING_SB_MENU");
                 assert client.player != null;
                 if (client.player.getInventory().selectedSlot != GlobalExecutorInfo.sbMenuHotbarSlot) {
                     Keybinds.asyncPressKeyAfterTick(
@@ -103,42 +75,42 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
                 }
             }
 
-            case OPENING_SB_MENU -> {
+            case "OPENING_SB_MENU" -> {
                 if (!waitBeforeAction()) {
                     Keybinds.asyncPressKeyAfterTick(client.options.useKey);
-                    nextState = AssembleCraftState.OPENING_CRAFTING_TABLE;
-                    state = AssembleCraftState.WAITING_FOR_MENU;
+                    nextState = getState("OPENING_CRAFTING_TABLE");
+                    state = getState("WAITING_FOR_MENU");
                 }
             }
 
-            case OPENING_CRAFTING_TABLE -> {
+            case "OPENING_CRAFTING_TABLE" -> {
                 if (!waitBeforeAction()) {
                     try {
                         SBUtils.leftClickOnSlot(task.getCraftingTableSlotName());
-                        nextState = AssembleCraftState.PUTTING_ITEMS;
-                        state = AssembleCraftState.WAITING_FOR_MENU;
+                        nextState = getState("PUTTING_ITEMS");
+                        state = getState("WAITING_FOR_MENU");
                     } catch (TimeoutException e) {
                         SkyblockBot.LOGGER.warn("Can't click on crafting table slot! Restarting AssembleCraft tsak");
-                        state = AssembleCraftState.RESTARTING;
+                        state = getState("RESTARTING");
                     }
                 }
             }
 
-            case PUTTING_ITEMS -> {
+            case "PUTTING_ITEMS" -> {
                 if (!waitBeforeAction()) {
                     if (!itemPutter.putNextCraftItem()) {
-                        state = AssembleCraftState.COLLECTING_CRAFT;
+                        state = getState("COLLECTING_CRAFT");
                     }
                 }
             }
 
-            case COLLECTING_CRAFT -> {
+            case "COLLECTING_CRAFT" -> {
                 if (!waitBeforeAction()) {
 
                 }
             }
 
-            case WAITING_FOR_MENU -> waitForMenuOrRestart();
+            case "WAITING_FOR_MENU" -> waitForMenuOrRestart();
         }
     }
 
@@ -160,7 +132,7 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
             Pair<String, Integer> ingredient;
             do {
                 ingredient = task.getRecipe().getIngredient(ingridientIterator);
-            } while(ingredient == null);
+            } while (ingredient == null);
 
             switch (putItemState) {
                 case PICKING_ITEM -> {

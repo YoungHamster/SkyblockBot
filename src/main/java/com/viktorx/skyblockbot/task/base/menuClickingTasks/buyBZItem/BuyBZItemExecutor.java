@@ -15,11 +15,25 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
     public static BuyBZItemExecutor INSTANCE = new BuyBZItemExecutor();
     protected int waitForScreenLoadingCounter = 0;
-    private BuyBZItemState state = BuyBZItemState.IDLE;
-    private BuyBZItemState nextState;
-    private BuyBZItemState prevState;
-    private BuyBZItemState stateBeforePause;
+    private int nextState;
+    private int prevState;
     private BuyBZItem task;
+
+    private BuyBZItemExecutor() {
+        addState("SENDING_COMMAND");
+        addState("CLICKING_TO_SEARCH");
+        addState("SEARCHING");
+        addState("CLICKING_ON_ITEM");
+        addState("CLICKING_BUY_INSTANTLY");
+        addState("CLICKING_ENTER_AMOUNT");
+        addState("ENTERING_AMOUNT");
+        addState("BUYING_ONE");
+        addState("BUYING_CUSTOM_AMOUNT");
+        addState("WAITING_FOR_MENU");
+        addState("WAITING_FOR_SCREEN_CHANGE");
+        addState("RESTARTING");
+        addState("COMPLETED");
+    }
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickBuy);
@@ -29,7 +43,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
     protected void restart() {
         blockingCloseCurrentInventory();
         SkyblockBot.LOGGER.warn("Can't buy " + task.getItemName() + ". Restarting task");
-        state = BuyBZItemState.RESTARTING;
+        state = getState("RESTARTING");
     }
 
     @Override
@@ -38,56 +52,16 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
     }
 
     @Override
-    public <T extends BaseTask<?>> void execute(T task) {
-        if (!state.equals(BuyBZItemState.IDLE)) {
-            SkyblockBot.LOGGER.warn("Can't execute buyBZItem, already running");
-            return;
-        }
-
+    public <T extends BaseTask<?>> void whenExecute(T task) {
         this.task = (BuyBZItem) task;
         waitTickCounter = 0;
         currentClickRunning = false;
-        state = BuyBZItemState.SENDING_COMMAND;
-    }
-
-    @Override
-    public void pause() {
-        if (state.equals(BuyBZItemState.IDLE) || state.equals(BuyBZItemState.PAUSED)) {
-            SkyblockBot.LOGGER.warn("Can't pause buyBZItem when not running or paused");
-            return;
-        }
-
-        stateBeforePause = state;
-        state = BuyBZItemState.PAUSED;
-    }
-
-    @Override
-    public void resume() {
-        if (state.equals(BuyBZItemState.PAUSED)) {
-            state = stateBeforePause;
-        } else {
-            SkyblockBot.LOGGER.warn("Can't resume when not paused!");
-        }
-    }
-
-    @Override
-    public void abort() {
-        state = BuyBZItemState.IDLE;
-    }
-
-    @Override
-    public <T extends BaseTask<?>> boolean isExecuting(T task) {
-        return !state.equals(BuyBZItemState.IDLE) && this.task.equals(task);
-    }
-
-    @Override
-    public boolean isPaused() {
-        return state.equals(BuyBZItemState.PAUSED);
+        state = getState("SENDING_COMMAND");
     }
 
     public void onTickBuy(MinecraftClient client) {
-        switch (state) {
-            case SENDING_COMMAND -> {
+        switch (getState(state)) {
+            case "SENDING_COMMAND" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
@@ -95,20 +69,20 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                 assert client.player != null;
                 Utils.sendChatMessage(task.getBZCommand());
 
-                nextState = BuyBZItemState.CLICKING_TO_SEARCH;
-                state = BuyBZItemState.WAITING_FOR_MENU;
+                nextState = getState("CLICKING_TO_SEARCH");
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case CLICKING_TO_SEARCH -> {
+            case "CLICKING_TO_SEARCH" -> {
                 if (!asyncClickOrRestart(task.getSearchItemName())) {
                     return;
                 }
 
-                nextState = BuyBZItemState.SEARCHING;
-                state = BuyBZItemState.WAITING_FOR_SCREEN_CHANGE;
+                nextState = getState("SEARCHING");
+                state = getState("WAITING_FOR_SCREEN_CHANGE");
             }
 
-            case SEARCHING -> {
+            case "SEARCHING" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
@@ -118,54 +92,54 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                 assert client.currentScreen != null;
                 client.currentScreen.close();
 
-                nextState = BuyBZItemState.CLICKING_ON_ITEM;
-                state = BuyBZItemState.WAITING_FOR_MENU;
+                nextState = getState("CLICKING_ON_ITEM");
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case CLICKING_ON_ITEM -> {
+            case "CLICKING_ON_ITEM" -> {
                 if (!asyncClickOrRestart(task.getItemName())) {
                     return;
                 }
 
-                nextState = BuyBZItemState.CLICKING_BUY_INSTANTLY;
-                state = BuyBZItemState.WAITING_FOR_MENU;
+                nextState = getState("CLICKING_BUY_INSTANTLY");
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case CLICKING_BUY_INSTANTLY -> {
+            case "CLICKING_BUY_INSTANTLY" -> {
                 if (!asyncClickOrRestart(task.getBuyInstantlyItemName())) {
                     return;
                 }
 
                 if (task.getItemCount() == 1) {
-                    nextState = BuyBZItemState.BUYING_ONE;
+                    nextState = getState("BUYING_ONE");
                 } else {
-                    nextState = BuyBZItemState.CLICKING_ENTER_AMOUNT;
+                    nextState = getState("CLICKING_ENTER_AMOUNT");
                 }
-                state = BuyBZItemState.WAITING_FOR_MENU;
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case BUYING_ONE -> {
+            case "BUYING_ONE" -> {
                 if (!asyncClickOrRestart(task.getBuyOneItemName())) {
                     return;
                 }
 
                 asyncCloseCurrentInventory();
 
-                nextState = BuyBZItemState.COMPLETED;
-                state = BuyBZItemState.WAITING_FOR_MENU;
+                nextState = getState("COMPLETED");
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case CLICKING_ENTER_AMOUNT -> {
+            case "CLICKING_ENTER_AMOUNT" -> {
                 if (!asyncClickOrRestart(task.getEnterAmountItemName())) {
                     return;
                 }
 
                 prevState = state;
-                nextState = BuyBZItemState.ENTERING_AMOUNT;
-                state = BuyBZItemState.WAITING_FOR_SCREEN_CHANGE;
+                nextState = getState("ENTERING_AMOUNT");
+                state = getState("WAITING_FOR_SCREEN_CHANGE");
             }
 
-            case ENTERING_AMOUNT -> {
+            case "ENTERING_AMOUNT" -> {
                 if (waitBeforeAction()) {
                     return;
                 }
@@ -175,29 +149,29 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                 assert client.currentScreen != null;
                 client.currentScreen.close();
 
-                nextState = BuyBZItemState.BUYING_CUSTOM_AMOUNT;
-                state = BuyBZItemState.WAITING_FOR_MENU;
+                nextState = getState("BUYING_CUSTOM_AMOUNT");
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case BUYING_CUSTOM_AMOUNT -> {
+            case "BUYING_CUSTOM_AMOUNT" -> {
                 if (!asyncClickOrRestart(task.getBuyCustomAmountItemName())) {
                     return;
                 }
 
                 asyncCloseCurrentInventory();
 
-                nextState = BuyBZItemState.COMPLETED;
-                state = BuyBZItemState.WAITING_FOR_MENU;
+                nextState = getState("COMPLETED");
+                state = getState("WAITING_FOR_MENU");
             }
 
-            case RESTARTING -> {
-                state = BuyBZItemState.IDLE;
+            case "RESTARTING" -> {
+                state = getState("IDLE");
                 CompletableFuture.runAsync(() -> execute(task));
             }
 
-            case WAITING_FOR_MENU -> waitForMenuOrRestart();
+            case "WAITING_FOR_MENU" -> waitForMenuOrRestart();
 
-            case WAITING_FOR_SCREEN_CHANGE -> {
+            case "WAITING_FOR_SCREEN_CHANGE" -> {
                 if (client.currentScreen == null) {
                     return;
                 }
@@ -210,9 +184,9 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                 }
             }
 
-            case COMPLETED -> {
+            case "COMPLETED" -> {
                 SkyblockBot.LOGGER.info("BuyBZItem completed!");
-                state = BuyBZItemState.IDLE;
+                state = getState("IDLE");
                 task.completed();
             }
         }

@@ -43,52 +43,11 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
     }
 
     @Override
-    public <T extends BaseTask<?>> void execute(T task) {
-        if (!state.equals(SellSacksState.IDLE)) {
-            SkyblockBot.LOGGER.warn("Can't execute SellSacks when already running");
-            return;
-        }
-
+    public <T extends BaseTask<?>> void whenExecute(T task) {
         this.task = (SellSacks) task;
         waitTickCounter = 0;
         state = SellSacksState.SENDING_COMMAND;
         SkyblockBot.LOGGER.info("Executing sell sacks");
-    }
-
-    @Override
-    public void pause() {
-        if (state.equals(SellSacksState.IDLE) || state.equals(SellSacksState.PAUSED)) {
-            SkyblockBot.LOGGER.info("Can't pause sell sacks executor when not executing or already paused");
-            return;
-        }
-
-        stateBeforePause = state;
-        state = SellSacksState.PAUSED;
-    }
-
-    @Override
-    public void resume() {
-        if (state != SellSacksState.PAUSED) {
-            SkyblockBot.LOGGER.info("SellSacksExecutor not paused!");
-            return;
-        }
-
-        state = stateBeforePause;
-    }
-
-    @Override
-    public void abort() {
-        state = SellSacksState.IDLE;
-    }
-
-    @Override
-    public <T extends BaseTask<?>> boolean isExecuting(T task) {
-        return this.task.equals(task) && !state.equals(SellSacksState.IDLE);
-    }
-
-    @Override
-    public boolean isPaused() {
-        return state.equals(SellSacksState.PAUSED);
     }
 
     private void onTickSellSacks(MinecraftClient client) {
