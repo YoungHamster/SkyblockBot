@@ -4,6 +4,7 @@ import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.RayTraceStuff;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
+import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
@@ -28,22 +29,25 @@ public class GiveVisitorItemsExecutor extends AbstractMenuClickingExecutor {
     }
 
     /**
-     * This executor doesn't use this method so I leave it empty
+     * This executor doesn't use this method, so I leave it empty
      */
     @Override
-    protected void whenMenuOpened() {}
+    protected void whenMenuOpened() {
+    }
 
-    public void execute(GiveVisitorItems task) {
+    @Override
+    public <T extends BaseTask<?>> void execute(T task) {
         if (!state.equals(GiveVisitorItemsState.IDLE)) {
             SkyblockBot.LOGGER.warn("Can't execute when already running");
             return;
         }
         currentClickRunning = false;
         waitTickCounter = 0;
-        this.task = task;
+        this.task = (GiveVisitorItems) task;
         state = GiveVisitorItemsState.CLICKING_ON_VISITOR;
     }
 
+    @Override
     public void pause() {
         if (state.equals(GiveVisitorItemsState.PAUSED) || state.equals(GiveVisitorItemsState.IDLE)) {
             SkyblockBot.LOGGER.warn("Can't pause when paused or idle");
@@ -54,6 +58,7 @@ public class GiveVisitorItemsExecutor extends AbstractMenuClickingExecutor {
         state = GiveVisitorItemsState.PAUSED;
     }
 
+    @Override
     public void resume() {
         if (!state.equals(GiveVisitorItemsState.PAUSED)) {
             SkyblockBot.LOGGER.warn("Can't resume when not paused!!!");
@@ -63,14 +68,17 @@ public class GiveVisitorItemsExecutor extends AbstractMenuClickingExecutor {
         state = stateBeforePause;
     }
 
+    @Override
     public void abort() {
         state = GiveVisitorItemsState.IDLE;
     }
 
-    public boolean isExecuting(GiveVisitorItems task) {
+    @Override
+    public <T extends BaseTask<?>> boolean isExecuting(T task) {
         return !state.equals(GiveVisitorItemsState.IDLE) && this.task == task;
     }
 
+    @Override
     public boolean isPaused() {
         return state.equals(GiveVisitorItemsState.PAUSED);
     }

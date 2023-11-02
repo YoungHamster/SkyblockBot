@@ -4,7 +4,9 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
+import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
+import javafx.util.Pair;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
@@ -18,6 +20,7 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
     private AssembleCraftState state = AssembleCraftState.IDLE;
     private AssembleCraftState stateBeforePause;
     private AssembleCraftState nextState;
+    private ItemPutter itemPutter;
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
@@ -33,16 +36,19 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
         state = nextState;
     }
 
-    public void execute(AssembleCraft task) {
+    @Override
+    public <T extends BaseTask<?>> void execute(T task) {
         if (!state.equals(AssembleCraftState.IDLE)) {
             SkyblockBot.LOGGER.warn("Can't execute AssembleCraft task when it is already executing");
             return;
         }
 
-        this.task = task;
+        this.itemPutter = new ItemPutter();
+        this.task = (AssembleCraft) task;
         state = AssembleCraftState.CHECKING_INGRIDIENTS;
     }
 
+    @Override
     public void pause() {
         if (state.equals(AssembleCraftState.IDLE) || state.equals(AssembleCraftState.PAUSED)) {
             SkyblockBot.LOGGER.warn("Can't pause talkToVisitor when already paused or not executing at all");
@@ -52,6 +58,7 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
         state = AssembleCraftState.PAUSED;
     }
 
+    @Override
     public void resume() {
         if (!state.equals(AssembleCraftState.PAUSED)) {
             SkyblockBot.LOGGER.warn("Can't resume talkToVisitor when not paused");
@@ -60,11 +67,13 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
         state = stateBeforePause;
     }
 
+    @Override
     public void abort() {
         state = AssembleCraftState.IDLE;
     }
 
-    public boolean isExecuting(AssembleCraft task) {
+    @Override
+    public <T extends BaseTask<?>> boolean isExecuting(T task) {
         return !state.equals(AssembleCraftState.IDLE) && this.task == task;
     }
 
@@ -75,8 +84,8 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
     private void onTick(MinecraftClient client) {
         switch (state) {
             case CHECKING_INGRIDIENTS -> {
-                task.getRecipe().getIngredients().forEach((ingridient, amount) -> {
-                    if (!SBUtils.isAmountInInventory(ingridient, amount)) {
+                task.getRecipe().getIngredients().forEach(ingredient -> {
+                    if (!SBUtils.isAmountInInventory(ingredient.getKey(), ingredient.getValue())) {
                         state = AssembleCraftState.ABORTED;
                     }
                 });
@@ -117,7 +126,7 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
 
             case PUTTING_ITEMS -> {
                 if (!waitBeforeAction()) {
-                    if (!putNextCraftItem()) {
+                    if (!itemPutter.putNextCraftItem()) {
                         state = AssembleCraftState.COLLECTING_CRAFT;
                     }
                 }
@@ -133,7 +142,39 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
         }
     }
 
-    private boolean putNextCraftItem() {
-        return false;
+    private class ItemPutter {
+        private enum PutItemState {
+            PICKING_ITEM,
+            PUTTING_ITEM;
+
+            PutItemState() {
+            }
+        }
+
+        private static final int craftingTableSize = 9;
+
+        private PutItemState putItemState = PutItemState.PICKING_ITEM;
+        private int ingridientIterator = 0;
+
+        private boolean putNextCraftItem() {
+            Pair<String, Integer> ingredient;
+            do {
+                ingredient = task.getRecipe().getIngredient(ingridientIterator);
+            } while(ingredient == null);
+
+            switch (putItemState) {
+                case PICKING_ITEM -> {
+                    putItemState = PutItemState.PUTTING_ITEM;
+                    // TODO
+                }
+
+                case PUTTING_ITEM -> {
+                    putItemState = PutItemState.PICKING_ITEM;
+                }
+            }
+
+            ingridientIterator++;
+            return ingridientIterator < craftingTableSize;
+        }
     }
 }

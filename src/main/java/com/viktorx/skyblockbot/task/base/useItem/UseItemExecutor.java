@@ -4,74 +4,43 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
+import com.viktorx.skyblockbot.task.base.BaseExecutor;
+import com.viktorx.skyblockbot.task.base.BaseTask;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerInventory;
 
-public class UseItemExecutor {
+public class UseItemExecutor extends BaseExecutor {
 
     private static final int defaultHotbarSlot = 1;
 
     public static UseItemExecutor INSTANCE = new UseItemExecutor();
 
     private UseItem task;
-    private UseItemState state = UseItemState.IDLE;
-    private UseItemState stateBeforePause;
     private int itemSlot;
     private int startingSlot;
     private boolean wasUsedHotbarSlotEmpty = true;
     private int waitBeforeActionIterator = 0;
 
+    private UseItemExecutor() {
+    }
+
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
     }
 
-    public void execute(UseItem task) {
-        if (!state.equals(UseItemState.IDLE)) {
-            SkyblockBot.LOGGER.warn("Can't execute UseItem when already executing");
-            return;
-        }
-
-        this.task = task;
+    @Override
+    public <T extends BaseTask<?>> void whenExecute(T task) {
+        this.task = (UseItem) task;
         waitBeforeActionIterator = 0;
         wasUsedHotbarSlotEmpty = true;
-        state = UseItemState.CHECKING_INVENTORY;
-    }
-
-    public void pause() {
-        if (state.equals(UseItemState.IDLE) || state.equals(UseItemState.PAUSED)) {
-            SkyblockBot.LOGGER.warn("Can't pause UseItem when idle or already paused");
-            return;
-        }
-
-        stateBeforePause = state;
-        state = UseItemState.PAUSED;
-    }
-
-    public void resume() {
-        if (!state.equals(UseItemState.PAUSED)) {
-            SkyblockBot.LOGGER.warn("Can't resume UseItem when not paused");
-        }
-
-        state = stateBeforePause;
-    }
-
-    public void abort() {
-        state = UseItemState.IDLE;
-    }
-
-    public boolean isExecuting(UseItem task) {
-        return !state.equals(UseItemState.IDLE) && this.task.equals(task);
-    }
-
-    public boolean isPaused() {
-        return state.equals(UseItemState.PAUSED);
+        state = states.get("CHECKING_INVENTORY");
     }
 
     private void onTick(MinecraftClient client) {
 
         switch (state) {
-            case CHECKING_INVENTORY -> {
+            case states.get("CHECKING_INVENTORY") -> {
                 itemSlot = getItemSlot(client);
                 if (itemSlot == -1) {
                     SkyblockBot.LOGGER.warn("Item " + task.getItemName() + " can't be found in inventory. Aborting UseItem.");

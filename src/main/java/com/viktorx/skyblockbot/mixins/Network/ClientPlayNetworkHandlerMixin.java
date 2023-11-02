@@ -20,6 +20,7 @@ import java.util.Objects;
 
 @Mixin(ClientPlayNetworkHandler.class)
 public class ClientPlayNetworkHandlerMixin {
+
     @Inject(method = "onInventory", at = @At("HEAD"))
     public void interceptInventory(InventoryS2CPacket packet, CallbackInfo ci) {
         CurrentInventory.setSyncID(packet.getSyncId());
@@ -95,7 +96,7 @@ public class ClientPlayNetworkHandlerMixin {
      * This is needed to suppress mojangs dumb warnings the like to spam when i play on hypixel
      */
     @Inject(method = "onPlayerList", at = @At("TAIL"), cancellable = true)
-    public void onPlayerList(PlayerListS2CPacket packet, CallbackInfo ci) {
+    public void supressDumbWarning(PlayerListS2CPacket packet, CallbackInfo ci) {
         MinecraftClient client = MinecraftClient.getInstance();
         ClientPlayNetworkHandler netHandler = MinecraftClient.getInstance().getNetworkHandler();
         IClientPlayNetworkHandlerMixin accessorNetHandler = (IClientPlayNetworkHandlerMixin) netHandler;

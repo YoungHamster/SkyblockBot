@@ -3,6 +3,7 @@ package com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.mixins.IAbstractSignEditScreenMixin;
+import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.MenuClickersSettings;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -36,18 +37,20 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
         state = nextState;
     }
 
-    public void execute(BuyBZItem task) {
+    @Override
+    public <T extends BaseTask<?>> void execute(T task) {
         if (!state.equals(BuyBZItemState.IDLE)) {
             SkyblockBot.LOGGER.warn("Can't execute buyBZItem, already running");
             return;
         }
 
-        this.task = task;
+        this.task = (BuyBZItem) task;
         waitTickCounter = 0;
         currentClickRunning = false;
         state = BuyBZItemState.SENDING_COMMAND;
     }
 
+    @Override
     public void pause() {
         if (state.equals(BuyBZItemState.IDLE) || state.equals(BuyBZItemState.PAUSED)) {
             SkyblockBot.LOGGER.warn("Can't pause buyBZItem when not running or paused");
@@ -58,6 +61,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
         state = BuyBZItemState.PAUSED;
     }
 
+    @Override
     public void resume() {
         if (state.equals(BuyBZItemState.PAUSED)) {
             state = stateBeforePause;
@@ -66,14 +70,17 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
         }
     }
 
+    @Override
     public void abort() {
         state = BuyBZItemState.IDLE;
     }
 
-    public boolean isExecuting(BuyBZItem task) {
+    @Override
+    public <T extends BaseTask<?>> boolean isExecuting(T task) {
         return !state.equals(BuyBZItemState.IDLE) && this.task.equals(task);
     }
 
+    @Override
     public boolean isPaused() {
         return state.equals(BuyBZItemState.PAUSED);
     }

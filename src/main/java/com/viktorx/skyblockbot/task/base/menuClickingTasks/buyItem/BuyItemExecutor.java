@@ -3,7 +3,7 @@ package com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.skyblock.flipping.auction.AuctionBrowser;
-import com.viktorx.skyblockbot.task.Task;
+import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
@@ -43,7 +43,8 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
         state = nextState;
     }
 
-    public void execute(BuyItem task) {
+    @Override
+    public <T extends BaseTask<?>> void execute(T task) {
         if (!state.equals(BuyItemState.IDLE)) {
             SkyblockBot.LOGGER.warn("Can't execute BuyItem when already running");
             return;
@@ -54,9 +55,10 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
         currentClickRunning = false;
         waitTickCounter = 0;
         state = BuyItemState.LOADING_AUCTIONS;
-        this.task = task;
+        this.task = (BuyItem) task;
     }
 
+    @Override
     public void pause() {
         if (state.equals(BuyItemState.IDLE) || state.equals(BuyItemState.PAUSED)) {
             SkyblockBot.LOGGER.warn("Can't pause BuyItem when idle or already paused");
@@ -67,18 +69,26 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
         state = BuyItemState.PAUSED;
     }
 
+    @Override
     public void resume() {
         if (state.equals(BuyItemState.PAUSED)) {
             state = stateBeforePause;
         }
     }
 
+    @Override
     public void abort() {
         state = BuyItemState.IDLE;
     }
 
-    public boolean isExecuting(Task task) {
+    @Override
+    public <T extends BaseTask<?>> boolean isExecuting(T task) {
         return !state.equals(BuyItemState.IDLE) && this.task == task;
+    }
+
+    @Override
+    public boolean isPaused() {
+        return state.equals(BuyItemState.PAUSED);
     }
 
     public void onTickBuy(MinecraftClient client) {

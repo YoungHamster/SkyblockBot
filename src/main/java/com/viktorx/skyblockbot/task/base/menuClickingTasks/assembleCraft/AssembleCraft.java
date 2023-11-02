@@ -1,37 +1,19 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.assembleCraft;
 
-import com.viktorx.skyblockbot.skyblock.flipping.SBRecipe;
-import com.viktorx.skyblockbot.task.Task;
-import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.talkToVisitor.TalkToVisitorExecutor;
+import com.viktorx.skyblockbot.task.base.BaseTask;
 
-public class AssembleCraft extends Task {
-    private SBRecipe recipe;
+public class AssembleCraft extends BaseTask<AssembleCraftExecutor> {
+    private CraftableRecipe recipe;
 
-
-    public void execute() {
-        AssembleCraftExecutor.INSTANCE.execute(this);
-    }
-    public void pause() {
-        AssembleCraftExecutor.INSTANCE.pause();
-    }
-    public void resume() {
-        AssembleCraftExecutor.INSTANCE.resume();
-    }
-    public void abort() {
-        AssembleCraftExecutor.INSTANCE.abort();
-    }
-    public boolean isExecuting() {
-        return AssembleCraftExecutor.INSTANCE.isExecuting(this);
-    }
-    public boolean isPaused() {
-        return AssembleCraftExecutor.INSTANCE.isPaused();
+    public AssembleCraft() {
+        super(AssembleCraftExecutor.INSTANCE);
     }
 
-    public void setRecipe(SBRecipe recipe) {
+    public void setRecipe(CraftableRecipe recipe) {
         this.recipe = recipe;
     }
 
-    public SBRecipe getRecipe() {
+    public CraftableRecipe getRecipe() {
         return recipe;
     }
 

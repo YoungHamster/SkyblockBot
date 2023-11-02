@@ -1,26 +1,26 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem;
 
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.task.Task;
+import com.viktorx.skyblockbot.task.base.BaseTask;
 
-public class BuyItem extends Task {
+public class BuyItem extends BaseTask<BuyItemExecutor> {
     private String itemName = null;
     private String[] itemLoreKeyWords;
-    private boolean paused = false;
     private long priceLimit = 10000000;
 
     public BuyItem() {
+        super(BuyItemExecutor.INSTANCE);
     }
 
     public void setItemInfo(String itemName, String[] itemLoreKeyWords) {
-        if(!BuyItemExecutor.INSTANCE.isExecuting(this)) {
+        if (!BuyItemExecutor.INSTANCE.isExecuting(this)) {
             this.itemName = itemName;
             this.itemLoreKeyWords = itemLoreKeyWords;
         }
     }
 
     public void setPriceLimit(long priceLimit) {
-        if(!BuyItemExecutor.INSTANCE.isExecuting(this)) {
+        if (!BuyItemExecutor.INSTANCE.isExecuting(this)) {
             this.priceLimit = priceLimit;
         }
     }
@@ -29,36 +29,13 @@ public class BuyItem extends Task {
         return priceLimit;
     }
 
+    @Override
     public void execute() {
-        if(itemName == null) {
+        if (itemName == null) {
             SkyblockBot.LOGGER.info("Can't execute BuyItem when itemName is null");
             return;
         }
-
-        paused = false;
         BuyItemExecutor.INSTANCE.execute(this);
-    }
-
-    public void pause() {
-        BuyItemExecutor.INSTANCE.pause();
-        paused = true;
-    }
-
-    public void resume() {
-        BuyItemExecutor.INSTANCE.resume();
-        paused = false;
-    }
-
-    public void abort() {
-        BuyItemExecutor.INSTANCE.abort();
-    }
-
-    public boolean isExecuting() {
-        return BuyItemExecutor.INSTANCE.isExecuting(this);
-    }
-
-    public boolean isPaused() {
-        return paused;
     }
 
     public String getItemName() {

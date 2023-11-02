@@ -4,6 +4,7 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
+import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
@@ -41,18 +42,20 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
         state = nextState;
     }
 
-    public void execute(SellSacks task) {
+    @Override
+    public <T extends BaseTask<?>> void execute(T task) {
         if (!state.equals(SellSacksState.IDLE)) {
             SkyblockBot.LOGGER.warn("Can't execute SellSacks when already running");
             return;
         }
 
-        this.task = task;
+        this.task = (SellSacks) task;
         waitTickCounter = 0;
         state = SellSacksState.SENDING_COMMAND;
         SkyblockBot.LOGGER.info("Executing sell sacks");
     }
 
+    @Override
     public void pause() {
         if (state.equals(SellSacksState.IDLE) || state.equals(SellSacksState.PAUSED)) {
             SkyblockBot.LOGGER.info("Can't pause sell sacks executor when not executing or already paused");
@@ -63,6 +66,7 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
         state = SellSacksState.PAUSED;
     }
 
+    @Override
     public void resume() {
         if (state != SellSacksState.PAUSED) {
             SkyblockBot.LOGGER.info("SellSacksExecutor not paused!");
@@ -72,14 +76,17 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
         state = stateBeforePause;
     }
 
+    @Override
     public void abort() {
         state = SellSacksState.IDLE;
     }
 
-    public boolean isExecuting(SellSacks task) {
+    @Override
+    public <T extends BaseTask<?>> boolean isExecuting(T task) {
         return this.task.equals(task) && !state.equals(SellSacksState.IDLE);
     }
 
+    @Override
     public boolean isPaused() {
         return state.equals(SellSacksState.PAUSED);
     }

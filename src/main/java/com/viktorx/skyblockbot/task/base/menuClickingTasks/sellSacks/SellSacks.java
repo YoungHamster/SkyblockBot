@@ -2,43 +2,23 @@ package com.viktorx.skyblockbot.task.base.menuClickingTasks.sellSacks;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
-import com.viktorx.skyblockbot.task.Task;
+import com.viktorx.skyblockbot.task.base.BaseTask;
 
 import java.util.concurrent.CompletableFuture;
 
-public class SellSacks extends Task {
+public class SellSacks extends BaseTask<SellSacksExecutor> {
 
-    public void execute() {
-        SellSacksExecutor.INSTANCE.execute(this);
+    public SellSacks() {
+        super(SellSacksExecutor.INSTANCE);
     }
 
-
-    public void pause() {
-        SellSacksExecutor.INSTANCE.pause();
-    }
-
-    public void resume() {
-        SellSacksExecutor.INSTANCE.resume();
-    }
-
-    public void abort() {
-        SellSacksExecutor.INSTANCE.abort();
-    }
-
+    @Override
     public void completed() {
         GlobalExecutorInfo.totalSackCount.set(0);
-        if(whenCompleted != null)
+        if (whenCompleted != null)
             CompletableFuture.runAsync(whenCompleted);
         else
             SkyblockBot.LOGGER.warn("whenCompleted == null!!!!!!!");
-    }
-
-    public boolean isExecuting() {
-        return SellSacksExecutor.INSTANCE.isExecuting(this);
-    }
-
-    public boolean isPaused() {
-        return SellSacksExecutor.INSTANCE.isPaused();
     }
 
     public String getCommand() {
@@ -51,9 +31,5 @@ public class SellSacks extends Task {
 
     public String getConfirmSlotName() {
         return "Selling whole inventory";
-    }
-
-    public String getClosingSlotName() {
-        return "Close";
     }
 }

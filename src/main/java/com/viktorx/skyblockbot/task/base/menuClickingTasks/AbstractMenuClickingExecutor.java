@@ -6,6 +6,7 @@ import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
+import com.viktorx.skyblockbot.task.base.BaseExecutor;
 import net.minecraft.client.MinecraftClient;
 
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-public abstract class AbstractMenuClickingExecutor {
+public abstract class AbstractMenuClickingExecutor extends BaseExecutor {
     protected final List<String> possibleErrors = new ArrayList<>();
     protected boolean currentClickRunning = false;
     protected int waitTickCounter = 0;

@@ -4,6 +4,7 @@ import com.viktorx.skyblockbot.RayTraceStuff;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
+import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import javafx.util.Pair;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -34,16 +35,18 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
         state = TalkToVisitorState.READING_DATA;
     }
 
-    public void execute(TalkToVisitor task) {
+    @Override
+    public <T extends BaseTask<?>> void execute(T task) {
         if (!state.equals(TalkToVisitorState.IDLE)) {
             SkyblockBot.LOGGER.info("Can't execute talkToVisitor when already executing");
             return;
         }
         SkyblockBot.LOGGER.info("Executing talk to visitor!");
-        this.task = task;
+        this.task = (TalkToVisitor) task;
         state = TalkToVisitorState.WAITING_FOR_VISITOR;
     }
 
+    @Override
     public void pause() {
         if (state.equals(TalkToVisitorState.IDLE) || state.equals(TalkToVisitorState.PAUSED)) {
             SkyblockBot.LOGGER.warn("Can't pause talkToVisitor when already paused or not executing at all");
@@ -53,6 +56,7 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
         state = TalkToVisitorState.PAUSED;
     }
 
+    @Override
     public void resume() {
         if (!state.equals(TalkToVisitorState.PAUSED)) {
             SkyblockBot.LOGGER.warn("Can't resume talkToVisitor when not paused");
@@ -61,14 +65,17 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
         state = stateBeforePause;
     }
 
+    @Override
     public void abort() {
         state = TalkToVisitorState.IDLE;
     }
 
-    public boolean isExecuting(TalkToVisitor task) {
+    @Override
+    public <T extends BaseTask<?>> boolean isExecuting(T task) {
         return !state.equals(TalkToVisitorState.IDLE) && this.task == task;
     }
 
+    @Override
     public boolean isPaused() {
         return state.equals(TalkToVisitorState.PAUSED);
     }

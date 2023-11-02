@@ -3,10 +3,12 @@ package com.viktorx.skyblockbot.task.base.changeIsland;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
+import com.viktorx.skyblockbot.task.base.BaseExecutor;
+import com.viktorx.skyblockbot.task.base.BaseTask;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
-public class ChangeIslandExecutor {
+public class ChangeIslandExecutor extends BaseExecutor {
     public static ChangeIslandExecutor INSTANCE = new ChangeIslandExecutor();
     ChangeIslandState state = ChangeIslandState.IDLE;
     ChangeIslandState stateBeforePause;
@@ -18,18 +20,20 @@ public class ChangeIslandExecutor {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickChangeIsland);
     }
 
-    public void execute(ChangeIsland changeIsland) {
+    @Override
+    public <T extends BaseTask<?>> void execute(T changeIsland) {
         if (!state.equals(ChangeIslandState.IDLE)) {
             SkyblockBot.LOGGER.warn("Can't execute ChangeIsland when already running");
             return;
         }
 
-        this.changeIsland = changeIsland;
+        this.changeIsland = (ChangeIsland) changeIsland;
         waitBeforeAttemptTickCounter = 0;
         attemptCounter = 0;
         state = ChangeIslandState.SENDING_COMMAND;
     }
 
+    @Override
     public void pause() {
         if (state.equals(ChangeIslandState.IDLE) || state.equals(ChangeIslandState.PAUSED)) {
             SkyblockBot.LOGGER.warn("Can't pause ChangeIsland when already paused or not running");
@@ -40,6 +44,7 @@ public class ChangeIslandExecutor {
         state = ChangeIslandState.PAUSED;
     }
 
+    @Override
     public void resume() {
         if (!state.equals(ChangeIslandState.PAUSED)) {
             SkyblockBot.LOGGER.warn("Can't resume ChangeIsland when not paused");
@@ -49,12 +54,19 @@ public class ChangeIslandExecutor {
         state = stateBeforePause;
     }
 
+    @Override
     public void abort() {
         state = ChangeIslandState.IDLE;
     }
 
-    public boolean isExecuting(ChangeIsland task) {
+    @Override
+    public <T extends BaseTask<?>> boolean isExecuting(T task) {
         return state != ChangeIslandState.IDLE && changeIsland == task;
+    }
+
+    @Override
+    public boolean isPaused() {
+        return state.equals(ChangeIslandState.PAUSED);
     }
 
     public void onTickChangeIsland(MinecraftClient client) {
