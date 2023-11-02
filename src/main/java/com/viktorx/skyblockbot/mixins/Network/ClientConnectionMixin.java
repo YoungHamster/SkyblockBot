@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.mixins;
+package com.viktorx.skyblockbot.mixins.Network;
 
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import net.minecraft.network.ClientConnection;

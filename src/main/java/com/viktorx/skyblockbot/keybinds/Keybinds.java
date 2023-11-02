@@ -2,6 +2,7 @@ package com.viktorx.skyblockbot.keybinds;
 
 import com.viktorx.skyblockbot.GlobalSettingsManager;
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
 import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
 import com.viktorx.skyblockbot.task.compound.FarmingTask;
@@ -84,6 +85,7 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
+                Utils.sendChatMessage("/warp hub");
                 try {
                     GlobalSettingsManager.getInstance().loadSettings();
                 } catch (IOException e) {

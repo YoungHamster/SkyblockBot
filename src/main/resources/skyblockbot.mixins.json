@@ -4,13 +4,14 @@
   "package": "com.viktorx.skyblockbot.mixins",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "ClientConnectionMixin",
-    "ClientPlayNetworkHandlerMixin",
     "IChatHudMixin",
     "IClientPlayerEntityMixin",
     "MinecraftClientMixin",
     "PlayerListHudMixin",
-    "InputRelated.KeyBindingMixin"
+    "InputRelated.KeyBindingMixin",
+    "Network.ClientConnectionMixin",
+    "Network.ClientPlayNetworkHandlerMixin",
+    "Network.YggdrasilMinecraftSessionServiceMixin"
   ],
   "injectors": {
     "defaultRequire": 1
@@ -21,6 +22,7 @@
     "ISelectionManagerMixin",
     "InputRelated.IMouseMixin",
     "InputRelated.KeyboardMixin",
-    "InputRelated.MouseMixin"
+    "InputRelated.MouseMixin",
+    "Network.IClientPlayNetworkHandlerMixin"
   ]
 }

@@ -1,15 +1,22 @@
-package com.viktorx.skyblockbot.mixins;
+package com.viktorx.skyblockbot.mixins.Network;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.viktorx.skyblockbot.CurrentInventory;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.network.NetworkThreadUtils;
 import net.minecraft.network.packet.s2c.play.*;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.Iterator;
+import java.util.Objects;
 
 @Mixin(ClientPlayNetworkHandler.class)
 public class ClientPlayNetworkHandlerMixin {
@@ -81,6 +88,50 @@ public class ClientPlayNetworkHandlerMixin {
             delta -= Integer.parseInt(decrease.replace(",", ""));
 
             GlobalExecutorInfo.totalSackCount.addAndGet(delta);
+        }
+    }
+
+    /**
+     * This is needed to suppress mojangs dumb warnings the like to spam when i play on hypixel
+     */
+    @Inject(method = "onPlayerList", at = @At("TAIL"), cancellable = true)
+    public void onPlayerList(PlayerListS2CPacket packet, CallbackInfo ci) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        ClientPlayNetworkHandler netHandler = MinecraftClient.getInstance().getNetworkHandler();
+        IClientPlayNetworkHandlerMixin accessorNetHandler = (IClientPlayNetworkHandlerMixin) netHandler;
+
+        NetworkThreadUtils.forceMainThread(packet, netHandler, client);
+        Iterator var2 = packet.getPlayerAdditionEntries().iterator();
+
+        PlayerListS2CPacket.Entry entry;
+        PlayerListEntry playerListEntry;
+        while(var2.hasNext()) {
+            entry = (PlayerListS2CPacket.Entry)var2.next();
+            playerListEntry = new PlayerListEntry((GameProfile) Objects.requireNonNull(entry.profile()), accessorNetHandler.callIsSecureChatEnforced());
+            if (accessorNetHandler.getPlayerListEntries().putIfAbsent(entry.profileId(), playerListEntry) == null) {
+                client.getSocialInteractionsManager().setPlayerOnline(playerListEntry);
+            }
+        }
+
+        var2 = packet.getEntries().iterator();
+
+        while(true) {
+            while(var2.hasNext()) {
+                entry = (PlayerListS2CPacket.Entry)var2.next();
+                playerListEntry = (PlayerListEntry)accessorNetHandler.getPlayerListEntries().get(entry.profileId());
+                if (playerListEntry == null) {
+                } else {
+                    Iterator var5 = packet.getActions().iterator();
+
+                    while(var5.hasNext()) {
+                        PlayerListS2CPacket.Action action = (PlayerListS2CPacket.Action)var5.next();
+                        accessorNetHandler.callHandlePlayerListAction(action, entry, playerListEntry);
+                    }
+                }
+            }
+
+            ci.cancel();
+            return;
         }
     }
 }
