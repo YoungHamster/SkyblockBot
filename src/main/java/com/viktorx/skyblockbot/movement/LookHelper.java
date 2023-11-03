@@ -26,12 +26,14 @@ public class LookHelper {
 
     public static void changeYawSmooth(float targetYaw) {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        assert player != null;
 
-        float deltaAngle = MathHelper.subtractAngles(getYaw(), targetYaw);
+        float firstDeltaAngle = MathHelper.subtractAngles(getYaw(), targetYaw);
+        float firstYaw = player.getYaw();
+        float deltaAngle = firstDeltaAngle;
         float degreesPerStep = deltaAngle / 20.0F;
 
         while(Math.abs(MathHelper.subtractAngles(getYaw(), targetYaw)) > 0.3f) {
-            assert player != null;
             player.setYaw(player.getYaw() + degreesPerStep);
 
             if(Math.abs(degreesPerStep) >= 0.2f) {
@@ -44,8 +46,7 @@ public class LookHelper {
             } catch (InterruptedException ignored) {}
         }
 
-        assert player != null;
-        player.setYaw(targetYaw);
+        player.setYaw(firstYaw + firstDeltaAngle);
     }
 
     public static void changePitchSmooth(float targetPitch, float degreesPerSecond) {
@@ -74,5 +75,12 @@ public class LookHelper {
         }
 
         player.setPitch(targetPitch);
+    }
+
+    public static void setYaw(float yaw) {
+        float delta = MathHelper.subtractAngles(getYaw(), Utils.normalize(yaw, -180, 180));
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        assert player != null;
+        player.setYaw(player.getYaw() + delta);
     }
 }

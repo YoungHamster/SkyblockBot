@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.task.base.replay.tickState;
 
+import com.viktorx.skyblockbot.movement.LookHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
@@ -39,7 +40,7 @@ public class TickState {
     public void setRotationForClient(MinecraftClient client) {
         assert client.player != null;
 
-        client.player.setYaw(getYaw());
+        LookHelper.setYaw(getYaw());
         client.player.setPitch(getPitch());
     }
 
