@@ -10,7 +10,6 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -26,12 +25,14 @@ import java.util.List;
 
 public class Utils {
 
-
-    private static List<Integer> detectedStringsInChatIds = new ArrayList<>();
+    private static final List<Pair<String, Integer>> prevTickInventory = new ArrayList<>();
+    /*
+     * Contains full string that was in chat and it's creation tick to prevent any confusions
+     */
+    private static List<Pair<String, Integer>> detectedStringsInChatIds = new ArrayList<>();
 
     /**
-     *
-     * @param str self-explanatory
+     * @param str          self-explanatory
      * @param maxBacktrack how many messages it will check in chat, starting from the most recent one
      * @return true if recent messages in chat contain str, otherwise false
      */
@@ -48,24 +49,23 @@ public class Utils {
         /*
          * Clearing out useless data so we don't leak memory when we run for long amounts of time
          */
-        if(detectedStringsInChatIds.size() > messages.size()) {
+        if (detectedStringsInChatIds.size() > messages.size()) {
             detectedStringsInChatIds = detectedStringsInChatIds.subList(0, messages.size());
         }
 
         for (int i = 0; i < limit; i++) {
-            if(detectedStringsInChatIds.contains(messages.get(i).signature().hashCode())) {
+            Pair<String, Integer> msg = new ImmutablePair<>(messages.get(i).content().getString(), messages.get(i).creationTick());
+            if (detectedStringsInChatIds.contains(msg)) {
                 continue;
             }
             if (messages.get(i).content().getString().contains(str)) {
-                detectedStringsInChatIds.add(messages.get(i).signature().hashCode());
+                detectedStringsInChatIds.add(msg);
                 return true;
             }
         }
 
         return false;
     }
-
-    private static final List<Pair<String, Integer>> prevTickInventory = new ArrayList<>();
 
     public static void InitItemCounter() {
         /*
@@ -125,7 +125,7 @@ public class Utils {
 
     public static void sendChatMessage(String message) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if(client.currentScreen != null) {
+        if (client.currentScreen != null) {
             SkyblockBot.LOGGER.error("Can't send chat message! Current screen isn't null, so i can't open chat screen");
             return;
         }

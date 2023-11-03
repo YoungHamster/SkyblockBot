@@ -27,7 +27,7 @@ configurations {
     implementation.extendsFrom(compileAndRuntime)
 }
 
-/*private static def getJavaFxPlatform() {
+private static def getJavaFxPlatform() {
     def os = System.getProperty('os.name').toLowerCase(Locale.ENGLISH)
     if (os.contains('win')) {
         return 'win'
@@ -39,7 +39,7 @@ configurations {
         return 'mac'
     }
     assert false: "unknown os: $os"
-}*/
+}
 
 dependencies {
     // https://mvnrepository.com/artifact/mysql/mysql-connector-java
@@ -58,9 +58,9 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:${project.fabric_version}")
 
     // javafx
-   // def jfxVersion = "21.0.1"
-    //def jfxPlatform = getJavaFxPlatform()
-    //compileAndRuntime "org.openjfx:javafx-base:${jfxVersion}:${jfxPlatform}"
+    def jfxVersion = "21.0.1"
+    def jfxPlatform = getJavaFxPlatform()
+    compileAndRuntime "org.openjfx:javafx-base:${jfxVersion}:${jfxPlatform}"
 }
 
 processResources {
@@ -70,10 +70,6 @@ processResources {
     filesMatching("fabric.mod.json") {
         expand "version": project.version
     }
-}
-
-javafx {
-    modules = ['javafx.base']
 }
 
 
@@ -101,20 +97,22 @@ java {
     withSourcesJar()
 }
 
-/*javafx {
+javafx {
     version = "21.0.1"
     modules = [ 'javafx.base' ]
-}*/
+}
 
 jar {
     from("LICENSE") {
         rename { "${it}_${project.archivesBaseName}" }
     }
 
-    /*copy {
-        from 'build/libs/skyblock-bot-0.5-BETA.jar' // shortcut for createJar.outputs.files
-        into "C:/Users/Nobody/AppData/Roaming/.minecraft/mods"
-    }*/
+    doLast {
+        copy {
+            from 'build/libs/skyblock-bot-0.5-BETA.jar' // shortcut for createJar.outputs.files
+            into "C:/Users/Nobody/AppData/Roaming/.minecraft/mods"
+        }
+    }
 }
 
 shadowJar {
