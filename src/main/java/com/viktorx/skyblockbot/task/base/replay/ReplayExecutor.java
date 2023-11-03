@@ -620,7 +620,7 @@ public class ReplayExecutor {
 
     private void prepareToStart() {
         pitchTask = LookHelper.changePitchSmoothAsync(replay.getTickState(tickIterator).getPitch(), 120.0f);
-        yawTask = LookHelper.changeYawSmoothAsync(replay.getTickState(tickIterator).getYaw(), 120.0f);
+        yawTask = LookHelper.changeYawSmoothAsync(replay.getTickState(tickIterator).getYaw());
         state = ReplayBotState.PREPARING_TO_START;
     }
 

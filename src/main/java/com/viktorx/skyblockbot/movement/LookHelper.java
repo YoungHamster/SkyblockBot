@@ -16,30 +16,34 @@ public class LookHelper {
         return Utils.normalize(MinecraftClient.getInstance().player.getYaw(), -180, 180);
     }
 
-    public static CompletableFuture<Void> changeYawSmoothAsync(float targetYaw, float degreesPerSecond) {
-        return CompletableFuture.runAsync(() -> changeYawSmooth(targetYaw, degreesPerSecond));
+    public static CompletableFuture<Void> changeYawSmoothAsync(float targetYaw) {
+        return CompletableFuture.runAsync(() -> changeYawSmooth(targetYaw));
     }
 
     public static CompletableFuture<Void> changePitchSmoothAsync(float targetPitch, float degreesPerSecond) {
         return CompletableFuture.runAsync(() -> changePitchSmooth(targetPitch, degreesPerSecond));
     }
 
-    public static void changeYawSmooth(float targetYaw, float degreesPerSecond) {
+    public static void changeYawSmooth(float targetYaw) {
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
 
-        float degreesPerStep = degreesPerSecond / 16.0F;
         float deltaAngle = MathHelper.subtractAngles(getYaw(), targetYaw);
+        float degreesPerStep = deltaAngle / 20.0F;
 
-        int steps = (int) Math.abs(deltaAngle / degreesPerStep);
-        for (int i = 0; i < steps; i++) {
+        while(Math.abs(MathHelper.subtractAngles(getYaw(), targetYaw)) > 0.3f) {
             assert player != null;
-            player.setYaw(player.getYaw() + deltaAngle / steps);
+            player.setYaw(player.getYaw() + degreesPerStep);
+
+            if(Math.abs(degreesPerStep) >= 0.2f) {
+                deltaAngle = MathHelper.subtractAngles(getYaw(), targetYaw);
+                degreesPerStep = deltaAngle / 20.0F;
+            }
 
             try {
                 Thread.sleep(16);
-            } catch (InterruptedException ignored) {
-            }
+            } catch (InterruptedException ignored) {}
         }
+
         assert player != null;
         player.setYaw(targetYaw);
     }

@@ -27,7 +27,7 @@ public class Bot implements Runnable {
         // Player sets the pitch, bot obliges
         assert MinecraftClient.getInstance().player != null;
 
-        LookHelper.changeYawSmooth(MinecraftClient.getInstance().player.getMovementDirection().asRotation(), 180.0F);
+        LookHelper.changeYawSmooth(MinecraftClient.getInstance().player.getMovementDirection().asRotation());
 
         // this is where the magic happens
         List<Vec2f> checkpoints = createPathAroundField("Carrots");
