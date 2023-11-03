@@ -106,13 +106,6 @@ jar {
     from("LICENSE") {
         rename { "${it}_${project.archivesBaseName}" }
     }
-
-    doLast {
-        copy {
-            from 'build/libs/skyblock-bot-0.5-BETA.jar' // shortcut for createJar.outputs.files
-            into "C:/Users/Nobody/AppData/Roaming/.minecraft/mods"
-        }
-    }
 }
 
 shadowJar {
@@ -127,9 +120,8 @@ remapJar {
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from { configurations.compileAndRuntime.collect { it.isDirectory() ? it : zipTree(it) } }
-}
 
-task copyJarToBin(type: Copy) {
+
     doLast {
         copy {
             from 'build/libs/skyblock-bot-0.5-BETA.jar' // shortcut for createJar.outputs.files

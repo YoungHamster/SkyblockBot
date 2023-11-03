@@ -37,7 +37,7 @@ public abstract class Task {
     public abstract boolean isExecuting();
     public abstract boolean isPaused();
 
-    public String getClassName() {
+    public String getTaskName() {
         String taskName = this.getClass().getName();
         String[] foo = taskName.split("\\.");
         taskName = foo[foo.length - 1];

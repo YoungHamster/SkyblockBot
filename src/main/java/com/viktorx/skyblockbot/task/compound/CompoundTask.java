@@ -38,4 +38,13 @@ public abstract class CompoundTask extends Task {
         }
         return false;
     }
+
+    @Override
+    public String getTaskName() {
+        if(currentTask == null) {
+            return "null. No task is currently executing";
+        } else {
+            return currentTask.getTaskName();
+        }
+    }
 }

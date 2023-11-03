@@ -37,7 +37,7 @@ public abstract class BaseExecutor {
 
     public <T extends BaseTask<?>> void execute(T task) {
         if (state != states.get("IDLE")) {
-            SkyblockBot.LOGGER.warn("Can't execute " + this.task.getClassName() + " when already executing");
+            SkyblockBot.LOGGER.warn("Can't execute " + this.task.getTaskName() + " when already executing");
             return;
         }
 
@@ -46,7 +46,7 @@ public abstract class BaseExecutor {
 
     public void pause() {
         if (state == states.get("IDLE") || state == states.get("PAUSED")) {
-            SkyblockBot.LOGGER.warn("Can't pause " + this.task.getClassName() + " when idle or already paused");
+            SkyblockBot.LOGGER.warn("Can't pause " + this.task.getTaskName() + " when idle or already paused");
             return;
         }
 
@@ -56,7 +56,7 @@ public abstract class BaseExecutor {
 
     public void resume() {
         if (state != states.get("PAUSED")) {
-            SkyblockBot.LOGGER.warn("Can't resume " + this.task.getClassName() + " when not paused");
+            SkyblockBot.LOGGER.warn("Can't resume " + this.task.getTaskName() + " when not paused");
             return;
         }
 

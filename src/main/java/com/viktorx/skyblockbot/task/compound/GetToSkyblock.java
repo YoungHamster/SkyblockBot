@@ -27,13 +27,13 @@ public class GetToSkyblock extends CompoundTask {
     }
 
     private void whenWaitInQueueCompleted() {
-        TGBotDaemon.INSTANCE.queueMessage("Completed task: " + currentTask.getClassName());
+        TGBotDaemon.INSTANCE.queueMessage("Completed task: " + currentTask.getTaskName());
         currentTask = getToSkyblock;
         currentTask.execute();
     }
 
     private void whenWaitInQueueAborted() {
-        TGBotDaemon.INSTANCE.queueMessage("Completed task: " + currentTask.getClassName());
+        TGBotDaemon.INSTANCE.queueMessage("Completed task: " + currentTask.getTaskName());
     }
 
     private void whenGetOutOfLimboCompleted() {
