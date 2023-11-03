@@ -1,7 +1,7 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem;
 
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.Utils;
+import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.mixins.IAbstractSignEditScreenMixin;
 import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;

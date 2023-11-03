@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot;
+package com.viktorx.skyblockbot.utils;
 
 import com.viktorx.skyblockbot.keybinds.KeybindsSettings;
 import com.viktorx.skyblockbot.task.compound.FarmingTaskSettings;

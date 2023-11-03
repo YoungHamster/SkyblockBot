@@ -10,6 +10,8 @@ import com.viktorx.skyblockbot.task.base.useItem.UseItemExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.giveVisitorItems.GiveVisitorItemsExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.talkToVisitor.TalkToVisitorExecutor;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
+import com.viktorx.skyblockbot.utils.GlobalSettingsManager;
+import com.viktorx.skyblockbot.utils.Utils;
 import net.fabricmc.api.ModInitializer;
 
 import net.minecraft.client.MinecraftClient;

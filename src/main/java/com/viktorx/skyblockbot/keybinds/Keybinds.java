@@ -1,11 +1,9 @@
 package com.viktorx.skyblockbot.keybinds;
 
-import com.viktorx.skyblockbot.GlobalSettingsManager;
+import com.viktorx.skyblockbot.utils.GlobalSettingsManager;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
 import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
-import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.compound.FarmingTask;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -86,7 +84,6 @@ public class Keybinds {
             }
 
             if (loadRecording.wasPressed()) {
-                LookHelper.changeYawSmoothAsync(90);
                 try {
                     GlobalSettingsManager.getInstance().loadSettings();
                 } catch (IOException e) {

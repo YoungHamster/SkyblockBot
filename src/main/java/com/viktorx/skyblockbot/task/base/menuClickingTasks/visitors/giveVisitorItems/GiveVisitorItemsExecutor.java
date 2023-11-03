@@ -1,7 +1,7 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.giveVisitorItems;
 
-import com.viktorx.skyblockbot.CurrentInventory;
-import com.viktorx.skyblockbot.RayTraceStuff;
+import com.viktorx.skyblockbot.utils.CurrentInventory;
+import com.viktorx.skyblockbot.utils.RayTraceStuff;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.task.base.BaseTask;

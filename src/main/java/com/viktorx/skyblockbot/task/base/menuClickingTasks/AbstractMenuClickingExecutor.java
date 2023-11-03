@@ -1,8 +1,8 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks;
 
 
-import com.viktorx.skyblockbot.CurrentInventory;
-import com.viktorx.skyblockbot.Utils;
+import com.viktorx.skyblockbot.utils.CurrentInventory;
+import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;

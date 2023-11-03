@@ -1,7 +1,7 @@
 package com.viktorx.skyblockbot.skyblock.flipping;
 
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.Utils;
+import com.viktorx.skyblockbot.utils.Utils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.HashMap;

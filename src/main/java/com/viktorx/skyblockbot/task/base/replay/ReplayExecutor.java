@@ -1,7 +1,7 @@
 package com.viktorx.skyblockbot.task.base.replay;
 
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.Utils;
+import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.Task;

@@ -1,16 +1,15 @@
 package com.viktorx.skyblockbot.task.compound;
 
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.Utils;
 import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.Task;
+import com.viktorx.skyblockbot.task.base.changeIsland.ChangeIsland;
+import com.viktorx.skyblockbot.task.base.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem.BuyBZItem;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem.BuyItem;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.sellSacks.SellSacks;
-import com.viktorx.skyblockbot.task.base.changeIsland.ChangeIsland;
-import com.viktorx.skyblockbot.task.base.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.base.replay.Replay;
 import com.viktorx.skyblockbot.task.base.replay.ReplayBotSettings;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
@@ -21,9 +20,8 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 
-public class FarmingTask extends Task {
+public class FarmingTask extends CompoundTask {
     public static final FarmingTask INSTANCE = new FarmingTask();
-    private final Task getOutOfLimbo;
     private final Task getToSkyblock;
     private final Task getToGarden;
     private final Task sellSacks;
@@ -35,14 +33,9 @@ public class FarmingTask extends Task {
     private final List<Runnable> runWhenFarmCompleted = new ArrayList<>();
     private final Queue<Task> taskQueue = new ArrayBlockingQueue<>(20);
     private final List<Timer> timers = new ArrayList<>();
-    private Task currentTask;
 
     FarmingTask() {
-        this.getOutOfLimbo = new ChangeIsland("/lobby");
-        this.getOutOfLimbo.whenCompleted(this::whenGetOutOfLimboCompleted);
-        this.getOutOfLimbo.whenAborted(this::whenGetOutOfLimboAborted);
-
-        this.getToSkyblock = new ChangeIsland("/play skyblock");
+        this.getToSkyblock = new GetToSkyblock();
         this.getToSkyblock.whenCompleted(this::whenGetToSkyblockCompleted);
         this.getToSkyblock.whenAborted(this::whenGetToSkyblockAborted);
 
@@ -70,27 +63,9 @@ public class FarmingTask extends Task {
         this.useItem.whenCompleted(this::defaultWhenCompleted);
         this.useItem.whenAborted(this::defaultWhenAborted);
 
-        this.gardenVisitorsTask = new GardenVisitorsTask();
+        this.gardenVisitorsTask = new GardenVisitors();
         this.gardenVisitorsTask.whenCompleted(this::defaultWhenCompleted);
         this.gardenVisitorsTask.whenAborted(this::whenGardenVisitorsAborted);
-    }
-
-    private void whenGetOutOfLimboCompleted() {
-        TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
-        currentTask = getToSkyblock;
-        currentTask.execute();
-    }
-
-    private void whenGetOutOfLimboAborted() {
-        TGBotDaemon.INSTANCE.queueMessage("Failed task: " + getCurrentTaskName());
-        SkyblockBot.LOGGER.info("Failed to get out of limbo, waiting 10 minutes to retry");
-        Timer retryGetOutOfLimbo = new Timer(true);
-        retryGetOutOfLimbo.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                currentTask.execute();
-            }
-        }, FarmingTaskSettings.retryGetOutOfLimboDelay);
     }
 
     private void whenGetToSkyblockCompleted() {
@@ -193,12 +168,7 @@ public class FarmingTask extends Task {
             if (SBUtils.isServerSkyblock()) {
                 currentTask = getToGarden;
             } else {
-                if (Utils.isStringInRecentChat("You were spawned in limbo", 3)
-                        || Utils.isStringInRecentChat("Вы АФК", 3)) {
-                    currentTask = getOutOfLimbo;
-                } else {
-                    currentTask = getToSkyblock;
-                }
+                currentTask = getToSkyblock;
             }
             currentTask.execute();
         }
@@ -277,18 +247,7 @@ public class FarmingTask extends Task {
                 0, FarmingTaskSettings.checkVisitorsInterval);*/
     }
 
-    public void pause() {
-        if (currentTask.isExecuting()) {
-            currentTask.pause();
-        }
-    }
-
-    public void resume() {
-        if (currentTask.isExecuting()) {
-            currentTask.resume();
-        }
-    }
-
+    @Override
     public void abort() {
         if (currentTask.isExecuting()) {
             currentTask.abort();
@@ -302,29 +261,18 @@ public class FarmingTask extends Task {
         timers.clear();
     }
 
-    public boolean isExecuting() {
-        return currentTask != null;
-    }
-
-    public boolean isPaused() {
-        if(currentTask == null) {
-            return false;
-        }
-        return currentTask.isPaused();
-    }
-
     public void loadRecordingAsync() {
         if (isExecuting()) {
             synchronized (runWhenFarmCompleted) {
                 runWhenFarmCompleted.add(() -> {
                     farm.loadFromFile(ReplayBotSettings.DEFAULT_RECORDING_FILE);
-                    ((GardenVisitorsTask) gardenVisitorsTask).reloadRecordings();
+                    ((GardenVisitors) gardenVisitorsTask).reloadRecordings();
                 });
             }
         } else {
             CompletableFuture.runAsync(() -> {
                 farm.loadFromFile(ReplayBotSettings.DEFAULT_RECORDING_FILE);
-                ((GardenVisitorsTask) gardenVisitorsTask).reloadRecordings();
+                ((GardenVisitors) gardenVisitorsTask).reloadRecordings();
             });
         }
     }

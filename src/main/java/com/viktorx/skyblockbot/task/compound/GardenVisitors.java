@@ -11,12 +11,11 @@ import javafx.util.Pair;
 
 import java.util.concurrent.TimeoutException;
 
-public class GardenVisitorsTask extends Task {
+public class GardenVisitors extends CompoundTask {
 
     private static final String goToVisitorsRecName = "go_to_visitors.bin";
     private static final String goBackToFarmRecName = "go_back_to_farm.bin";
 
-    private Task currentTask;
     private final Task goToVisitors;
     private final Task goBackToFarm;
     private final Task talkToVisitor;
@@ -24,7 +23,7 @@ public class GardenVisitorsTask extends Task {
     private final Task giveVisitorItems;
     private String currentVisitor = null;
 
-    public GardenVisitorsTask() {
+    public GardenVisitors() {
         this.goToVisitors = new Replay(goToVisitorsRecName);
         this.goToVisitors.whenCompleted(this::whenGoToVisitorsCompleted);
         this.goToVisitors.whenAborted(this::whenGoToVisitorsAborted);
@@ -148,39 +147,6 @@ public class GardenVisitorsTask extends Task {
         }
         currentTask = goToVisitors;
         goToVisitors.execute();
-    }
-
-    public void pause() {
-        if (currentTask != null) {
-            currentTask.pause();
-        }
-    }
-
-    public void resume() {
-        if (currentTask != null) {
-            currentTask.resume();
-        }
-    }
-
-    public void abort() {
-        if (currentTask != null) {
-            currentTask.abort();
-        }
-        currentTask = null;
-    }
-
-    public boolean isExecuting() {
-        if (currentTask != null) {
-            return currentTask.isExecuting();
-        }
-        return false;
-    }
-
-    public boolean isPaused() {
-        if (currentTask != null) {
-            return currentTask.isPaused();
-        }
-        return false;
     }
 
     public void reloadRecordings() {

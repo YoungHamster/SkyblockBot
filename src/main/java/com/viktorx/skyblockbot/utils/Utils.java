@@ -1,5 +1,6 @@
-package com.viktorx.skyblockbot;
+package com.viktorx.skyblockbot.utils;
 
+import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.IChatHudMixin;
 import com.viktorx.skyblockbot.mixins.IMinecraftClientMixin;
 import com.viktorx.skyblockbot.skyblock.ItemNames;

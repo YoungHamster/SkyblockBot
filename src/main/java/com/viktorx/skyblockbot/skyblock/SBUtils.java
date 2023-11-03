@@ -1,6 +1,6 @@
 package com.viktorx.skyblockbot.skyblock;
 
-import com.viktorx.skyblockbot.CurrentInventory;
+import com.viktorx.skyblockbot.utils.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.PlayerListHudMixin;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;

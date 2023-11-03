@@ -5,14 +5,13 @@ import com.viktorx.skyblockbot.task.Task;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.getSkills.GetSkills;
 import com.viktorx.skyblockbot.task.base.replay.Replay;
 
-public class SetupMinionsForSkillsTask extends Task {
+public class SetupMinionsForSkills extends CompoundTask {
     private static final String buildPlaceForMinionsReplay = "build_place_for_minions";
-    private Task currentTask;
     private final Task buildPlaceForMinions;
     private final Task getSkills;
     private final Task craft;
 
-    public SetupMinionsForSkillsTask() {
+    public SetupMinionsForSkills() {
         buildPlaceForMinions = new Replay(buildPlaceForMinionsReplay);
         buildPlaceForMinions.whenCompleted(this::whenBuildPlaceForMinionsCompleted);
         buildPlaceForMinions.whenAborted(this::whenBuildPlaceForMinionsAborted);
@@ -57,33 +56,5 @@ public class SetupMinionsForSkillsTask extends Task {
             return;
         }
         // TODO
-    }
-    public void pause() {
-        if(currentTask != null) {
-            currentTask.pause();
-        }
-    }
-    public void resume() {
-        if(currentTask != null) {
-            currentTask.resume();
-        }
-    }
-    public void abort() {
-        if(currentTask != null) {
-            currentTask.abort();
-        }
-        currentTask = null;
-    }
-    public boolean isExecuting() {
-        if(currentTask != null) {
-            return currentTask.isExecuting();
-        }
-        return false;
-    }
-    public boolean isPaused() {
-        if(currentTask != null) {
-            return currentTask.isPaused();
-        }
-        return false;
     }
 }

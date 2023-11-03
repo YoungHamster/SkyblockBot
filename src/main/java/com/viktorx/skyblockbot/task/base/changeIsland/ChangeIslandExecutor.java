@@ -1,6 +1,6 @@
 package com.viktorx.skyblockbot.task.base.changeIsland;
 
-import com.viktorx.skyblockbot.Utils;
+import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseExecutor;
 import com.viktorx.skyblockbot.task.base.BaseTask;

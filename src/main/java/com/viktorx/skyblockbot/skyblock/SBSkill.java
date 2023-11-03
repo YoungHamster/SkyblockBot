@@ -1,6 +1,6 @@
 package com.viktorx.skyblockbot.skyblock;
 
-import com.viktorx.skyblockbot.Utils;
+import com.viktorx.skyblockbot.utils.Utils;
 
 public class SBSkill {
 

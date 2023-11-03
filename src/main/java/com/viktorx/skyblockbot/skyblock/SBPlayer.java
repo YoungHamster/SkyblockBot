@@ -1,10 +1,8 @@
 package com.viktorx.skyblockbot.skyblock;
 
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.Utils;
+import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.skyblock.movementstuff.SBGoal;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

@@ -2,7 +2,7 @@ package com.viktorx.skyblockbot.skyblock.flipping.auction;
 
 import com.google.gson.Gson;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.Utils;
+import com.viktorx.skyblockbot.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;

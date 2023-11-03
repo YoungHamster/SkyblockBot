@@ -6,8 +6,7 @@ import com.viktorx.skyblockbot.task.base.menuClickingTasks.assembleCraft.Assembl
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem.BuyBZItem;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem.BuyItem;
 
-public class CraftTask extends Task {
-    private Task currentTask;
+public class CraftTask extends CompoundTask {
     private final Task buyBZItem;
     private final Task buyItem;
     private final Task assembleCraft;
@@ -24,38 +23,5 @@ public class CraftTask extends Task {
             return;
         }
         // TODO
-    }
-
-    public void pause() {
-        if (currentTask != null) {
-            currentTask.pause();
-        }
-    }
-
-    public void resume() {
-        if (currentTask != null) {
-            currentTask.resume();
-        }
-    }
-
-    public void abort() {
-        if (currentTask != null) {
-            currentTask.abort();
-        }
-        currentTask = null;
-    }
-
-    public boolean isExecuting() {
-        if (currentTask != null) {
-            return currentTask.isExecuting();
-        }
-        return false;
-    }
-
-    public boolean isPaused() {
-        if (currentTask != null) {
-            return currentTask.isPaused();
-        }
-        return false;
     }
 }

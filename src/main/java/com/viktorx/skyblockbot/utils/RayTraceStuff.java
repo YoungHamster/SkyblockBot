@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot;
+package com.viktorx.skyblockbot.utils;
 
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;

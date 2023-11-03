@@ -1,6 +1,6 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.talkToVisitor;
 
-import com.viktorx.skyblockbot.RayTraceStuff;
+import com.viktorx.skyblockbot.utils.RayTraceStuff;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
