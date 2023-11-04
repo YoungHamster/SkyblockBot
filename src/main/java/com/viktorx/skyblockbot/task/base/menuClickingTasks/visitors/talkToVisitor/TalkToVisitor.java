@@ -10,8 +10,8 @@ public class TalkToVisitor extends BaseTask<TalkToVisitorExecutor> {
     private final List<Pair<String, Integer>> items = new ArrayList<>();
     private String visitorName;
 
-    public TalkToVisitor() {
-        super(TalkToVisitorExecutor.INSTANCE);
+    public TalkToVisitor(Runnable whenCompleted, Runnable whenAborted) {
+        super(TalkToVisitorExecutor.INSTANCE, whenCompleted, whenAborted);
     }
 
     public String getAcceptOfferStr() {

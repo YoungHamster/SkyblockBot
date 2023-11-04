@@ -1,13 +1,13 @@
 package com.viktorx.skyblockbot.task.base.replay;
 
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.Task;
 import com.viktorx.skyblockbot.task.base.replay.tickState.AnyKeyRecord;
 import com.viktorx.skyblockbot.task.base.replay.tickState.TickState;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
+import com.viktorx.skyblockbot.utils.Utils;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -43,6 +43,7 @@ public class ReplayExecutor {
     private ReplayBotState state = ReplayBotState.IDLE;
     private CompletableFuture<Void> yawTask = null;
     private CompletableFuture<Void> pitchTask = null;
+    private CompletableFuture<Void> stopFlyingTask = null;
     private int antiDetectTriggeredTickCounter = 0;
 
     public void Init() {
@@ -137,14 +138,19 @@ public class ReplayExecutor {
     private void onTickPlay(MinecraftClient client) {
         if (!state.equals(ReplayBotState.PLAYING)) {
             if (state.equals(ReplayBotState.PREPARING_TO_START)) {
-                if (!yawTask.isDone() || !pitchTask.isDone()) {
+                if (yawTask.isDone() && pitchTask.isDone() && stopFlyingTask.isDone()) {
+                    state = ReplayBotState.PLAYING;
+
+                    /*
+                     * this is supposed to start pressing keys if we start from the middle of the recording
+                     * and there are already some keys pressed
+                     */
+                    currentlyPressedKeys.forEach((key, value) -> value.firstPress());
+
                     return;
                 } else {
-                    state = ReplayBotState.UNPRESSING_BUTTONS_BEFORE_START;
+                    return;
                 }
-            } else if (state.equals(ReplayBotState.UNPRESSING_BUTTONS_BEFORE_START)) {
-                state = ReplayBotState.PLAYING;
-                return;
             } else {
                 return;
             }
@@ -230,6 +236,9 @@ public class ReplayExecutor {
         prepareToStart();
     }
 
+    /**
+     * @return True if can't start from the middle, False if can
+     */
     private boolean tryStartingFromMiddleOfRecording(Replay replay) {
         SkyblockBot.LOGGER.info("Trying to find fitting tick state away from the start");
 
@@ -253,10 +262,7 @@ public class ReplayExecutor {
              * Figure out which keys are pressed at the moment we start, press them before starting
              */
             Map<Integer, AnyKeyRecord> keys = findKeysPressedAtTick(tickIterator);
-            keys.forEach((key, value) -> {
-                value.firstPress();
-                currentlyPressedKeys.put(key, value);
-            });
+            currentlyPressedKeys.putAll(keys);
 
             SkyblockBot.LOGGER.info("Found tick to start from! Continuing replay from " + lowestDistanceIterator + " tick state");
         } else {
@@ -433,7 +439,7 @@ public class ReplayExecutor {
                 Map<Integer, AnyKeyRecord> keys = findKeysPressedAtTick(tickIterator);
 
                 keys.forEach((key, value) -> {
-                    if(!currentlyPressedKeys.containsKey(key)) {
+                    if (!currentlyPressedKeys.containsKey(key)) {
                         currentlyPressedKeys.put(key, value);
                         value.firstPress();
                     }
@@ -441,7 +447,7 @@ public class ReplayExecutor {
 
                 List<Integer> keysToRemove = new ArrayList<>();
                 currentlyPressedKeys.forEach((key, value) -> {
-                    if(!keys.containsKey(key)) {
+                    if (!keys.containsKey(key)) {
                         value.unpress();
                         keysToRemove.add(key);
                     }
@@ -607,9 +613,9 @@ public class ReplayExecutor {
 
     private Map<Integer, AnyKeyRecord> findKeysPressedAtTick(int tickNumber) {
         Map<Integer, AnyKeyRecord> keys = new HashMap<>();
-        for(TickState tick : replay.tickStates.subList(0, tickNumber)) {
+        for (TickState tick : replay.tickStates.subList(0, tickNumber)) {
             for (AnyKeyRecord key : tick.getKeys()) {
-                switch(key.getAction()) {
+                switch (key.getAction()) {
                     case 0 -> keys.remove(key.getKey());
                     case 1 -> keys.put(key.getKey(), key);
                 }
@@ -619,8 +625,28 @@ public class ReplayExecutor {
     }
 
     private void prepareToStart() {
-        pitchTask = LookHelper.changePitchSmoothAsync(replay.getTickState(tickIterator).getPitch(), 120.0f);
+        pitchTask = LookHelper.changePitchSmoothAsync(replay.getTickState(tickIterator).getPitch());
         yawTask = LookHelper.changeYawSmoothAsync(replay.getTickState(tickIterator).getYaw());
+
+        /*
+         * Turns out if you drink mushroom soup you always spawn in the garden in flight, so to account for it a have to land before doing anything
+         */
+        stopFlyingTask = CompletableFuture.runAsync(() -> {
+            assert MinecraftClient.getInstance().player != null;
+            if (!MinecraftClient.getInstance().player.isOnGround()) {
+                MinecraftClient.getInstance().options.sneakKey.setPressed(true);
+
+                while (!MinecraftClient.getInstance().player.isOnGround()) {
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+
+                MinecraftClient.getInstance().options.sneakKey.setPressed(false);
+            }
+        });
+
         state = ReplayBotState.PREPARING_TO_START;
     }
 

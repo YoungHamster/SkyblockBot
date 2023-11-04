@@ -6,6 +6,10 @@ public abstract class CompoundTask extends Task {
 
     protected Task currentTask;
 
+    public CompoundTask(Runnable whenCompleted, Runnable whenAborted) {
+        super(whenCompleted, whenAborted);
+    }
+
     public void pause() {
         if (currentTask != null) {
             currentTask.pause();
@@ -44,7 +48,7 @@ public abstract class CompoundTask extends Task {
         if(currentTask == null) {
             return "null. No task is currently executing";
         } else {
-            return currentTask.getTaskName();
+            return currentTask.getClass().getSimpleName();
         }
     }
 }

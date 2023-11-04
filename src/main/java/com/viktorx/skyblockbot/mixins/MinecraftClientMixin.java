@@ -20,6 +20,7 @@ public class MinecraftClientMixin {
     @Inject(method = "setScreen", at = @At("TAIL"))
     public void detectWorldLoad(@Nullable Screen screen, CallbackInfo ci) {
         if (screen == null) {
+            GlobalExecutorInfo.isCurrentScreenNull.set(true);
             GlobalExecutorInfo.worldLoading.set(false);
             GlobalExecutorInfo.worldLoaded.set(true);
         } else if (screen.getClass() == DownloadingTerrainScreen.class) {

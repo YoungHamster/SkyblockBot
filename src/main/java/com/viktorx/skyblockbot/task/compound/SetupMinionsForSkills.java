@@ -11,18 +11,16 @@ public class SetupMinionsForSkills extends CompoundTask {
     private final Task getSkills;
     private final Task craft;
 
-    public SetupMinionsForSkills() {
-        buildPlaceForMinions = new Replay(buildPlaceForMinionsReplay);
-        buildPlaceForMinions.whenCompleted(this::whenBuildPlaceForMinionsCompleted);
-        buildPlaceForMinions.whenAborted(this::whenBuildPlaceForMinionsAborted);
+    public SetupMinionsForSkills(Runnable whenCompleted, Runnable whenAborted) {
+        super(whenCompleted, whenAborted);
 
-        getSkills = new GetSkills();
-        getSkills.whenCompleted(this::whenGetSkillCompleted);
-        getSkills.whenAborted(this::whenGetSkillsAborted);
+        buildPlaceForMinions = new Replay(buildPlaceForMinionsReplay,
+                this::whenBuildPlaceForMinionsCompleted,
+                this::whenBuildPlaceForMinionsAborted);
 
-        craft = new CraftTask();
-        craft.whenCompleted(this::whenCraftCompleted);
-        craft.whenAborted(this::whenCraftAborted);
+        getSkills = new GetSkills(this::whenGetSkillCompleted, this::whenGetSkillsAborted);
+
+        craft = new CraftTask(this::whenCraftCompleted, this::whenCraftAborted);
 
     }
 

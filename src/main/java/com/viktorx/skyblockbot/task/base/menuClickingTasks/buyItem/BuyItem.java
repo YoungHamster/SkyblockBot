@@ -5,17 +5,19 @@ import com.viktorx.skyblockbot.task.base.BaseTask;
 
 public class BuyItem extends BaseTask<BuyItemExecutor> {
     private String itemName = null;
-    private String[] itemLoreKeyWords;
+    private String[] loreKeyWords;
     private long priceLimit = 10000000;
 
-    public BuyItem() {
-        super(BuyItemExecutor.INSTANCE);
+    public BuyItem(String itemName, String[] loreKeyWords, Runnable whenCompleted, Runnable whenAborted) {
+        super(BuyItemExecutor.INSTANCE, whenCompleted, whenAborted);
+        this.itemName = itemName;
+        this.loreKeyWords = loreKeyWords;
     }
 
     public void setItemInfo(String itemName, String[] itemLoreKeyWords) {
         if (!BuyItemExecutor.INSTANCE.isExecuting(this)) {
             this.itemName = itemName;
-            this.itemLoreKeyWords = itemLoreKeyWords;
+            this.loreKeyWords = itemLoreKeyWords;
         }
     }
 
@@ -42,8 +44,8 @@ public class BuyItem extends BaseTask<BuyItemExecutor> {
         return itemName;
     }
 
-    public String[] getItemLoreKeyWords() {
-        return itemLoreKeyWords;
+    public String[] getLoreKeyWords() {
+        return loreKeyWords;
     }
 
     public String getBuySlotName() {

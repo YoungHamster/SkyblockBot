@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.mixins.IAbstractSignEditScreenMixin;
 import com.viktorx.skyblockbot.task.base.BaseTask;
@@ -32,7 +33,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
         addState("WAITING_FOR_MENU");
         addState("WAITING_FOR_SCREEN_CHANGE");
         addState("RESTARTING");
-        addState("COMPLETED");
+        addState("WAITING_FOR_ITEM");
     }
 
     public void Init() {
@@ -125,8 +126,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
                 asyncCloseCurrentInventory();
 
-                nextState = getState("COMPLETED");
-                state = getState("WAITING_FOR_MENU");
+                state = getState("WAITING_FOR_ITEM");
             }
 
             case "CLICKING_ENTER_AMOUNT" -> {
@@ -160,8 +160,15 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
                 asyncCloseCurrentInventory();
 
-                nextState = getState("COMPLETED");
-                state = getState("WAITING_FOR_MENU");
+                state = getState("WAITING_FOR_ITEM");
+            }
+
+            case "WAITING_FOR_ITEM" -> {
+                if(SBUtils.isItemInInventory(task.getItemName())) {
+                    state = getState("IDLE");
+                    task.completed();
+
+                }
             }
 
             case "RESTARTING" -> {
@@ -182,12 +189,6 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                 if (waitForScreenLoadingCounter++ > MenuClickersSettings.maxWaitForScreen) {
                     state = prevState;
                 }
-            }
-
-            case "COMPLETED" -> {
-                SkyblockBot.LOGGER.info("BuyBZItem completed!");
-                state = getState("IDLE");
-                task.completed();
             }
         }
     }

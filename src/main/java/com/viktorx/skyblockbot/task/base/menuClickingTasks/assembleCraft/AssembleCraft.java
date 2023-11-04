@@ -5,8 +5,8 @@ import com.viktorx.skyblockbot.task.base.BaseTask;
 public class AssembleCraft extends BaseTask<AssembleCraftExecutor> {
     private CraftableRecipe recipe;
 
-    public AssembleCraft() {
-        super(AssembleCraftExecutor.INSTANCE);
+    public AssembleCraft(Runnable whenCompleted, Runnable whenAborted) {
+        super(AssembleCraftExecutor.INSTANCE, whenCompleted, whenAborted);
     }
 
     public void setRecipe(CraftableRecipe recipe) {

@@ -9,6 +9,7 @@ public class GlobalExecutorInfo {
     public static AtomicBoolean debugMode = new AtomicBoolean(false);
     public static AtomicBoolean worldLoaded = new AtomicBoolean(false);
     public static AtomicBoolean worldLoading = new AtomicBoolean(false);
+    public static AtomicBoolean isCurrentScreenNull = new AtomicBoolean(false);
 
     public static int waitTicksBeforeAction;
 

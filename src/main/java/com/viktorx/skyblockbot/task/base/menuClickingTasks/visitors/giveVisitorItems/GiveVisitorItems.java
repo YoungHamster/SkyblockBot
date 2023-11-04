@@ -4,8 +4,8 @@ import com.viktorx.skyblockbot.task.base.BaseTask;
 
 public class GiveVisitorItems extends BaseTask<GiveVisitorItemsExecutor> {
 
-    public GiveVisitorItems() {
-        super(GiveVisitorItemsExecutor.INSTANCE);
+    public GiveVisitorItems(Runnable whenCompleted, Runnable whenAborted) {
+        super(GiveVisitorItemsExecutor.INSTANCE, whenCompleted, whenAborted);
     }
 
     public String getAcceptOfferStr() {

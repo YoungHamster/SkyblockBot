@@ -13,63 +13,39 @@ import com.viktorx.skyblockbot.task.base.menuClickingTasks.sellSacks.SellSacks;
 import com.viktorx.skyblockbot.task.base.replay.Replay;
 import com.viktorx.skyblockbot.task.base.replay.ReplayBotSettings;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
-import com.viktorx.skyblockbot.task.base.useItem.UseItem;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.useItem.UseItem;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FarmingTask extends CompoundTask {
-    public static final FarmingTask INSTANCE = new FarmingTask();
+    public static final FarmingTask INSTANCE = new FarmingTask(null, null);
     private final Task getToSkyblock;
     private final Task getToGarden;
     private final Task sellSacks;
-    private final Task buyItem;
-    private final Task buyBZItem;
-    private final Task useItem;
     private final Task gardenVisitorsTask;
     private final Task farm;
     private final List<Runnable> runWhenFarmCompleted = new ArrayList<>();
     private final Queue<Task> taskQueue = new ArrayBlockingQueue<>(20);
     private final List<Timer> timers = new ArrayList<>();
 
-    FarmingTask() {
-        this.getToSkyblock = new GetToSkyblock();
-        this.getToSkyblock.whenCompleted(this::whenGetToSkyblockCompleted);
-        this.getToSkyblock.whenAborted(this::whenGetToSkyblockAborted);
+    FarmingTask(Runnable whenCompleted, Runnable whenAborted) {
+        super(whenCompleted, whenAborted);
 
-        this.getToGarden = new ChangeIsland("/warp garden");
-        this.getToGarden.whenCompleted(this::defaultWhenCompleted);
-        this.getToGarden.whenAborted(this::whenGetToGardenAborted);
+        this.getToSkyblock = new GetToSkyblock(this::whenGetToSkyblockCompleted, this::whenGetToSkyblockAborted);
+        this.getToGarden = new ChangeIsland("/warp garden", this::defaultWhenCompleted, this::whenGetToGardenAborted);
+        this.sellSacks = new SellSacks(this::defaultWhenCompleted, this::defaultWhenAborted);
+        this.farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE, this::whenFarmCompleted, this::whenFarmAborted);
 
-        this.sellSacks = new SellSacks();
-        this.sellSacks.whenCompleted(this::defaultWhenCompleted);
-        this.sellSacks.whenAborted(this::defaultWhenAborted);
-
-        this.farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE);
-        this.farm.whenCompleted(this::whenFarmCompleted);
-        this.farm.whenAborted(this::whenFarmAborted);
-
-        this.buyItem = new BuyItem();
-        this.buyItem.whenCompleted(this::defaultWhenCompleted);
-        this.buyItem.whenAborted(this::defaultWhenAborted);
-
-        this.buyBZItem = new BuyBZItem();
-        this.buyBZItem.whenCompleted(this::defaultWhenCompleted);
-        this.buyBZItem.whenAborted(this::defaultWhenAborted);
-
-        this.useItem = new UseItem();
-        this.useItem.whenCompleted(this::defaultWhenCompleted);
-        this.useItem.whenAborted(this::defaultWhenAborted);
-
-        this.gardenVisitorsTask = new GardenVisitors();
-        this.gardenVisitorsTask.whenCompleted(this::defaultWhenCompleted);
-        this.gardenVisitorsTask.whenAborted(this::whenGardenVisitorsAborted);
+        this.gardenVisitorsTask = new GardenVisitors(this::defaultWhenCompleted, this::whenGardenVisitorsAborted);
     }
 
     private void whenGetToSkyblockCompleted() {
         TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
+        printTaskInfoCompl();
 
         if (!SBUtils.getIslandOrArea().contains(FarmingTaskSettings.gardenName)) {
             currentTask = getToGarden;
@@ -81,17 +57,20 @@ public class FarmingTask extends CompoundTask {
     }
 
     private void whenGetToSkyblockAborted() {
-        SkyblockBot.LOGGER.info("Couldn't warp to skyblock!");
+        printTaskInfoAbort();
+
         currentTask = null;
     }
 
     private void whenGetToGardenAborted() {
-        SkyblockBot.LOGGER.info("Couldn't warp to garden");
+        printTaskInfoAbort();
+
         currentTask = null;
     }
 
     private void defaultWhenCompleted() {
         TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
+        printTaskInfoCompl();
 
         if (!taskQueue.isEmpty()) {
             currentTask = taskQueue.poll();
@@ -102,12 +81,15 @@ public class FarmingTask extends CompoundTask {
     }
 
     private void defaultWhenAborted() {
-        SkyblockBot.LOGGER.warn(getCurrentTaskName() + " task aborted.");
+        printTaskInfoAbort();
+
         currentTask = farm;
         currentTask.execute();
     }
 
     private void whenFarmCompleted() {
+        printTaskInfoCompl();
+
         /*
          * This code is for situation when we die at the end of the farm to respawn at the start
          * We have to wait and check every tick if our position is equal to the starting position
@@ -155,6 +137,8 @@ public class FarmingTask extends CompoundTask {
     }
 
     private void whenFarmAborted() {
+        printTaskInfoAbort();
+
         if (GlobalExecutorInfo.worldLoading.get()) {
             SkyblockBot.LOGGER.info("Warped out of garden. Trying to get back");
 
@@ -175,14 +159,24 @@ public class FarmingTask extends CompoundTask {
     }
 
     private void whenGardenVisitorsAborted() {
-        SkyblockBot.LOGGER.warn("Garden visitors task aborted!!!!");
+        printTaskInfoAbort();
+
         defaultWhenCompleted();
         // TODO
+    }
+
+    private void printTaskInfoCompl() {
+        SkyblockBot.LOGGER.info(getTaskName() + " completed");
+    }
+
+    private void printTaskInfoAbort() {
+        SkyblockBot.LOGGER.info(getTaskName() + " aborted");
     }
 
     private void debugExecute() {
         currentTask = farm;
         currentTask.execute();
+        taskQueue.add(gardenVisitorsTask);
     }
 
     public void execute() {
@@ -191,7 +185,7 @@ public class FarmingTask extends CompoundTask {
             return;
         }
 
-        SkyblockBot.LOGGER.info("Debuge mode: " + GlobalExecutorInfo.debugMode.get());
+        SkyblockBot.LOGGER.info("Debug mode: " + GlobalExecutorInfo.debugMode.get());
         if (GlobalExecutorInfo.debugMode.get()) {
             debugExecute();
             return;
@@ -287,6 +281,16 @@ public class FarmingTask extends CompoundTask {
         return taskName;
     }
 
+    private boolean isTaskInQueue(String taskName) {
+        AtomicBoolean returnVal = new AtomicBoolean(false);
+        taskQueue.forEach(task -> {
+            if(task.getTaskName().equals(taskName)) {
+                returnVal.set(true);
+            }
+        });
+        return returnVal.get();
+    }
+
     private class RegularPauseTimerTask extends TimerTask {
         @Override
         public void run() {
@@ -323,34 +327,49 @@ public class FarmingTask extends CompoundTask {
             SkyblockBot.LOGGER.info("Time left god pot: " + SBUtils.getTimeLeftGodPot()
                     + "\n Time left cookie: " + SBUtils.getTimeLeftCookieBuff());
             if (SBUtils.getTimeLeftGodPot() < FarmingTaskSettings.godPotBuyThreshold) {
-                if (!taskQueue.contains(useItem) &&
-                        !currentTask.getClass().equals(buyItem.getClass()) &&
-                        !currentTask.getClass().equals(useItem.getClass())) {
+                if (!isTaskInQueue(UseItem.class.getSimpleName()) &&
+                        !currentTask.getClass().equals(BuyItem.class) &&
+                        !currentTask.getClass().equals(UseItem.class)) {
 
                     SkyblockBot.LOGGER.info("Queueing to use god pot. Minutes left: " + SBUtils.getTimeLeftGodPot() / (1000 * 60));
 
                     if (!SBUtils.isItemInInventory(ItemNames.GOD_POT.getName())) {
-                        ((BuyItem) buyItem).setItemInfo(ItemNames.GOD_POT.getName(), new String[0]);
-                        taskQueue.add(buyItem);
+                        taskQueue.add(
+                                new BuyItem(
+                                        ItemNames.GOD_POT.getName(),
+                                        new String[0],
+                                        FarmingTask.this::defaultWhenCompleted,
+                                        FarmingTask.this::defaultWhenAborted));
                     }
-                    ((UseItem) useItem).setItemName(ItemNames.GOD_POT.getName());
-                    taskQueue.add(useItem);
+
+                    taskQueue.add(
+                            new UseItem(
+                                    ItemNames.GOD_POT.getName(),
+                                    FarmingTask.this::defaultWhenCompleted,
+                                    FarmingTask.this::defaultWhenAborted));
                 }
             }
 
             if (SBUtils.getTimeLeftCookieBuff() < FarmingTaskSettings.cookieBuyThreshold) {
-                if (!taskQueue.contains(useItem) &&
-                        !currentTask.getClass().equals(buyBZItem.getClass()) &&
-                        !currentTask.getClass().equals(useItem.getClass())) {
+                if (!isTaskInQueue(UseItem.class.getSimpleName()) &&
+                        !currentTask.getClass().equals(BuyBZItem.class) &&
+                        !currentTask.getClass().equals(UseItem.class)) {
 
                     SkyblockBot.LOGGER.info("Queueing to use cookie. Minutes left: " + SBUtils.getTimeLeftCookieBuff() / (1000 * 60));
 
                     if (!SBUtils.isItemInInventory(ItemNames.BOOSTER_COOKIE.getName())) {
-                        ((BuyBZItem) buyBZItem).setItemName(ItemNames.BOOSTER_COOKIE.getName());
-                        taskQueue.add(buyBZItem);
+                        taskQueue.add(
+                                new BuyBZItem(
+                                        ItemNames.BOOSTER_COOKIE.getName(),
+                                        FarmingTask.this::defaultWhenCompleted,
+                                        FarmingTask.this::defaultWhenAborted));
                     }
-                    ((UseItem) useItem).setItemName(ItemNames.BOOSTER_COOKIE.getName());
-                    taskQueue.add(useItem);
+
+                    taskQueue.add(
+                            new UseItem(
+                                    ItemNames.BOOSTER_COOKIE.getName(),
+                                    FarmingTask.this::defaultWhenCompleted,
+                                    FarmingTask.this::defaultWhenAborted));
                 }
             }
         }

@@ -20,9 +20,11 @@ public class Replay extends Task {
     protected final List<TickState> tickStates = new ArrayList<>();
 
     public Replay() {
+        super(null, null);
     }
 
-    public Replay(String filename) {
+    public Replay(String filename, Runnable whenCompleted, Runnable whenAborted) {
+        super(whenCompleted, whenAborted);
         loadFromFile(filename);
     }
 

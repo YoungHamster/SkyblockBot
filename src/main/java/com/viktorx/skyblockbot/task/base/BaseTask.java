@@ -5,7 +5,8 @@ import com.viktorx.skyblockbot.task.Task;
 public abstract class BaseTask<T extends BaseExecutor> extends Task {
     private final T executor;
 
-    public BaseTask (T executor) {
+    public BaseTask (T executor, Runnable whenCompleted, Runnable whenAborted) {
+        super(whenCompleted, whenAborted);
         this.executor = executor;
     }
 

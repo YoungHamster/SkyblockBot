@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.task.base.useItem;
+package com.viktorx.skyblockbot.task.base.menuClickingTasks.useItem;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
@@ -6,11 +6,12 @@ import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseExecutor;
 import com.viktorx.skyblockbot.task.base.BaseTask;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerInventory;
 
-public class UseItemExecutor extends BaseExecutor {
+public class UseItemExecutor extends AbstractMenuClickingExecutor {
 
     private static final int defaultHotbarSlot = 1;
 
@@ -20,7 +21,6 @@ public class UseItemExecutor extends BaseExecutor {
     private int itemSlot;
     private int startingSlot;
     private boolean wasUsedHotbarSlotEmpty = true;
-    private int waitBeforeActionIterator = 0;
 
     private UseItemExecutor() {
         addState("CHECKING_INVENTORY");
@@ -43,9 +43,20 @@ public class UseItemExecutor extends BaseExecutor {
     @Override
     public <T extends BaseTask<?>> void whenExecute(T task) {
         this.task = (UseItem) task;
-        waitBeforeActionIterator = 0;
+        waitTickCounter = 0;
+        waitForMenuCounter = 0;
         wasUsedHotbarSlotEmpty = true;
         state = getState("CHECKING_INVENTORY");
+    }
+
+    @Override
+    protected void restart() {
+        state = getState("IDLE");
+        execute(task);
+    }
+
+    @Override
+    protected void whenMenuOpened() {
     }
 
     private void onTick(MinecraftClient client) {
@@ -180,20 +191,21 @@ public class UseItemExecutor extends BaseExecutor {
         }
     }
 
-    private boolean waitBeforeAction() {
-        if (waitBeforeActionIterator++ < GlobalExecutorInfo.waitTicksBeforeAction / 2) {
-            return true;
-        }
-        waitBeforeActionIterator = 0;
-        return false;
-    }
-
     private int getItemSlot(MinecraftClient client) {
         assert client.player != null;
         PlayerInventory inventory = client.player.getInventory();
 
         for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
             if (inventory.getStack(i).getName().getString().equals(task.getItemName())) {
+                return i;
+            }
+        }
+
+        /*
+         * In a desperate attempt to find anything we look again for item who's name only contains our desired name
+         */
+        for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
+            if (inventory.getStack(i).getName().getString().contains(task.getItemName())) {
                 return i;
             }
         }

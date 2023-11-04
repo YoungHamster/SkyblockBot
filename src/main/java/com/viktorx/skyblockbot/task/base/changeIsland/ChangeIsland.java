@@ -6,8 +6,8 @@ public class ChangeIsland extends BaseTask<ChangeIslandExecutor> {
 
     private final String command;
 
-    public ChangeIsland(String command) {
-        super(ChangeIslandExecutor.INSTANCE);
+    public ChangeIsland(String command, Runnable whenCompleted, Runnable whenAborted) {
+        super(ChangeIslandExecutor.INSTANCE, whenCompleted, whenAborted);
         this.command = command;
     }
 

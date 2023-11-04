@@ -8,8 +8,8 @@ import java.util.concurrent.CompletableFuture;
 
 public class SellSacks extends BaseTask<SellSacksExecutor> {
 
-    public SellSacks() {
-        super(SellSacksExecutor.INSTANCE);
+    public SellSacks(Runnable whenCompleted, Runnable whenAborted) {
+        super(SellSacksExecutor.INSTANCE, whenCompleted, whenAborted);
     }
 
     @Override

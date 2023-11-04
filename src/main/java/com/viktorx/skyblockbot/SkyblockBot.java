@@ -6,7 +6,7 @@ import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem.BuyItemExecut
 import com.viktorx.skyblockbot.task.base.changeIsland.ChangeIslandExecutor;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.sellSacks.SellSacksExecutor;
-import com.viktorx.skyblockbot.task.base.useItem.UseItemExecutor;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.useItem.UseItemExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.giveVisitorItems.GiveVisitorItemsExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.talkToVisitor.TalkToVisitorExecutor;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;

@@ -10,6 +10,11 @@ public abstract class Task {
     protected Runnable whenCompleted = null;
     protected Runnable whenAborted = null;
 
+    public Task(Runnable whenCompleted, Runnable whenAborted) {
+        this.whenCompleted = whenCompleted;
+        this.whenAborted = whenAborted;
+    }
+
     public abstract void execute();
     public abstract void pause();
     public abstract void resume();
@@ -38,9 +43,6 @@ public abstract class Task {
     public abstract boolean isPaused();
 
     public String getTaskName() {
-        String taskName = this.getClass().getName();
-        String[] foo = taskName.split("\\.");
-        taskName = foo[foo.length - 1];
-        return taskName;
+        return this.getClass().getSimpleName();
     }
 }

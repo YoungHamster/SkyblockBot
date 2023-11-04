@@ -1,6 +1,8 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.skyblock.SBUtils;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.skyblock.flipping.auction.AuctionBrowser;
 import com.viktorx.skyblockbot.task.base.BaseTask;
@@ -34,6 +36,8 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
         addState("CLAIMING_AUCTION_VIEW_BIDS");
         addState("CLAIMING_AUCTION_BID");
         addState("CLIAMING_AUCTION_CLAIM");
+        addState("WAITING_FOR_ITEM");
+        addState("WAITING_FOR_MENU_TO_CLOSE");
     }
 
     public void Init() {
@@ -77,7 +81,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
                             CompletableFuture.supplyAsync(
                                     () -> AuctionBrowser.INSTANCE.getAuctionWithBestPrice(
                                             task.getItemName(),
-                                            task.getItemLoreKeyWords(),
+                                            task.getLoreKeyWords(),
                                             task.getPriceLimit()));
                     priceFinderRunning = true;
                 }
@@ -188,8 +192,20 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
                     return;
                 }
 
-                state = getState("IDLE");
-                task.completed();
+                state = getState("WAITING_FOR_ITEM");
+            }
+
+            case "WAITING_FOR_ITEM" -> {
+                if(SBUtils.isItemInInventory(task.getItemName())) {
+                    state = getState("WAITING_FOR_MENU_TO_CLOSE");
+                }
+            }
+
+            case "WAITING_FOR_MENU_TO_CLOSE" -> {
+                if(GlobalExecutorInfo.isCurrentScreenNull.get()) {
+                    state = getState("IDLE");
+                    task.completed();
+                }
             }
 
             case "WAITING_FOR_MENU" -> waitForMenuOrRestart();

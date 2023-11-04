@@ -10,8 +10,15 @@ public class BuyBZItem extends BaseTask<BuyBZItemExecutor> {
     private String itemName = null;
     private int itemCount = 1;
 
-    public BuyBZItem() {
-        super(BuyBZItemExecutor.INSTANCE);
+    public BuyBZItem(String itemName, Runnable whenCompleted, Runnable whenAborted) {
+        super(BuyBZItemExecutor.INSTANCE, whenCompleted, whenAborted);
+        this.itemName = itemName;
+    }
+
+    public BuyBZItem(String itemName, int itemCount, Runnable whenCompleted, Runnable whenAborted) {
+        super(BuyBZItemExecutor.INSTANCE, whenCompleted, whenAborted);
+        this.itemName = itemName;
+        this.itemCount = itemCount;
     }
 
     public void setItemName(String itemName) {

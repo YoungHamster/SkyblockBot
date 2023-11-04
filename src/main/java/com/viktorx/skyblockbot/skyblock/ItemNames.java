@@ -9,7 +9,9 @@ public enum ItemNames {
     CROPIE("Cropie"),
     CARROT("Carrot"),
     RED_MUSHROOM("Red Mushroom"),
-    BROWN_MUSHROOM("Brown Mushroom");
+    BROWN_MUSHROOM("Brown Mushroom"),
+    MYSTICAL_MUSHROOM_SOUP("Mystical Mushroom Soup"),
+    ARMADILLO("Armadillo");
 
     private final String name;
 

@@ -12,18 +12,13 @@ public class GetToSkyblock extends CompoundTask {
     private final Task getOutOfLimbo;
     private final Task getToSkyblock;
 
-    public GetToSkyblock() {
-        waitInQueue = new WaitInQueue();
-        waitInQueue.whenCompleted(this::whenWaitInQueueCompleted);
-        waitInQueue.whenAborted(this::whenWaitInQueueAborted);
+    public GetToSkyblock(Runnable whenCompleted, Runnable whenAborted) {
+        super(whenCompleted, whenAborted);
 
-        getOutOfLimbo = new ChangeIsland("/lobby");
-        getOutOfLimbo.whenCompleted(this::whenGetOutOfLimboCompleted);
-        getOutOfLimbo.whenAborted(this::whenGetOutOfLimboAborted);
+        waitInQueue = new WaitInQueue(this::whenWaitInQueueCompleted, this::whenWaitInQueueAborted);
 
-        getToSkyblock = new ChangeIsland("/play sb");
-        getToSkyblock.whenCompleted(this::whenGetToSkyblockCompleted);
-        getToSkyblock.whenAborted(this::whenGetToSkyblockAborted);
+        getOutOfLimbo = new ChangeIsland("/lobby", this::whenGetOutOfLimboCompleted, this::whenGetOutOfLimboAborted);
+        getToSkyblock = new ChangeIsland("/play sb", this::whenGetToSkyblockCompleted, this::whenGetToSkyblockAborted);
     }
 
     private void whenWaitInQueueCompleted() {
