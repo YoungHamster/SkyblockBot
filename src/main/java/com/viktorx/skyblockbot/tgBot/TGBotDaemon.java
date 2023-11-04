@@ -89,7 +89,7 @@ public class TGBotDaemon {
                 + brownMushCount * brownMushPrice + cropieCount * cropiePrice)
                 * profitMultiplier);
 
-        String taskName = FarmingTask.INSTANCE.getCurrentTaskName();
+        String taskName = FarmingTask.INSTANCE.getTaskName();
 
         List<String> messages;
         synchronized (messageQueue) {

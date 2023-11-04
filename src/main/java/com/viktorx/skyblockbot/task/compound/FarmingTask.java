@@ -10,16 +10,15 @@ import com.viktorx.skyblockbot.task.base.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem.BuyBZItem;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem.BuyItem;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.sellSacks.SellSacks;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.useItem.UseItem;
 import com.viktorx.skyblockbot.task.base.replay.Replay;
 import com.viktorx.skyblockbot.task.base.replay.ReplayBotSettings;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
-import com.viktorx.skyblockbot.task.base.menuClickingTasks.useItem.UseItem;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FarmingTask extends CompoundTask {
     public static final FarmingTask INSTANCE = new FarmingTask(null, null);
@@ -44,7 +43,7 @@ public class FarmingTask extends CompoundTask {
     }
 
     private void whenGetToSkyblockCompleted() {
-        TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
+        TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getTaskName());
         printTaskInfoCompl();
 
         if (!SBUtils.getIslandOrArea().contains(FarmingTaskSettings.gardenName)) {
@@ -69,7 +68,7 @@ public class FarmingTask extends CompoundTask {
     }
 
     private void defaultWhenCompleted() {
-        TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getCurrentTaskName());
+        TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getTaskName());
         printTaskInfoCompl();
 
         if (!taskQueue.isEmpty()) {
@@ -88,7 +87,6 @@ public class FarmingTask extends CompoundTask {
     }
 
     private void whenFarmCompleted() {
-        printTaskInfoCompl();
 
         /*
          * This code is for situation when we die at the end of the farm to respawn at the start
@@ -236,9 +234,9 @@ public class FarmingTask extends CompoundTask {
                 0, FarmingTaskSettings.intervalBetweenRegularChecks);
         timers.add(checkSacksTimer);
 
-        /*Timer checkVisitorsTimer = new Timer(true);
+        Timer checkVisitorsTimer = new Timer(true);
         checkVisitorsTimer.scheduleAtFixedRate(new CheckVisitorsTimerTask(),
-                0, FarmingTaskSettings.checkVisitorsInterval);*/
+                0, FarmingTaskSettings.checkVisitorsInterval);
     }
 
     @Override
@@ -271,26 +269,6 @@ public class FarmingTask extends CompoundTask {
         }
     }
 
-    public String getCurrentTaskName() {
-        if (currentTask == null) {
-            return "null. No task is currently executing";
-        }
-        String taskName = currentTask.getClass().getName();
-        String[] foo = taskName.split("\\.");
-        taskName = foo[foo.length - 1];
-        return taskName;
-    }
-
-    private boolean isTaskInQueue(String taskName) {
-        AtomicBoolean returnVal = new AtomicBoolean(false);
-        taskQueue.forEach(task -> {
-            if(task.getTaskName().equals(taskName)) {
-                returnVal.set(true);
-            }
-        });
-        return returnVal.get();
-    }
-
     private class RegularPauseTimerTask extends TimerTask {
         @Override
         public void run() {
@@ -313,6 +291,34 @@ public class FarmingTask extends CompoundTask {
     }
 
     private class CheckGodPotAndCookieTimerTask extends TimerTask {
+        private static Task buyGodPot;
+        private static Task useGodPot;
+        private static Task buyCookie;
+        private static Task useCookie;
+
+        {
+            buyGodPot = new BuyItem(
+                    ItemNames.GOD_POT.getName(),
+                    new String[0],
+                    FarmingTask.this::defaultWhenCompleted,
+                    FarmingTask.this::defaultWhenAborted);
+
+            useGodPot = new UseItem(
+                    ItemNames.GOD_POT.getName(),
+                    FarmingTask.this::defaultWhenCompleted,
+                    FarmingTask.this::defaultWhenAborted);
+
+            buyCookie = new BuyBZItem(
+                    ItemNames.BOOSTER_COOKIE.getName(),
+                    FarmingTask.this::defaultWhenCompleted,
+                    FarmingTask.this::defaultWhenAborted);
+
+            useCookie = new UseItem(
+                    ItemNames.BOOSTER_COOKIE.getName(),
+                    FarmingTask.this::defaultWhenCompleted,
+                    FarmingTask.this::defaultWhenAborted);
+        }
+
         @Override
         public void run() {
             if (!SBUtils.isServerSkyblock()) {
@@ -327,50 +333,45 @@ public class FarmingTask extends CompoundTask {
             SkyblockBot.LOGGER.info("Time left god pot: " + SBUtils.getTimeLeftGodPot()
                     + "\n Time left cookie: " + SBUtils.getTimeLeftCookieBuff());
             if (SBUtils.getTimeLeftGodPot() < FarmingTaskSettings.godPotBuyThreshold) {
-                if (!isTaskInQueue(UseItem.class.getSimpleName()) &&
-                        !currentTask.getClass().equals(BuyItem.class) &&
-                        !currentTask.getClass().equals(UseItem.class)) {
+                if (!taskQueue.contains(useGodPot) &&
+                        currentTask != buyGodPot &&
+                        currentTask != useGodPot) {
 
                     SkyblockBot.LOGGER.info("Queueing to use god pot. Minutes left: " + SBUtils.getTimeLeftGodPot() / (1000 * 60));
 
                     if (!SBUtils.isItemInInventory(ItemNames.GOD_POT.getName())) {
-                        taskQueue.add(
-                                new BuyItem(
-                                        ItemNames.GOD_POT.getName(),
-                                        new String[0],
-                                        FarmingTask.this::defaultWhenCompleted,
-                                        FarmingTask.this::defaultWhenAborted));
+                        taskQueue.add(buyGodPot);
                     }
 
-                    taskQueue.add(
-                            new UseItem(
-                                    ItemNames.GOD_POT.getName(),
-                                    FarmingTask.this::defaultWhenCompleted,
-                                    FarmingTask.this::defaultWhenAborted));
+                    taskQueue.add(useGodPot);
                 }
+            } else {
+                if (taskQueue.contains(useGodPot)) {
+                    SkyblockBot.LOGGER.info("Wrongfully queued to use god pot, removing that task from queue");
+                }
+                taskQueue.remove(buyGodPot);
+                taskQueue.remove(useGodPot);
             }
 
             if (SBUtils.getTimeLeftCookieBuff() < FarmingTaskSettings.cookieBuyThreshold) {
-                if (!isTaskInQueue(UseItem.class.getSimpleName()) &&
-                        !currentTask.getClass().equals(BuyBZItem.class) &&
-                        !currentTask.getClass().equals(UseItem.class)) {
+                if (!taskQueue.contains(useCookie) &&
+                        currentTask != buyCookie &&
+                        currentTask != useCookie) {
 
                     SkyblockBot.LOGGER.info("Queueing to use cookie. Minutes left: " + SBUtils.getTimeLeftCookieBuff() / (1000 * 60));
 
                     if (!SBUtils.isItemInInventory(ItemNames.BOOSTER_COOKIE.getName())) {
-                        taskQueue.add(
-                                new BuyBZItem(
-                                        ItemNames.BOOSTER_COOKIE.getName(),
-                                        FarmingTask.this::defaultWhenCompleted,
-                                        FarmingTask.this::defaultWhenAborted));
+                        taskQueue.add(buyCookie);
                     }
 
-                    taskQueue.add(
-                            new UseItem(
-                                    ItemNames.BOOSTER_COOKIE.getName(),
-                                    FarmingTask.this::defaultWhenCompleted,
-                                    FarmingTask.this::defaultWhenAborted));
+                    taskQueue.add(useCookie);
                 }
+            } else {
+                if (taskQueue.contains(useCookie)) {
+                    SkyblockBot.LOGGER.info("Wrongfully queued to use cookie, removing that task from queue");
+                }
+                taskQueue.remove(buyCookie);
+                taskQueue.remove(useCookie);
             }
         }
     }
