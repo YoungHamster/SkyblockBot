@@ -28,8 +28,9 @@ public abstract class AbstractMenuClickingExecutor extends BaseExecutor {
     protected void waitForMenuOrRestart() {
         if(CurrentInventory.syncIDChanged()) {
             whenMenuOpened();
+            waitForMenuCounter = 0;
         } else {
-            if(waitForMenuCounter > MenuClickersSettings.maxWaitForScreen) {
+            if(waitForMenuCounter++ > MenuClickersSettings.maxWaitForScreen) {
                 restart();
             }
         }
@@ -78,6 +79,11 @@ public abstract class AbstractMenuClickingExecutor extends BaseExecutor {
         if (MinecraftClient.getInstance().currentScreen != null) {
             Keybinds.blockingPressKey(MinecraftClient.getInstance().options.inventoryKey);
         }
+        while(MinecraftClient.getInstance().currentScreen != null) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException ignored) {}
+        }
     }
 
     protected boolean waitAndClick(String slotName) {
@@ -87,6 +93,13 @@ public abstract class AbstractMenuClickingExecutor extends BaseExecutor {
         }
 
         try {
+            /*
+             * This line is here to clear info about sync id changes before button click
+             * Otherwise sometimes we get false-positives when checking if the menu was opened after clicking on slot,
+             * that is supposed to open new menu in different menu tasks
+             */
+            CurrentInventory.syncIDChanged();
+
             SBUtils.leftClickOnSlot(slotName);
             return true;
         } catch (TimeoutException e) {

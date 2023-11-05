@@ -33,6 +33,8 @@ public class GardenVisitors extends CompoundTask {
     }
 
     private void whenGoToVisitorsCompleted() {
+        currentVisitor = SBUtils.getFirstVisitor();
+        ((TalkToVisitor) talkToVisitor).setVisitorName(currentVisitor);
         currentTask = talkToVisitor;
         currentTask.execute();
     }
@@ -58,7 +60,6 @@ public class GardenVisitors extends CompoundTask {
         String itemName = itemNameCount.getKey();
         int itemCount = itemNameCount.getValue();
 
-        currentVisitor = ((TalkToVisitor) talkToVisitor).getVisitorName();
         SkyblockBot.LOGGER.info("Just talked to visitor " + currentVisitor);
 
         currentTask = new BuyBZItem(itemName, itemCount, this::whenBuyBZItemCompleted, this::whenBuyBZItemAborted);
@@ -66,6 +67,7 @@ public class GardenVisitors extends CompoundTask {
         if (SBUtils.isItemInInventory(itemName)) {
             try {
                 if (SBUtils.getSlot(itemName).getStack().getCount() >= itemCount) {
+                    ((GiveVisitorItems) giveVisitorItems).setVisitorName(currentVisitor);
                     currentTask = giveVisitorItems;
                 }
             } catch (TimeoutException e) {
@@ -91,6 +93,7 @@ public class GardenVisitors extends CompoundTask {
             ((BuyBZItem) currentTask).setItemName(itemName);
             ((BuyBZItem) currentTask).setItemCount(itemCount);
         } else {
+            ((GiveVisitorItems) giveVisitorItems).setVisitorName(currentVisitor);
             currentTask = giveVisitorItems;
         }
         currentTask.execute();
@@ -103,13 +106,21 @@ public class GardenVisitors extends CompoundTask {
     }
 
     private void whenGiveVisitorItemsCompleted() {
-        currentVisitor = null;
-
-        if (SBUtils.getGardenVisitorCount() == 0) {
-            currentTask = goBackToFarm;
-        } else {
-            SkyblockBot.LOGGER.info("Visitor count: " + SBUtils.getGardenVisitorCount());
-            currentTask = talkToVisitor;
+        while(true) {
+            String firstVisitor = SBUtils.getFirstVisitor();
+            if(firstVisitor == null) {
+                currentTask = goBackToFarm;
+                break;
+            } else if(firstVisitor.equals(currentVisitor)) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ignored) {}
+            } else {
+                currentVisitor = firstVisitor;
+                ((TalkToVisitor) talkToVisitor).setVisitorName(currentVisitor);
+                currentTask = talkToVisitor;
+                break;
+            }
         }
         currentTask.execute();
     }

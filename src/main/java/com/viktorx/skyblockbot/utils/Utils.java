@@ -10,6 +10,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -23,6 +24,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Utils {
 
@@ -122,6 +124,33 @@ public class Utils {
                 prevTickInventory.add(new ImmutablePair<>(stack.getName().getString(), stack.getCount()));
             }
         });
+    }
+
+    public static Entity getClosestEntity(String name) {
+        List<Entity> entities = new ArrayList<>();
+
+        assert MinecraftClient.getInstance().world != null;
+        MinecraftClient.getInstance().world.getEntities().forEach(e -> {
+            String entityName = e.getName().getString();
+
+            if (entityName.contains(name)) {
+                entities.add(e);
+            }
+        });
+
+        AtomicReference<Entity> result = new AtomicReference<>();
+        AtomicReference<Double> lowestDistance = new AtomicReference<>(Double.MAX_VALUE);
+
+        entities.forEach(e -> {
+            assert MinecraftClient.getInstance().player != null;
+            double distance = e.getPos().subtract(MinecraftClient.getInstance().player.getPos()).length();
+            if(distance < lowestDistance.get()) {
+                result.set(e);
+                lowestDistance.set(distance);
+            }
+        });
+
+        return result.get();
     }
 
     public static void sendChatMessage(String message) {

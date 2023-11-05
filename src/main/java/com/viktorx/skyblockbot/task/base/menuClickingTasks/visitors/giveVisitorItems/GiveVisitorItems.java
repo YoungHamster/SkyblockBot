@@ -1,8 +1,8 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.giveVisitorItems;
 
-import com.viktorx.skyblockbot.task.base.BaseTask;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.AbstractVisitorTask;
 
-public class GiveVisitorItems extends BaseTask<GiveVisitorItemsExecutor> {
+public class GiveVisitorItems extends AbstractVisitorTask<GiveVisitorItemsExecutor> {
 
     public GiveVisitorItems(Runnable whenCompleted, Runnable whenAborted) {
         super(GiveVisitorItemsExecutor.INSTANCE, whenCompleted, whenAborted);

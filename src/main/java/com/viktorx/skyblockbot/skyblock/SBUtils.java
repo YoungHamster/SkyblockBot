@@ -1,11 +1,11 @@
 package com.viktorx.skyblockbot.skyblock;
 
-import com.viktorx.skyblockbot.utils.CurrentInventory;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.PlayerListHudMixin;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
+import com.viktorx.skyblockbot.utils.CurrentInventory;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.gui.hud.PlayerListHud;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
@@ -15,7 +15,6 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -88,9 +87,15 @@ public class SBUtils {
         }
     }
 
-    public static boolean isGardenVisitorInQueue(String name) {
-        String visitorLine = getTabPlayers().stream().filter(string -> string.contains(name)).collect(Collectors.joining());
-        return visitorLine.length() == 0;
+    public static String getFirstVisitor() {
+        List<String> players = getTabPlayers();
+        for (int i = 0; i < players.size(); i++) {
+            if (players.get(i).contains("Visitors")) {
+                return players.get(i + 1).strip();
+            }
+        }
+
+        return null;
     }
 
     /*
@@ -174,12 +179,14 @@ public class SBUtils {
 
     private static List<String> getTabPlayers() {
         MinecraftClient client = MinecraftClient.getInstance();
-        assert client.player != null;
-        Collection<PlayerListEntry> playerListEntries = client.player.networkHandler.getPlayerList();
+
+        PlayerListHudMixin playerListHud = (PlayerListHudMixin) client.inGameHud.getPlayerListHud();
+
         List<String> tabPlayers = new ArrayList<>();
 
-        playerListEntries.forEach(entry -> {
-            tabPlayers.add(client.inGameHud.getPlayerListHud().getPlayerName(entry).getString());
+        playerListHud.callCollectPlayerEntries().forEach(entry -> {
+            String name = ((PlayerListHud) playerListHud).getPlayerName(entry).getString();
+            tabPlayers.add(name);
         });
 
         return tabPlayers;
@@ -261,7 +268,7 @@ public class SBUtils {
         List<Slot> slotList;
         MinecraftClient client = MinecraftClient.getInstance();
 
-        int numberOfTries = 20;
+        int numberOfTries = 40;
         int i = 0;
 
         do {

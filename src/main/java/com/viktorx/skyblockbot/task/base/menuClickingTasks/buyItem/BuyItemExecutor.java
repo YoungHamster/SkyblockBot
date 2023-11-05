@@ -31,7 +31,6 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
         addState("BUYING");
         addState("CONFIRMING_BUY");
         addState("CHECKING_BUY_RESULT");
-        addState("RESTARTING"); // if item wasn't bought because some hypixel error, like someone else already bought it we restart
         addState("CLAIMING_AUCTION"); // if item was bought, but didn't go to our inventory, we have to claim it
         addState("CLAIMING_AUCTION_VIEW_BIDS");
         addState("CLAIMING_AUCTION_BID");
@@ -46,9 +45,13 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
 
     @Override
     protected void restart() {
-        blockingCloseCurrentInventory();
-        SkyblockBot.LOGGER.warn("Can't buy from auction. Restarting task");
-        state = getState("RESTARTING");
+        SkyblockBot.LOGGER.warn("BuyItem restart happened when state was " + getState(state));
+        state = getState("IDLE");
+        CompletableFuture.runAsync(() -> {
+            blockingCloseCurrentInventory();
+            SkyblockBot.LOGGER.warn("Can't buy from auction. Restarting task");
+            execute(task);
+        });
     }
 
     @Override
@@ -106,7 +109,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
                 }
 
                 if (auctionCommand == null) {
-                    state = getState("RESTARTING");
+                    restart();
                     SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 118");
                     return;
                 }
@@ -147,14 +150,9 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
                 } else if (Utils.isStringInRecentChat("Visit the Auction House", 5)) {
                     state = getState("CLAIMING_AUCTION");
                 } else {
-                    state = getState("RESTARTING");
+                    restart();
                     SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 159");
                 }
-            }
-
-            case "RESTARTING" -> {
-                state = getState("IDLE");
-                CompletableFuture.runAsync(() -> execute(task));
             }
 
             case "CLAIMING_AUCTION" -> {

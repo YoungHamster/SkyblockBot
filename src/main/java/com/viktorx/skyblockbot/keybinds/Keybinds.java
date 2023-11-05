@@ -1,19 +1,16 @@
 package com.viktorx.skyblockbot.keybinds;
 
-import com.viktorx.skyblockbot.movement.LookHelper;
-import com.viktorx.skyblockbot.utils.GlobalSettingsManager;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
 import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
-import com.viktorx.skyblockbot.task.compound.FarmingTask;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
-import com.viktorx.skyblockbot.utils.RayTraceStuff;
+import com.viktorx.skyblockbot.task.compound.FarmingTask;
+import com.viktorx.skyblockbot.utils.GlobalSettingsManager;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.Entity;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;

@@ -172,9 +172,8 @@ public class FarmingTask extends CompoundTask {
     }
 
     private void debugExecute() {
-        currentTask = farm;
+        currentTask = gardenVisitorsTask;
         currentTask.execute();
-        taskQueue.add(gardenVisitorsTask);
     }
 
     public void execute() {
@@ -330,8 +329,6 @@ public class FarmingTask extends CompoundTask {
                 SkyblockBot.LOGGER.info("Current task is null, can't check god pot and cookie");
             }
 
-            SkyblockBot.LOGGER.info("Time left god pot: " + SBUtils.getTimeLeftGodPot()
-                    + "\n Time left cookie: " + SBUtils.getTimeLeftCookieBuff());
             if (SBUtils.getTimeLeftGodPot() < FarmingTaskSettings.godPotBuyThreshold) {
                 if (!taskQueue.contains(useGodPot) &&
                         currentTask != buyGodPot &&
@@ -392,6 +389,10 @@ public class FarmingTask extends CompoundTask {
         @Override
         public void run() {
             if (SBUtils.getGardenVisitorCount() > 3) {
+                if(SBUtils.getPurse() < 3000000) {
+                    SkyblockBot.LOGGER.info("Not queueing to handle garden guests, because purse is too low on coins. Purse: " + SBUtils.getPurse());
+                    return;
+                }
                 if (!taskQueue.contains(gardenVisitorsTask)) {
                     SkyblockBot.LOGGER.info("Queueing to handle garden guests");
                     taskQueue.add(gardenVisitorsTask);

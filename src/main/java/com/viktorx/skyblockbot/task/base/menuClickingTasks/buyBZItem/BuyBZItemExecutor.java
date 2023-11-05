@@ -2,6 +2,8 @@ package com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
+import com.viktorx.skyblockbot.utils.CurrentInventory;
 import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.mixins.IAbstractSignEditScreenMixin;
 import com.viktorx.skyblockbot.task.base.BaseTask;
@@ -32,7 +34,6 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
         addState("BUYING_CUSTOM_AMOUNT");
         addState("WAITING_FOR_MENU");
         addState("WAITING_FOR_SCREEN_CHANGE");
-        addState("RESTARTING");
         addState("WAITING_FOR_ITEM");
     }
 
@@ -42,9 +43,14 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
     @Override
     protected void restart() {
-        blockingCloseCurrentInventory();
-        SkyblockBot.LOGGER.warn("Can't buy " + task.getItemName() + ". Restarting task");
-        state = getState("RESTARTING");
+        SkyblockBot.LOGGER.warn("BuyBZItem restart happened when state was " + getState(state) +
+                " and next state was " + getState(nextState));
+        state = getState("IDLE");
+        CompletableFuture.runAsync(() -> {
+            blockingCloseCurrentInventory();
+            SkyblockBot.LOGGER.warn("Can't buy " + task.getItemName() + ". Restarting task");
+            execute(task);
+        });
     }
 
     @Override
@@ -56,6 +62,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
     public <T extends BaseTask<?>> void whenExecute(T task) {
         this.task = (BuyBZItem) task;
         waitTickCounter = 0;
+        waitForScreenLoadingCounter = 0;
         currentClickRunning = false;
         state = getState("SENDING_COMMAND");
     }
@@ -146,6 +153,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
                 typeIntoCurrentScreen(Integer.toString(task.getItemCount()));
 
+                CurrentInventory.syncIDChanged(); // Reseting this for reasons
                 assert client.currentScreen != null;
                 client.currentScreen.close();
 
@@ -164,16 +172,11 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
             }
 
             case "WAITING_FOR_ITEM" -> {
-                if(SBUtils.isItemInInventory(task.getItemName())) {
+                if(SBUtils.isItemInInventory(task.getItemName()) && client.currentScreen == null) {
                     state = getState("IDLE");
                     task.completed();
 
                 }
-            }
-
-            case "RESTARTING" -> {
-                state = getState("IDLE");
-                CompletableFuture.runAsync(() -> execute(task));
             }
 
             case "WAITING_FOR_MENU" -> waitForMenuOrRestart();

@@ -1,33 +1,23 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.talkToVisitor;
 
-import com.viktorx.skyblockbot.movement.LookHelper;
-import com.viktorx.skyblockbot.utils.CurrentInventory;
-import com.viktorx.skyblockbot.utils.RayTraceStuff;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.base.BaseTask;
-import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.AbstractVisitorExecutor;
 import javafx.util.Pair;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.Entity;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
-public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
+public class TalkToVisitorExecutor extends AbstractVisitorExecutor {
     public static final TalkToVisitorExecutor INSTANCE = new TalkToVisitorExecutor();
 
-    private TalkToVisitor task;
-    private CompletableFuture<Void> lookTask;
 
     private TalkToVisitorExecutor() {
-        addState("WAITING_FOR_VISITOR");
-        addState("MOVING_CAMERA_TO_VISITOR");
-        addState("CLICKING_ON_VISITOR");
-        addState("CLICKING_ON_VISITOR_SECOND_TIME");
+        addState("START_TRACKING_VISITOR");
+        addState("TRACKING_VISITOR");
         addState("WAITING_FOR_MENU");
         addState("READING_DATA");
         addState("CLOSING_VISITOR");
@@ -39,8 +29,9 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
 
     @Override
     protected void restart() {
-        SkyblockBot.LOGGER.warn("TalkToVisitor task isn't meant to be restarted! Aborting");
-        abort();
+        keepTracking.set(false);
+        state = getState("IDLE");
+        execute(task);
     }
 
     @Override
@@ -52,63 +43,21 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
     public <T extends BaseTask<?>> void whenExecute(T task) {
         SkyblockBot.LOGGER.info("Executing talk to visitor!");
         this.task = (TalkToVisitor) task;
-        state = getState("WAITING_FOR_VISITOR");
+        state = getState("START_TRACKING_VISITOR");
     }
 
     private void onTick(MinecraftClient client) {
         switch (getState(state)) {
-            case "WAITING_FOR_VISITOR" -> {
-                assert client.world != null;
-                Entity npc = RayTraceStuff.rayTraceEntityFromPlayer(client.player, client.world, 4.0d);
-                if (npc != null) {
-                    /*
-                     * We're waiting for npc to stop moving before interacting with it
-                     */
-                    if(npc.getLerpedPos(2).subtract(npc.getPos()).length() > 0.05d) {
-                        return;
-                    }
+            case "START_TRACKING_VISITOR" -> whenStartTrackingVisitor();
 
-                    lookTask = LookHelper.lookAtEntityAsync(npc);
-                    state = getState("MOVING_CAMERA_TO_VISITOR");
-                } else {
-                    if(SBUtils.getGardenVisitorCount() == 0) {
-                        state = getState("IDLE");
-                        task.aborted();
-                    }
-                }
-            }
-
-            case "MOVING_CAMERA_TO_VISITOR" -> {
-                if(lookTask.isDone()) {
-                    state = getState("CLICKING_ON_VISITOR");
-                }
-            }
-
-            case "CLICKING_ON_VISITOR" -> {
-                if (!waitBeforeAction()) {
-                    Keybinds.asyncPressKeyAfterTick(client.options.useKey);
-                    state = getState("CLICKING_ON_VISITOR_SECOND_TIME");
-                }
-            }
-
-            case "CLICKING_ON_VISITOR_SECOND_TIME" -> {
-                if (!waitBeforeAction()) {
-                    // Maybe visitor menu already opened and we don't need to click it them a second time
-                    if(!CurrentInventory.syncIDChanged()) {
-                        Keybinds.asyncPressKeyAfterTick(client.options.useKey);
-                        state = getState("WAITING_FOR_MENU");
-                    } else {
-                        whenMenuOpened();
-                    }
-                }
-            }
+            case "TRACKING_VISITOR" -> whenTrackingVisitor(client);
 
             case "WAITING_FOR_MENU" -> waitForMenuOrRestart();
 
             case "READING_DATA" -> {
                 List<String> lore;
                 try {
-                    lore = SBUtils.getSlotLore(task.getAcceptOfferStr());
+                    lore = SBUtils.getSlotLore(((TalkToVisitor) task).getAcceptOfferStr());
                 } catch (TimeoutException e) {
                     SkyblockBot.LOGGER.warn("Can't read data from visitor, timeout exception! Aborting task");
                     abort();
@@ -120,9 +69,6 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
                     abort();
                     return;
                 }
-
-                assert client.currentScreen != null;
-                task.setVisitorName(client.currentScreen.getTitle().getString());
 
                 /*
                  * visitors can have more than one item required
@@ -139,7 +85,7 @@ public class TalkToVisitorExecutor extends AbstractMenuClickingExecutor {
                         count = Integer.parseInt(nameCount[1]);
                     }
 
-                    task.addItem(new Pair<>(name, count));
+                    ((TalkToVisitor) task).addItem(new Pair<>(name, count));
                 }
 
                 state = getState("CLOSING_VISITOR");

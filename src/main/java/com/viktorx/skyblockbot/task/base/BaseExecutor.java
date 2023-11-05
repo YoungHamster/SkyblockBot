@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.task.base;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.utils.CurrentInventory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,6 +41,11 @@ public abstract class BaseExecutor {
             SkyblockBot.LOGGER.warn("Can't execute " + this.task.getTaskName() + " when already executing");
             return;
         }
+
+        /*
+         * Resetting syncIdChanged in case it changed sometime before this task's execution
+         */
+        CurrentInventory.syncIDChanged();
 
         whenExecute(task);
     }

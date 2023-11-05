@@ -1,22 +1,19 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.giveVisitorItems;
 
-import com.viktorx.skyblockbot.utils.CurrentInventory;
-import com.viktorx.skyblockbot.utils.RayTraceStuff;
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.task.base.BaseTask;
-import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.AbstractVisitorExecutor;
+import com.viktorx.skyblockbot.utils.RayTraceStuff;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
-public class GiveVisitorItemsExecutor extends AbstractMenuClickingExecutor {
+public class GiveVisitorItemsExecutor extends AbstractVisitorExecutor {
 
     public static final GiveVisitorItemsExecutor INSTANCE = new GiveVisitorItemsExecutor();
 
-    private GiveVisitorItems task;
-
     private GiveVisitorItemsExecutor() {
-        addState("CLICKING_ON_VISITOR");
+        addState("START_TRACKING_VISITOR");
+        addState("TRACKING_VISITOR");
         addState("WAITING_FOR_MENU");
         addState("ACCEPTING_OFFER");
         addState("WAITING_TILL_NPC_LEAVES");
@@ -33,40 +30,31 @@ public class GiveVisitorItemsExecutor extends AbstractMenuClickingExecutor {
         execute(task);
     }
 
-    /**
-     * This executor doesn't use this method, so I leave it empty
-     */
     @Override
     protected void whenMenuOpened() {
+        SkyblockBot.LOGGER.info("Menu loaded!");
+        state = getState("ACCEPTING_OFFER");
     }
 
     @Override
     public <T extends BaseTask<?>> void whenExecute(T task) {
         currentClickRunning = false;
         waitTickCounter = 0;
+        waitForMenuCounter = 0;
         this.task = (GiveVisitorItems) task;
-        state = getState("CLICKING_ON_VISITOR");
+        state = getState("START_TRACKING_VISITOR");
     }
 
     private void onTick(MinecraftClient client) {
         switch (getState(state)) {
-            case "CLICKING_ON_VISITOR" -> {
-                assert client.world != null;
-                if (RayTraceStuff.rayTraceEntityFromPlayer(client.player, client.world, 4.0d) != null) {
-                    Keybinds.asyncPressKeyAfterTick(client.options.useKey);
-                    SkyblockBot.LOGGER.info("GiveVisitorItems task executor clicked on visitor");
-                    state = getState("WAITING_FOR_MENU");
-                }
-            }
+            case "START_TRACKING_VISITOR" -> whenStartTrackingVisitor();
 
-            case "WAITING_FOR_MENU" -> {
-                if (CurrentInventory.syncIDChanged()) {
-                    state = getState("ACCEPTING_OFFER");
-                }
-            }
+            case "TRACKING_VISITOR" -> whenTrackingVisitor(client);
+
+            case "WAITING_FOR_MENU" -> waitForMenuOrRestart();
 
             case "ACCEPTING_OFFER" -> {
-                if (!asyncClickOrRestart(task.getAcceptOfferStr())) {
+                if (!asyncClickOrRestart(((GiveVisitorItems) task).getAcceptOfferStr())) {
                     return;
                 }
                 state = getState("WAITING_TILL_NPC_LEAVES");
