@@ -389,7 +389,7 @@ public class FarmingTask extends CompoundTask {
         @Override
         public void run() {
             if (SBUtils.getGardenVisitorCount() > 3) {
-                if(SBUtils.getPurse() < 3000000) {
+                if (SBUtils.getPurse() < 3000000) {
                     SkyblockBot.LOGGER.info("Not queueing to handle garden guests, because purse is too low on coins. Purse: " + SBUtils.getPurse());
                     return;
                 }

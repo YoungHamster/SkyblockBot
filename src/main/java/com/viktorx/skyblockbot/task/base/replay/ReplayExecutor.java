@@ -147,10 +147,8 @@ public class ReplayExecutor {
                      */
                     currentlyPressedKeys.forEach((key, value) -> value.firstPress());
 
-                    return;
-                } else {
-                    return;
                 }
+                return;
             } else {
                 return;
             }
@@ -600,8 +598,10 @@ public class ReplayExecutor {
                 }
 
                 case 1 -> {
-                    currentlyPressedKeys.put(key.getKey(), key);
-                    key.press();
+                    if(!currentlyPressedKeys.containsKey(key.getKey())) {
+                        currentlyPressedKeys.put(key.getKey(), key);
+                        key.press();
+                    }
                 }
 
                 case 2 -> key.press();
