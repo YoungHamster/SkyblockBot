@@ -1,9 +1,11 @@
 package com.viktorx.skyblockbot.mixins.InputRelated;
 
+import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.task.base.replay.tickState.KeyboardKeyRecord;
 import net.minecraft.client.Keyboard;
+import net.minecraft.client.util.InputUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,6 +17,10 @@ public class KeyboardMixin {
     public void interceptOnKey(long window, int key, int scancode, int action, int modifiers, CallbackInfo ci) {
         if (key != Keybinds.getStartStopRecrodingKeyCode()) {
             ReplayExecutor.INSTANCE.onKeyPress(new KeyboardKeyRecord(key, scancode, action, modifiers));
+        }
+
+        if(key == InputUtil.GLFW_KEY_F && action != 2) {
+            SkyblockBot.LOGGER.info("Pressed F, action: " + action);
         }
     }
 }
