@@ -85,9 +85,13 @@ public class ClientPlayNetworkHandlerMixin {
             increase = increase.substring(1);
             delta += Integer.parseInt(increase.replace(",", ""));
 
+            // if decrease string contains 'last' then no items were taken out of sacks
+            // and chat message looks like '[Sacks] +25 items. (Last 30s.)' instead of '[Sacks] +733 items, -594 items. (Last 30s.)'
             String decrease = split[3];
-            decrease = decrease.substring(1);
-            delta -= Integer.parseInt(decrease.replace(",", ""));
+            if(!decrease.contains("Last")) {
+                decrease = decrease.substring(1);
+                delta -= Integer.parseInt(decrease.replace(",", ""));
+            }
 
             GlobalExecutorInfo.totalSackCount.addAndGet(delta);
         }
