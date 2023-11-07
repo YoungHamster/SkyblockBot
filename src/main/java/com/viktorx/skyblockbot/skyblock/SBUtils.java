@@ -146,7 +146,7 @@ public class SBUtils {
             return 0;
         }
 
-        if (cookieTime.contains("Less than an hour")) {
+        if (cookieTime.contains("Less than an hour") || cookieTime.contains("Not active")) {
             return 0;
         } else if (cookieTime.contains("days") || cookieTime.contains("day")) {
             return Long.parseLong(cookieTime.split(" ")[0]) * day;
