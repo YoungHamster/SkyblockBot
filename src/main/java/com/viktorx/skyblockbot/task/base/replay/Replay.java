@@ -1,7 +1,7 @@
 package com.viktorx.skyblockbot.task.base.replay;
 
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.task.Task;
+import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.replay.tickState.AnyKeyRecord;
 import com.viktorx.skyblockbot.task.base.replay.tickState.KeyboardKeyRecord;
 import com.viktorx.skyblockbot.task.base.replay.tickState.MouseKeyRecord;
@@ -15,37 +15,17 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Replay extends Task {
+public class Replay extends BaseTask<ReplayExecutor> {
     private static final long saveProtocolVersion = 42070;
     protected final List<TickState> tickStates = new ArrayList<>();
 
     public Replay() {
-        super(null, null);
+        super(ReplayExecutor.INSTANCE, null, null);
     }
 
     public Replay(String filename, Runnable whenCompleted, Runnable whenAborted) {
-        super(whenCompleted, whenAborted);
+        super(ReplayExecutor.INSTANCE, whenCompleted, whenAborted);
         loadFromFile(filename);
-    }
-
-    public void execute() {
-        try {
-            ReplayExecutor.INSTANCE.execute(this);
-        } catch (InterruptedException e) {
-            SkyblockBot.LOGGER.info("Interrupted while trying to execute Replay, wtf?");
-        }
-    }
-
-    public void pause() {
-        ReplayExecutor.INSTANCE.pause();
-    }
-
-    public void resume() {
-        ReplayExecutor.INSTANCE.resume();
-    }
-
-    public void abort() {
-        ReplayExecutor.INSTANCE.abort();
     }
 
     public void saveToFile(String filename) {
@@ -54,7 +34,7 @@ public class Replay extends Task {
          */
         int bufferSize = 8 + tickStates.size() * TickState.getEmptyTickStateSize();
         for (TickState tick : tickStates) {
-            for(AnyKeyRecord key : tick.getKeys()) {
+            for (AnyKeyRecord key : tick.getKeys()) {
                 bufferSize += key.getSize();
             }
         }
@@ -78,7 +58,7 @@ public class Replay extends Task {
         }
         try {
             File f = new File("replays");
-            if(!f.isDirectory()) {
+            if (!f.isDirectory()) {
                 f.mkdir();
             }
             OutputStream os = new FileOutputStream("replays\\\\" + filename, false);
@@ -137,7 +117,7 @@ public class Replay extends Task {
             for (int i = 0; i < numberOfKeys; i++) {
                 byte keyType = file.get();
 
-                if(keyType == KeyboardKeyRecord.getType()) {
+                if (keyType == KeyboardKeyRecord.getType()) {
                     keys.add(new KeyboardKeyRecord(file.getInt(), file.getInt(), file.getInt(), file.getInt()));
                 } else if (keyType == MouseKeyRecord.getType()) {
                     keys.add(new MouseKeyRecord(file.getInt(), file.getInt(), file.getInt()));

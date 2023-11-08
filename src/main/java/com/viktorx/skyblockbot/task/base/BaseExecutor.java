@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.task.base;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.task.Task;
 import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
 import com.viktorx.skyblockbot.utils.CurrentInventory;
 import net.minecraft.client.MinecraftClient;
@@ -66,7 +67,7 @@ public abstract class BaseExecutor {
         }
     }
 
-    protected static class Paused implements ExecutorState {
+    public static class Paused implements ExecutorState {
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             return this;

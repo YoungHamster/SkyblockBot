@@ -16,6 +16,7 @@ import com.viktorx.skyblockbot.task.base.replay.ReplayBotSettings;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -174,9 +175,6 @@ public class FarmingTask extends CompoundTask {
     private void debugExecute() {
         currentTask = gardenVisitorsTask;
         currentTask.execute();
-
-        runWhenFarmCompleted.add(this::pause);
-        runWhenFarmCompleted.stream().forEach(method -> SkyblockBot.LOGGER.info("Method: " + method.toString()));
     }
 
     public void execute() {
