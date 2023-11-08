@@ -9,6 +9,7 @@ import com.viktorx.skyblockbot.task.base.menuClickingTasks.sellSacks.SellSacksEx
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.useItem.UseItemExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.giveVisitorItems.GiveVisitorItemsExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.talkToVisitor.TalkToVisitorExecutor;
+import com.viktorx.skyblockbot.task.base.waitInQueue.WaitInQueueExecutor;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 import com.viktorx.skyblockbot.utils.GlobalSettingsManager;
 import com.viktorx.skyblockbot.utils.Utils;
@@ -46,5 +47,6 @@ public class SkyblockBot implements ModInitializer {
         TGBotDaemon.INSTANCE.Init();
         TalkToVisitorExecutor.INSTANCE.Init();
         GiveVisitorItemsExecutor.INSTANCE.Init();
+        WaitInQueueExecutor.INSTANCE.Init();
     }
 }

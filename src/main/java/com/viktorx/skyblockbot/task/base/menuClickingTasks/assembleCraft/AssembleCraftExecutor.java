@@ -6,6 +6,7 @@ import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
+import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
 import javafx.util.Pair;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
@@ -15,116 +16,117 @@ import java.util.concurrent.TimeoutException;
 public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
 
     public static final AssembleCraftExecutor INSTANCE = new AssembleCraftExecutor();
-
     private AssembleCraft task;
-    private int nextState;
+    private ExecutorState nextState;
     private ItemPutter itemPutter;
-
-    private AssembleCraftExecutor() {
-        addState("CHECKING_INGREDIENTS");
-        addState("OPENING_SB_MENU");
-        addState("OPENING_CRAFTING_TABLE");
-        addState("PUTTING_ITEMS");
-        addState("COLLECTING_CRAFT");
-        addState("CLOSING_INVENTORY");
-        addState("WAITING_FOR_MENU");
-        addState("RESTARTING");
-        addState("ABORTED");
-    }
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
     }
 
     @Override
-    protected void restart() {
-        state = getState("OPENING_SB_MENU");
+    protected synchronized ExecutorState restart() {
+        return new OpeningSBMenu();
     }
 
     @Override
-    protected void whenMenuOpened() {
-        state = nextState;
+    protected ExecutorState whenMenuOpened() {
+        return nextState;
     }
 
     @Override
-    public <T extends BaseTask<?>> void whenExecute(T task) {
+    public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         this.itemPutter = new ItemPutter();
         this.task = (AssembleCraft) task;
-        state = getState("CHECKING_INGREDIENTS");
+        return new CheckingIngredients();
     }
 
-    private void onTick(MinecraftClient client) {
-        switch (getState(state)) {
-            case "CHECKING_INGREDIENTS" -> {
-                task.getRecipe().getIngredients().forEach(ingredient -> {
-                    if (!SBUtils.isAmountInInventory(ingredient.getKey(), ingredient.getValue())) {
-                        state = getState("ABORTED");
-                    }
-                });
+    private synchronized void onTick(MinecraftClient client) {
+        state = state.onTick(client);
+    }
 
-                if (state == getState("ABORTED")) {
-                    abort();
-                    return;
-                }
+    protected static class CheckingIngredients implements ExecutorState {
+        private final AssembleCraftExecutor parent = AssembleCraftExecutor.INSTANCE;
 
-                state = getState("OPENING_SB_MENU");
-                assert client.player != null;
-                if (client.player.getInventory().selectedSlot != GlobalExecutorInfo.sbMenuHotbarSlot) {
-                    Keybinds.asyncPressKeyAfterTick(
-                            client.options.hotbarKeys[GlobalExecutorInfo.sbMenuHotbarSlot]);
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            for (Pair<String, Integer> ingredient : parent.task.getRecipe().getIngredients()) {
+                if (!SBUtils.isAmountInInventory(ingredient.getKey(), ingredient.getValue())) {
+                    parent.abort();
+                    return new Idle();
                 }
             }
+            assert client.player != null;
+            if (client.player.getInventory().selectedSlot != GlobalExecutorInfo.sbMenuHotbarSlot) {
+                Keybinds.asyncPressKeyAfterTick(
+                        client.options.hotbarKeys[GlobalExecutorInfo.sbMenuHotbarSlot]);
+            }
+            return new OpeningSBMenu();
+        }
+    }
 
-            case "OPENING_SB_MENU" -> {
-                if (!waitBeforeAction()) {
-                    Keybinds.asyncPressKeyAfterTick(client.options.useKey);
-                    nextState = getState("OPENING_CRAFTING_TABLE");
-                    state = getState("WAITING_FOR_MENU");
+    protected static class OpeningSBMenu extends WaitingExecutorState {
+        private final AssembleCraftExecutor parent = AssembleCraftExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (!waitBeforeAction()) {
+                Keybinds.asyncPressKeyAfterTick(client.options.useKey);
+                parent.nextState = new OpeningCraftingTable();
+                return new WaitingForMenu(parent);
+            }
+            return this;
+        }
+    }
+
+    protected static class OpeningCraftingTable extends WaitingExecutorState {
+        private final AssembleCraftExecutor parent = AssembleCraftExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (!waitBeforeAction()) {
+                try {
+                    SBUtils.leftClickOnSlot(parent.task.getCraftingTableSlotName());
+                    parent.nextState = new PuttingItems();
+                    return new WaitingForMenu(parent);
+                } catch (TimeoutException e) {
+                    SkyblockBot.LOGGER.warn("Can't click on crafting table slot! Restarting AssembleCraft tsak");
+                    return parent.restart();
                 }
             }
+            return this;
+        }
+    }
 
-            case "OPENING_CRAFTING_TABLE" -> {
-                if (!waitBeforeAction()) {
-                    try {
-                        SBUtils.leftClickOnSlot(task.getCraftingTableSlotName());
-                        nextState = getState("PUTTING_ITEMS");
-                        state = getState("WAITING_FOR_MENU");
-                    } catch (TimeoutException e) {
-                        SkyblockBot.LOGGER.warn("Can't click on crafting table slot! Restarting AssembleCraft tsak");
-                        state = getState("RESTARTING");
-                    }
+    protected static class PuttingItems extends WaitingExecutorState {
+        private final AssembleCraftExecutor parent = AssembleCraftExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (!waitBeforeAction()) {
+                if (!parent.itemPutter.putNextCraftItem()) {
+                    return new CollectingCraft();
                 }
             }
+            return this;
+        }
+    }
 
-            case "PUTTING_ITEMS" -> {
-                if (!waitBeforeAction()) {
-                    if (!itemPutter.putNextCraftItem()) {
-                        state = getState("COLLECTING_CRAFT");
-                    }
-                }
+
+    protected static class CollectingCraft extends WaitingExecutorState {
+        private final AssembleCraftExecutor parent = AssembleCraftExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (!waitBeforeAction()) {
+
             }
-
-            case "COLLECTING_CRAFT" -> {
-                if (!waitBeforeAction()) {
-
-                }
-            }
-
-            case "WAITING_FOR_MENU" -> waitForMenuOrRestart();
+            return this;
         }
     }
 
     private class ItemPutter {
-        private enum PutItemState {
-            PICKING_ITEM,
-            PUTTING_ITEM;
-
-            PutItemState() {
-            }
-        }
-
         private static final int craftingTableSize = 9;
-
         private PutItemState putItemState = PutItemState.PICKING_ITEM;
         private int ingridientIterator = 0;
 
@@ -147,6 +149,14 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
 
             ingridientIterator++;
             return ingridientIterator < craftingTableSize;
+        }
+
+        private enum PutItemState {
+            PICKING_ITEM,
+            PUTTING_ITEM;
+
+            PutItemState() {
+            }
         }
     }
 }

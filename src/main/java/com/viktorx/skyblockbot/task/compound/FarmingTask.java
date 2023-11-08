@@ -174,6 +174,9 @@ public class FarmingTask extends CompoundTask {
     private void debugExecute() {
         currentTask = gardenVisitorsTask;
         currentTask.execute();
+
+        runWhenFarmCompleted.add(this::pause);
+        runWhenFarmCompleted.stream().forEach(method -> SkyblockBot.LOGGER.info("Method: " + method.toString()));
     }
 
     public void execute() {
@@ -236,6 +239,7 @@ public class FarmingTask extends CompoundTask {
         Timer checkVisitorsTimer = new Timer(true);
         checkVisitorsTimer.scheduleAtFixedRate(new CheckVisitorsTimerTask(),
                 0, FarmingTaskSettings.checkVisitorsInterval);
+        timers.add(checkVisitorsTimer);
     }
 
     @Override
@@ -274,18 +278,20 @@ public class FarmingTask extends CompoundTask {
             SkyblockBot.LOGGER.info("When the current farm loop is done bot is going to take a break");
 
             synchronized (runWhenFarmCompleted) {
-                runWhenFarmCompleted.add(() -> {
-                    SkyblockBot.LOGGER.info("Bot is taking a break for " + FarmingTaskSettings.pauseDuration / 60000 + "minutes");
-                    TGBotDaemon.INSTANCE.queueMessage("Bot is taking a break");
-                    try {
-                        Thread.sleep(FarmingTaskSettings.pauseDuration);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    SkyblockBot.LOGGER.info("Break is over, bot is farming again");
-                    TGBotDaemon.INSTANCE.queueMessage("Break is over, bot is farming again");
-                });
+                runWhenFarmCompleted.add(this::pauseTask);
             }
+        }
+
+        private void pauseTask() {
+            SkyblockBot.LOGGER.info("Bot is taking a break for " + FarmingTaskSettings.pauseDuration / 60000 + "minutes");
+            TGBotDaemon.INSTANCE.queueMessage("Bot is taking a break");
+            try {
+                Thread.sleep(FarmingTaskSettings.pauseDuration);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            SkyblockBot.LOGGER.info("Break is over, bot is farming again");
+            TGBotDaemon.INSTANCE.queueMessage("Break is over, bot is farming again");
         }
     }
 

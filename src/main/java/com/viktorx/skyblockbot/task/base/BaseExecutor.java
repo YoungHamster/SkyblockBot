@@ -1,45 +1,22 @@
 package com.viktorx.skyblockbot.task.base;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
 import com.viktorx.skyblockbot.utils.CurrentInventory;
-
-import java.util.HashMap;
-import java.util.Map;
+import net.minecraft.client.MinecraftClient;
 
 public abstract class BaseExecutor {
 
-    private final Map<String, Integer> states = new HashMap<>();
-    private final Map<Integer, String> reverseStates = new HashMap<>();
     protected BaseTask<?> task;
-    protected int state;
-    protected int stateBeforePause;
+    protected ExecutorState state = new Idle();
+    protected ExecutorState stateBeforePause;
 
-    public BaseExecutor() {
-        addState("IDLE");
-        addState("PAUSED");
+    public abstract <T extends BaseTask<?>> ExecutorState whenExecute(T task);
 
-        state = states.get("IDLE");
-    }
-
-    protected void addState(String name) {
-        states.put(name, states.size());
-        reverseStates.put(reverseStates.size(), name);
-    }
-
-    protected int getState(String name) {
-        return states.get(name);
-    }
-
-    protected String getState(Integer i) {
-        return reverseStates.get(i);
-    }
-
-    public abstract <T extends BaseTask<?>> void whenExecute(T task);
-
-    public <T extends BaseTask<?>> void execute(T task) {
-        if (state != states.get("IDLE")) {
+    public synchronized <T extends BaseTask<?>> ExecutorState execute(T task) {
+        if (!state.getClass().equals(Idle.class)) {
             SkyblockBot.LOGGER.warn("Can't execute " + this.task.getTaskName() + " when already executing");
-            return;
+            return new Idle();
         }
 
         /*
@@ -47,21 +24,22 @@ public abstract class BaseExecutor {
          */
         CurrentInventory.syncIDChanged();
 
-        whenExecute(task);
+        state = whenExecute(task);
+        return state;
     }
 
-    public void pause() {
-        if (state == states.get("IDLE") || state == states.get("PAUSED")) {
+    public synchronized void pause() {
+        if (state.getClass().equals(Idle.class) || state.getClass().equals(Paused.class)) {
             SkyblockBot.LOGGER.warn("Can't pause " + this.task.getTaskName() + " when idle or already paused");
             return;
         }
 
         stateBeforePause = state;
-        state = states.get("PAUSED");
+        state = new Paused();
     }
 
-    public void resume() {
-        if (state != states.get("PAUSED")) {
+    public synchronized void resume() {
+        if (!state.getClass().equals(Paused.class)) {
             SkyblockBot.LOGGER.warn("Can't resume " + this.task.getTaskName() + " when not paused");
             return;
         }
@@ -69,15 +47,29 @@ public abstract class BaseExecutor {
         state = stateBeforePause;
     }
 
-    public void abort() {
-        state = states.get("IDLE");
+    public synchronized void abort() {
+        state = new Idle();
     }
 
     public <T extends BaseTask<?>> boolean isExecuting(T task) {
-        return state != states.get("IDLE") && this.task == task;
+        return !state.getClass().equals(Idle.class) && this.task == task;
     }
 
     public boolean isPaused() {
-        return state == states.get("PAUSED");
+        return state.getClass().equals(Paused.class);
+    }
+
+    public static class Idle implements ExecutorState {
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            return this;
+        }
+    }
+
+    protected static class Paused implements ExecutorState {
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            return this;
+        }
     }
 }

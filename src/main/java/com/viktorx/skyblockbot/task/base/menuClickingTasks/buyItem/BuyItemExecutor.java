@@ -2,11 +2,11 @@ package com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
-import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
-import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.skyblock.flipping.auction.AuctionBrowser;
 import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
+import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
+import com.viktorx.skyblockbot.utils.Utils;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutionException;
 public class BuyItemExecutor extends AbstractMenuClickingExecutor {
 
     public static final BuyItemExecutor INSTANCE = new BuyItemExecutor();
-    private int nextState;
+    private ExecutorState nextState;
     private BuyItem task;
     private CompletableFuture<String> priceFinder;
     private boolean priceFinderRunning = false;
@@ -24,19 +24,6 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
     BuyItemExecutor() {
         possibleErrors.add("You cannot view this auction");
         possibleErrors.add("This auction wasn't found");
-
-        addState("LOADING_AUCTIONS");
-        addState("SENDING_COMMAND");
-        addState("WAITING_FOR_MENU");
-        addState("BUYING");
-        addState("CONFIRMING_BUY");
-        addState("CHECKING_BUY_RESULT");
-        addState("CLAIMING_AUCTION"); // if item was bought, but didn't go to our inventory, we have to claim it
-        addState("CLAIMING_AUCTION_VIEW_BIDS");
-        addState("CLAIMING_AUCTION_BID");
-        addState("CLIAMING_AUCTION_CLAIM");
-        addState("WAITING_FOR_ITEM");
-        addState("WAITING_FOR_MENU_TO_CLOSE");
     }
 
     public void Init() {
@@ -44,170 +31,209 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
     }
 
     @Override
-    protected void restart() {
-        SkyblockBot.LOGGER.warn("BuyItem restart happened when state was " + getState(state));
-        state = getState("IDLE");
+    protected synchronized ExecutorState restart() {
+        SkyblockBot.LOGGER.warn("BuyItem restart happened when state was " + state.getClass().getSimpleName());
         CompletableFuture.runAsync(() -> {
             blockingCloseCurrentInventory();
             SkyblockBot.LOGGER.warn("Can't buy from auction. Restarting task");
             execute(task);
         });
+        return new Idle();
     }
 
     @Override
-    protected void whenMenuOpened() {
-        state = nextState;
+    protected ExecutorState whenMenuOpened() {
+        return nextState;
     }
 
     @Override
-    public <T extends BaseTask<?>> void whenExecute(T task) {
+    public synchronized  <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         CompletableFuture.runAsync(AuctionBrowser.INSTANCE::loadAH);
         priceFinderRunning = false;
         currentClickRunning = false;
-        waitTickCounter = 0;
-        state = getState("LOADING_AUCTIONS");
         this.task = (BuyItem) task;
+        return new LoadingAuctions();
     }
 
-    public void onTickBuy(MinecraftClient client) {
+    public synchronized void onTickBuy(MinecraftClient client) {
+        state = state.onTick(client);
+    }
 
-        switch (getState(state)) {
-            case "LOADING_AUCTIONS" -> {
-                if (AuctionBrowser.INSTANCE.isAHLoaded()) {
-                    state = getState("SENDING_COMMAND");
-                }
+    protected static class LoadingAuctions implements ExecutorState {
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (AuctionBrowser.INSTANCE.isAHLoaded()) {
+                return new SendingCommand();
+            }
+            return this;
+        }
+    }
+
+    protected static class SendingCommand extends WaitingExecutorState {
+        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (!parent.priceFinderRunning) {
+                parent.priceFinder =
+                        CompletableFuture.supplyAsync(
+                                () -> AuctionBrowser.INSTANCE.getAuctionWithBestPrice(
+                                        parent.task.getItemName(),
+                                        parent.task.getLoreKeyWords(),
+                                        parent.task.getPriceLimit()));
+                parent.priceFinderRunning = true;
             }
 
-            case "SENDING_COMMAND" -> {
-                if (!priceFinderRunning) {
-                    priceFinder =
-                            CompletableFuture.supplyAsync(
-                                    () -> AuctionBrowser.INSTANCE.getAuctionWithBestPrice(
-                                            task.getItemName(),
-                                            task.getLoreKeyWords(),
-                                            task.getPriceLimit()));
-                    priceFinderRunning = true;
-                }
-
-                if (!priceFinder.isDone()) {
-                    return;
-                }
-
-                if (waitBeforeAction()) {
-                    return;
-                }
-
-                priceFinderRunning = false;
-                String auctionCommand = null;
-
-                try {
-                    auctionCommand = priceFinder.get();
-                } catch (InterruptedException | ExecutionException e) {
-                    SkyblockBot.LOGGER.info("Some weird exception when buying item.");
-                    state = getState("IDLE");
-                    task.aborted();
-                }
-
-                if (auctionCommand == null) {
-                    restart();
-                    SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 118");
-                    return;
-                }
-
-                assert client.player != null;
-                Utils.sendChatMessage(auctionCommand);
-
-                nextState = getState("BUYING");
-                state = getState("WAITING_FOR_MENU");
+            if (!parent.priceFinder.isDone()) {
+                return this;
             }
 
-            case "BUYING" -> {
-                if (!asyncClickOrRestart(task.getBuySlotName())) {
-                    return;
-                }
-
-                nextState = getState("CONFIRMING_BUY");
-                state = getState("WAITING_FOR_MENU");
+            if (waitBeforeAction()) {
+                return this;
             }
 
-            case "CONFIRMING_BUY" -> {
-                if (!asyncClickOrRestart(task.getConfirmSlotName())) {
-                    return;
-                }
+            parent.priceFinderRunning = false;
+            String auctionCommand = null;
 
-                nextState = getState("CHECKING_BUY_RESULT");
-                state = getState("WAITING_FOR_MENU");
+            try {
+                auctionCommand = parent.priceFinder.get();
+            } catch (InterruptedException | ExecutionException e) {
+                SkyblockBot.LOGGER.info("Some weird exception when buying item.");
+                parent.task.aborted();
+                return new Idle();
             }
 
-            case "CHECKING_BUY_RESULT" -> {
-                if (waitBeforeAction()) {
-                    return;
-                }
-
-                if (Utils.isStringInRecentChat("You claimed", 5)) {
-                    state = getState("IDLE");
-                    task.completed();
-                } else if (Utils.isStringInRecentChat("Visit the Auction House", 5)) {
-                    state = getState("CLAIMING_AUCTION");
-                } else {
-                    restart();
-                    SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 159");
-                }
+            if (auctionCommand == null) {
+                SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting!");
+                return parent.restart();
             }
 
-            case "CLAIMING_AUCTION" -> {
-                if (waitBeforeAction()) {
-                    return;
-                }
+            assert client.player != null;
+            Utils.sendChatMessage(auctionCommand);
 
-                assert client.player != null;
-                Utils.sendChatMessage("/ah");
+            parent.nextState = new Buying();
+            return new WaitingForMenu(parent);
 
-                nextState = getState("CLAIMING_AUCTION_VIEW_BIDS");
-                state = getState("WAITING_FOR_MENU");
+        }
+    }
+
+    protected static class Buying implements ExecutorState {
+        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (!parent.asyncClickOrRestart(parent.task.getBuySlotName())) {
+                return this;
             }
 
-            case "CLAIMING_AUCTION_VIEW_BIDS" -> {
-                if (!asyncClickOrRestart(task.getViewBidsSlotName())) {
-                    return;
-                }
+            parent.nextState = new ConfirmingBuy();
+            return new WaitingForMenu(parent);
+        }
+    }
 
-                nextState = getState("CLAIMING_AUCTION_BID");
-                state = getState("WAITING_FOR_MENU");
+    protected static class ConfirmingBuy implements ExecutorState {
+        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (!parent.asyncClickOrRestart(parent.task.getConfirmSlotName())) {
+                return this;
             }
 
-            case "CLAIMING_AUCTION_BID" -> {
-                if (!asyncClickOrRestart(task.getItemName())) {
-                    return;
-                }
+            parent.nextState = new CheckingBuyResult();
+            return new WaitingForMenu(parent);
+        }
+    }
 
-                nextState = getState("CLIAMING_AUCTION_CLAIM");
-                state = getState("WAITING_FOR_MENU");
+    protected static class CheckingBuyResult extends WaitingExecutorState {
+        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+
+            if (waitBeforeAction()) {
+                return this;
             }
 
-            case "CLIAMING_AUCTION_CLAIM" -> {
-                if (!asyncClickOrRestart(task.getCollectAuctionSlotName())) {
-                    return;
-                }
+            if (Utils.isStringInRecentChat("You claimed", 5)) {
+                parent.task.completed();
+                return new Idle();
+            } else if (Utils.isStringInRecentChat("Visit the Auction House", 5)) {
+                return new ClaimingAuction();
+            } else {
+                SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 159");
+                return parent.restart();
+            }
+        }
+    }
 
-                state = getState("WAITING_FOR_ITEM");
+    protected static class ClaimingAuction extends WaitingExecutorState {
+        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+
+            if (waitBeforeAction()) {
+                return this;
             }
 
-            case "WAITING_FOR_ITEM" -> {
-                if(SBUtils.isItemInInventory(task.getItemName())) {
-                    state = getState("WAITING_FOR_MENU_TO_CLOSE");
-                }
+            assert client.player != null;
+            Utils.sendChatMessage("/ah");
+
+            parent.nextState = new ClaimingAuctionViewBids();
+            return new WaitingForMenu(parent);
+        }
+    }
+
+    protected static class ClaimingAuctionViewBids implements ExecutorState {
+        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (!parent.asyncClickOrRestart(parent.task.getViewBidsSlotName())) {
+                return this;
             }
 
-            case "WAITING_FOR_MENU_TO_CLOSE" -> {
-                if(client.currentScreen == null) {
-                    state = getState("IDLE");
-                    task.completed();
-                }
+            parent.nextState = new ClaimingAuctionBid();
+            return new WaitingForMenu(parent);
+        }
+    }
+
+    protected static class ClaimingAuctionBid implements ExecutorState {
+        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (!parent.asyncClickOrRestart(parent.task.getItemName())) {
+                return this;
             }
 
-            case "WAITING_FOR_MENU" -> waitForMenuOrRestart();
+            parent.nextState = new ClaimingAuctionClaim();
+            return new WaitingForMenu(parent);
+        }
+    }
 
+    protected static class ClaimingAuctionClaim implements ExecutorState {
+        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (parent.asyncClickOrRestart(parent.task.getCollectAuctionSlotName())) {
+                return new WaitingForItem();
+            }
+            return this;
+        }
+    }
+
+    protected static class WaitingForItem implements ExecutorState {
+        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (SBUtils.isItemInInventory(parent.task.getItemName())) {
+                return new WaitForMenuToClose(new Complete(parent));
+            }
+            return this;
         }
     }
 }

@@ -4,9 +4,9 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
-import com.viktorx.skyblockbot.task.base.BaseExecutor;
 import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
+import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerInventory;
@@ -18,177 +18,35 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
     public static UseItemExecutor INSTANCE = new UseItemExecutor();
 
     private UseItem task;
-    private int itemSlot;
     private int startingSlot;
     private boolean wasUsedHotbarSlotEmpty = true;
-
-    private UseItemExecutor() {
-        addState("CHECKING_INVENTORY");
-        addState("GOING_TO_HOTBAR_SLOT");
-        addState("USING_ITEM");
-        addState("ITEM_IN_USE");
-        addState("GOING_BACK_TO_HOTBAR_SLOT");
-        addState("OPENING_INVENTORY");
-        addState("MOVING_ITEM_TO_CORRECT_SLOT");
-        addState("CLOSING_INVENTORY");
-        addState("OPENING_INVENTORY_TO_MOVE_ITEM_BACK");
-        addState("MOVING_ITEM_BACK");
-        addState("CLOSING_INVENTORY_FINAL");
-    }
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
     }
 
     @Override
-    public <T extends BaseTask<?>> void whenExecute(T task) {
+    public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         this.task = (UseItem) task;
-        waitTickCounter = 0;
         waitForMenuCounter = 0;
         wasUsedHotbarSlotEmpty = true;
-        state = getState("CHECKING_INVENTORY");
+        return new CheckingInventory(this);
     }
 
     @Override
-    protected void restart() {
-        state = getState("IDLE");
-        execute(task);
+    protected synchronized ExecutorState restart() {
+        SkyblockBot.LOGGER.info("Restarting UseItem task");
+        return execute(task);
     }
 
+    // This class isn't supposed to use this method, so it returns null
     @Override
-    protected void whenMenuOpened() {
+    protected ExecutorState whenMenuOpened() {
+        return null;
     }
 
-    private void onTick(MinecraftClient client) {
-
-        switch (getState(state)) {
-            case "CHECKING_INVENTORY" -> {
-                itemSlot = getItemSlot(client);
-                if (itemSlot == -1) {
-                    SkyblockBot.LOGGER.warn("Item " + task.getItemName() + " can't be found in inventory. Aborting UseItem.");
-                    state = getState("IDLE");
-                    task.aborted();
-                    return;
-                }
-
-                if (itemSlot < 9) {
-                    state = getState("GOING_TO_HOTBAR_SLOT");
-                } else {
-                    state = getState("OPENING_INVENTORY");
-                }
-            }
-
-            case "GOING_TO_HOTBAR_SLOT" -> {
-                if (waitBeforeAction()) {
-                    return;
-                }
-
-                assert client.player != null;
-                startingSlot = client.player.getInventory().selectedSlot;
-
-                if (itemSlot < 9) {
-                    Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[itemSlot]);
-                } else {
-                    Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[defaultHotbarSlot]);
-                }
-
-                state = getState("USING_ITEM");
-            }
-
-            case "USING_ITEM" -> {
-                if (waitBeforeAction()) {
-                    return;
-                }
-
-                client.options.useKey.setPressed(true);
-                state = getState("ITEM_IN_USE");
-            }
-
-            case "ITEM_IN_USE" -> {
-                if (waitBeforeAction()) {
-                    return;
-                }
-
-                client.options.useKey.setPressed(false);
-                state = getState("GOING_BACK_TO_HOTBAR_SLOT");
-            }
-
-            case "GOING_BACK_TO_HOTBAR_SLOT" -> {
-                if (waitBeforeAction()) {
-                    return;
-                }
-
-                Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[startingSlot]);
-
-                if (!wasUsedHotbarSlotEmpty) {
-                    state = getState("OPENING_INVENTORY_TO_MOVE_ITEM_BACK");
-                    return;
-                }
-
-                state = getState("IDLE");
-                task.completed();
-            }
-
-            case "OPENING_INVENTORY" -> {
-                if (waitBeforeAction()) {
-                    return;
-                }
-
-                Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
-                state = getState("MOVING_ITEM_TO_CORRECT_SLOT");
-            }
-
-            case "MOVING_ITEM_TO_CORRECT_SLOT" -> {
-                if (waitBeforeAction()) {
-                    return;
-                }
-
-                assert client.player != null;
-                wasUsedHotbarSlotEmpty = client.player.getInventory()
-                        .getStack(defaultHotbarSlot).getName().getString().equals("Air");
-
-                SBUtils.quickSwapSlotWithHotbar(itemSlot, defaultHotbarSlot);
-
-                state = getState("CLOSING_INVENTORY");
-            }
-
-            case "CLOSING_INVENTORY" -> {
-                if (waitBeforeAction()) {
-                    return;
-                }
-
-                Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
-                state = getState("GOING_TO_HOTBAR_SLOT");
-            }
-
-            case "OPENING_INVENTORY_TO_MOVE_ITEM_BACK" -> {
-                if (waitBeforeAction()) {
-                    return;
-                }
-
-                Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
-                state = getState("MOVING_ITEM_BACK");
-            }
-
-            case "MOVING_ITEM_BACK" -> {
-                if (waitBeforeAction()) {
-                    return;
-                }
-
-                SBUtils.quickSwapSlotWithHotbar(itemSlot, defaultHotbarSlot);
-                state = getState("CLOSING_INVENTORY_FINAL");
-            }
-
-            case "CLOSING_INVENTORY_FINAL" -> {
-                if (waitBeforeAction()) {
-                    return;
-                }
-
-                Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
-                state = getState("IDLE");
-                task.completed();
-            }
-        }
+    private synchronized void onTick(MinecraftClient client) {
+        state = state.onTick(client);
     }
 
     private int getItemSlot(MinecraftClient client) {
@@ -210,5 +68,210 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
             }
         }
         return -1;
+    }
+
+    protected static class CheckingInventory implements ExecutorState {
+        private final UseItemExecutor parent;
+
+        public CheckingInventory(UseItemExecutor parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            int itemSlot = parent.getItemSlot(client);
+            if (itemSlot == -1) {
+                SkyblockBot.LOGGER.warn("Item " + parent.task.getItemName() + " can't be found in inventory. Aborting UseItem.");
+                parent.task.aborted();
+                return new Idle();
+            }
+
+            if (itemSlot < 9) {
+                return new GoingBackToHotBarSlot(parent);
+            } else {
+                return new OpeningInventory();
+            }
+        }
+    }
+
+    protected static class GoingToHotBarSlot extends WaitingExecutorState {
+        private final UseItemExecutor parent;
+
+        public GoingToHotBarSlot() {
+            parent = UseItemExecutor.INSTANCE;
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (waitBeforeAction()) {
+                return this;
+            }
+
+            assert client.player != null;
+            parent.startingSlot = client.player.getInventory().selectedSlot;
+
+            if (parent.getItemSlot(client) < 9) {
+                Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[parent.getItemSlot(client)]);
+            } else {
+                Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[defaultHotbarSlot]);
+            }
+
+            return new UsingItem(parent);
+        }
+    }
+
+    protected static class UsingItem extends WaitingExecutorState {
+        private final UseItemExecutor parent;
+
+        public UsingItem(UseItemExecutor parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (waitBeforeAction()) {
+                return this;
+            }
+
+            client.options.useKey.setPressed(true);
+            return new ItemInUse(parent);
+        }
+    }
+
+    protected static class ItemInUse extends WaitingExecutorState {
+        private final UseItemExecutor parent;
+
+        public ItemInUse(UseItemExecutor parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (waitBeforeAction()) {
+                return this;
+            }
+
+            client.options.useKey.setPressed(false);
+            return new GoingBackToHotBarSlot(parent);
+        }
+    }
+
+    protected static class GoingBackToHotBarSlot extends WaitingExecutorState {
+        private final UseItemExecutor parent;
+
+        public GoingBackToHotBarSlot(UseItemExecutor parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (waitBeforeAction()) {
+                return this;
+            }
+
+            Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[parent.startingSlot]);
+
+            if (!parent.wasUsedHotbarSlotEmpty) {
+                return new OpeningInventoryToMoveItemBack();
+            }
+
+            parent.task.completed();
+            return new Idle();
+        }
+    }
+
+    protected static class OpeningInventory extends WaitingExecutorState {
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (!waitBeforeAction()) {
+                Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
+                return new MovingItemToCorrectSlot();
+            }
+            return this;
+        }
+    }
+
+    protected static class MovingItemToCorrectSlot extends WaitingExecutorState {
+        private final UseItemExecutor parent;
+
+        public MovingItemToCorrectSlot() {
+            parent = UseItemExecutor.INSTANCE;
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (waitBeforeAction()) {
+                return this;
+            }
+
+            assert client.player != null;
+            parent.wasUsedHotbarSlotEmpty = client.player.getInventory()
+                    .getStack(defaultHotbarSlot).getName().getString().equals("Air");
+
+            SBUtils.quickSwapSlotWithHotbar(parent.getItemSlot(client), defaultHotbarSlot);
+
+            return new ClosingInventory();
+        }
+    }
+
+    protected static class ClosingInventory extends WaitingExecutorState {
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (waitBeforeAction()) {
+                return this;
+            }
+
+            Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
+            return new GoingToHotBarSlot();
+        }
+    }
+
+    protected static class OpeningInventoryToMoveItemBack extends WaitingExecutorState {
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (waitBeforeAction()) {
+                return this;
+            }
+
+            Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
+            return new MovingItemBack();
+        }
+    }
+
+    protected static class MovingItemBack extends WaitingExecutorState {
+        private final UseItemExecutor parent;
+
+        public MovingItemBack() {
+            parent = UseItemExecutor.INSTANCE;
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (waitBeforeAction()) {
+                return this;
+            }
+
+            SBUtils.quickSwapSlotWithHotbar(parent.getItemSlot(client), defaultHotbarSlot);
+            return new ClosingInventoryFinal();
+        }
+    }
+
+    protected static class ClosingInventoryFinal extends WaitingExecutorState {
+        private final UseItemExecutor parent;
+
+        public ClosingInventoryFinal() {
+            parent = UseItemExecutor.INSTANCE;
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (waitBeforeAction()) {
+                return this;
+            }
+
+            Keybinds.asyncPressKeyAfterTick(client.options.inventoryKey);
+            parent.task.completed();
+            return new Idle();
+        }
     }
 }

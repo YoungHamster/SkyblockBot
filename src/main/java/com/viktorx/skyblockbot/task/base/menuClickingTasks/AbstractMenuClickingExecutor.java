@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks;
 
 
+import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
 import com.viktorx.skyblockbot.utils.CurrentInventory;
 import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
@@ -18,23 +19,11 @@ import java.util.concurrent.TimeoutException;
 public abstract class AbstractMenuClickingExecutor extends BaseExecutor {
     protected final List<String> possibleErrors = new ArrayList<>();
     protected boolean currentClickRunning = false;
-    protected int waitTickCounter = 0;
     protected int waitForMenuCounter = 0;
     private CompletableFuture<Boolean> currentClick;
 
-    protected abstract void restart();
-    protected abstract void whenMenuOpened();
-
-    protected void waitForMenuOrRestart() {
-        if(CurrentInventory.syncIDChanged()) {
-            whenMenuOpened();
-            waitForMenuCounter = 0;
-        } else {
-            if(waitForMenuCounter++ > MenuClickersSettings.maxWaitForScreen) {
-                restart();
-            }
-        }
-    }
+    protected abstract ExecutorState restart();
+    protected abstract ExecutorState whenMenuOpened();
 
     protected boolean checkForPossibleError() {
         for (String possibleError : possibleErrors) {
@@ -111,11 +100,65 @@ public abstract class AbstractMenuClickingExecutor extends BaseExecutor {
         return GlobalExecutorInfo.waitTicksBeforeAction * 50L;
     }
 
-    protected boolean waitBeforeAction() {
-        if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeAction) {
-            return true;
+    public static abstract class WaitingExecutorState implements ExecutorState {
+        protected int waitTickCounter = 0;
+
+        protected boolean waitBeforeAction() {
+            if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeAction) {
+                return true;
+            }
+            waitTickCounter = 0;
+            return false;
         }
-        waitTickCounter = 0;
-        return false;
+    }
+
+    public static class WaitingForMenu implements ExecutorState {
+        private int waitForMenuCounter = 0;
+        protected final AbstractMenuClickingExecutor parent;
+
+        public WaitingForMenu(AbstractMenuClickingExecutor parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if(CurrentInventory.syncIDChanged()) {
+                return parent.whenMenuOpened();
+            } else {
+                if(waitForMenuCounter++ > MenuClickersSettings.maxWaitForScreen) {
+                    return parent.restart();
+                }
+            }
+            return this;
+        }
+    }
+
+    public static class WaitForMenuToClose implements ExecutorState {
+        private final ExecutorState nextState;
+
+        public WaitForMenuToClose(ExecutorState nextState) {
+            this.nextState = nextState;
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if(client.currentScreen == null) {
+                return nextState;
+            }
+            return this;
+        }
+    }
+
+    public static class Complete implements ExecutorState {
+        private final AbstractMenuClickingExecutor parent;
+        public Complete(AbstractMenuClickingExecutor parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            parent.task.completed();
+            return new Idle();
+        }
     }
 }

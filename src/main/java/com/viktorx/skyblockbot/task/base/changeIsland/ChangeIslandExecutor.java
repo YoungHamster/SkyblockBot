@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.task.base.changeIsland;
 
+import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
 import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseExecutor;
@@ -10,60 +11,64 @@ import net.minecraft.client.MinecraftClient;
 public class ChangeIslandExecutor extends BaseExecutor {
     public static ChangeIslandExecutor INSTANCE = new ChangeIslandExecutor();
     private ChangeIsland task;
-    private int waitBeforeAttemptTickCounter;
-    private int attemptCounter;
-
-    private ChangeIslandExecutor() {
-        addState("SENDING_COMMAND");
-        addState("WAITING_AFTER_COMMAND");
-        addState("WAITING_FOR_WORLD_LOAD");
-    }
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickChangeIsland);
     }
 
     @Override
-    public <T extends BaseTask<?>> void whenExecute(T task) {
+    public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         this.task = (ChangeIsland) task;
-        waitBeforeAttemptTickCounter = 0;
-        attemptCounter = 0;
-        state = getState("SENDING_COMMAND");
+        return new SendingCommand();
     }
 
-    public void onTickChangeIsland(MinecraftClient client) {
+    public synchronized void onTickChangeIsland(MinecraftClient client) {
+        state = state.onTick(client);
+    }
 
-        switch (getState(state)) {
-            case "SENDING_COMMAND" -> {
-                GlobalExecutorInfo.worldLoaded.set(false);
-                assert client.player != null;
-                Utils.sendChatMessage(task.getCommand());
-                state = getState("WAITING_AFTER_COMMAND");
-            }
+    protected static class SendingCommand implements ExecutorState {
+        private final ChangeIslandExecutor parent = ChangeIslandExecutor.INSTANCE;
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            GlobalExecutorInfo.worldLoaded.set(false);
+            Utils.sendChatMessage(parent.task.getCommand());
+            return new WaitingAfterCommand();
+        }
+    }
 
-            case "WAITING_AFTER_COMMAND" -> {
-                if (!GlobalExecutorInfo.worldLoading.get()) {
-                    if (waitBeforeAttemptTickCounter++ == ChangeIslandSettings.ticksToWaitBeforeAttempt) {
-                        if (attemptCounter++ == ChangeIslandSettings.maxAttempts) {
-                            task.aborted();
-                            state = getState("IDLE");
-                        } else {
-                            assert client.player != null;
-                            waitBeforeAttemptTickCounter = 0;
-                            Utils.sendChatMessage(task.getCommand());
-                        }
+    protected static class WaitingAfterCommand implements ExecutorState {
+        private final ChangeIslandExecutor parent = ChangeIslandExecutor.INSTANCE;
+        private int waitBeforeAttemptTickCounter = 0;
+        private int attemptCounter = 0;
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (!GlobalExecutorInfo.worldLoading.get()) {
+                if (waitBeforeAttemptTickCounter++ == ChangeIslandSettings.ticksToWaitBeforeAttempt) {
+                    if (attemptCounter++ == ChangeIslandSettings.maxAttempts) {
+                        parent.task.aborted();
+                        return new Idle();
+                    } else {
+                        assert client.player != null;
+                        waitBeforeAttemptTickCounter = 0;
+                        Utils.sendChatMessage(parent.task.getCommand());
                     }
-                } else {
-                    state = getState("WAITING_FOR_WORLD_LOAD");
                 }
+            } else {
+                return new WaitingForWorldLoad();
             }
+            return this;
+        }
+    }
 
-            case "WAITING_FOR_WORLD_LOAD" -> {
-                if (GlobalExecutorInfo.worldLoaded.get()) {
-                    state = getState("IDLE");
-                    task.completed();
-                }
+    protected static class WaitingForWorldLoad implements ExecutorState {
+        private final ChangeIslandExecutor parent = ChangeIslandExecutor.INSTANCE;
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if (GlobalExecutorInfo.worldLoaded.get()) {
+                parent.task.completed();
+                return new Idle();
             }
+            return this;
         }
     }
 }
