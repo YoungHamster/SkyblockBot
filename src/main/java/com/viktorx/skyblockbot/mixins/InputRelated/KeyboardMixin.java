@@ -18,9 +18,5 @@ public class KeyboardMixin {
         if (key != Keybinds.getStartStopRecrodingKeyCode()) {
             ReplayExecutor.INSTANCE.onKeyPress(new KeyboardKeyRecord(key, scancode, action, modifiers));
         }
-
-        if(key == InputUtil.GLFW_KEY_F && action != 2) {
-            SkyblockBot.LOGGER.info("Pressed F, action: " + action);
-        }
     }
 }

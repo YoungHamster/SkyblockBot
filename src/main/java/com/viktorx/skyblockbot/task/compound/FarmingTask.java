@@ -393,7 +393,7 @@ public class FarmingTask extends CompoundTask {
                     SkyblockBot.LOGGER.info("Not queueing to handle garden guests, because purse is too low on coins. Purse: " + SBUtils.getPurse());
                     return;
                 }
-                if (!taskQueue.contains(gardenVisitorsTask)) {
+                if (!taskQueue.contains(gardenVisitorsTask) && currentTask != gardenVisitorsTask) {
                     SkyblockBot.LOGGER.info("Queueing to handle garden guests");
                     taskQueue.add(gardenVisitorsTask);
                 }

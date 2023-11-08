@@ -625,27 +625,8 @@ public class ReplayExecutor {
     }
 
     private void prepareToStart() {
-        pitchTask = CompletableFuture.runAsync(() -> {
-            float targetPitch = replay.getTickState(tickIterator).getPitch();
-            assert MinecraftClient.getInstance().player != null;
-            if(MinecraftClient.getInstance().player.getPitch() != targetPitch) {
-                LookHelper.changePitchSmooth(targetPitch);
-            } else {
-                LookHelper.changePitchSmooth(targetPitch + 5);
-                LookHelper.changePitchSmooth(targetPitch - 5);
-                LookHelper.changePitchSmooth(targetPitch);
-            }
-        });
-        yawTask = CompletableFuture.runAsync(() -> {
-            float targetYaw = replay.getTickState(tickIterator).getYaw();
-            if(LookHelper.getYaw() != targetYaw) {
-                LookHelper.changeYawSmooth(targetYaw);
-            } else {
-                LookHelper.changeYawSmooth(targetYaw + 5);
-                LookHelper.changeYawSmooth(targetYaw - 5);
-                LookHelper.changeYawSmooth(targetYaw);
-            }
-        });
+        pitchTask = LookHelper.changePitchSmoothAsync(replay.getTickState(tickIterator).getPitch());
+        yawTask = LookHelper.changeYawSmoothAsync(replay.getTickState(tickIterator).getYaw());
 
         /*
          * Turns out if you drink mushroom soup you always spawn in the garden in flight, so to account for it a have to land before doing anything
@@ -688,11 +669,13 @@ public class ReplayExecutor {
     }
 
     private void printDebugInfo() {
-        SkyblockBot.LOGGER.info("total packet counter = " + debugPacketCounter);
-        SkyblockBot.LOGGER.info("on ground only counter = " + debugOnGroundOnlyCounter);
-        SkyblockBot.LOGGER.info("look and on ground counter = " + debugLookAndOnGroundCounter);
-        SkyblockBot.LOGGER.info("position and on ground counter = " + debugPositionAndOnGroundCounter);
-        SkyblockBot.LOGGER.info("full counter = " + debugFullCounter);
+        if(GlobalExecutorInfo.debugMode.get()) {
+            SkyblockBot.LOGGER.info("total packet counter = " + debugPacketCounter);
+            SkyblockBot.LOGGER.info("on ground only counter = " + debugOnGroundOnlyCounter);
+            SkyblockBot.LOGGER.info("look and on ground counter = " + debugLookAndOnGroundCounter);
+            SkyblockBot.LOGGER.info("position and on ground counter = " + debugPositionAndOnGroundCounter);
+            SkyblockBot.LOGGER.info("full counter = " + debugFullCounter);
+        }
     }
 
     private void saveRecordingAsync() {

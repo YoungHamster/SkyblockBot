@@ -200,7 +200,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
             }
 
             case "WAITING_FOR_MENU_TO_CLOSE" -> {
-                if(GlobalExecutorInfo.isCurrentScreenNull.get()) {
+                if(client.currentScreen == null) {
                     state = getState("IDLE");
                     task.completed();
                 }

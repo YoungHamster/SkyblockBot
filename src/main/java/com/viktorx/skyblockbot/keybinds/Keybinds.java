@@ -3,6 +3,7 @@ package com.viktorx.skyblockbot.keybinds;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
 import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
+import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.task.compound.FarmingTask;
 import com.viktorx.skyblockbot.utils.GlobalSettingsManager;

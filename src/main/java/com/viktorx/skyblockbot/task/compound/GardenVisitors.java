@@ -136,6 +136,11 @@ public class GardenVisitors extends CompoundTask {
             SkyblockBot.LOGGER.info("Can't execute GardenVisitorsTask, already in execution");
             return;
         }
+        if(SBUtils.getGardenVisitorCount() == 0) {
+            SkyblockBot.LOGGER.warn("Can't execute GardenVisitors when there are no visitors!");
+            this.aborted();
+            return;
+        }
         currentTask = goToVisitors;
         goToVisitors.execute();
     }

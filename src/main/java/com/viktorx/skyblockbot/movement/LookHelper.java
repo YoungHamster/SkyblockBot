@@ -1,14 +1,17 @@
 package com.viktorx.skyblockbot.movement;
 
 import com.viktorx.skyblockbot.SkyblockBot;
+import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
 import com.viktorx.skyblockbot.utils.Utils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Mouse;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
