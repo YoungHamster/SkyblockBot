@@ -17,7 +17,6 @@ import java.util.concurrent.ExecutionException;
 public class BuyItemExecutor extends AbstractMenuClickingExecutor {
 
     public static final BuyItemExecutor INSTANCE = new BuyItemExecutor();
-    private BuyItem task;
     private CompletableFuture<String> priceFinder;
     private boolean priceFinderRunning = false;
 
@@ -45,7 +44,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
     public synchronized  <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         CompletableFuture.runAsync(AuctionBrowser.INSTANCE::loadAH);
         priceFinderRunning = false;
-        this.task = (BuyItem) task;
+        this.task = task;
         return new LoadingAuctions();
     }
 
@@ -69,12 +68,13 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             if (!parent.priceFinderRunning) {
+                BuyItem buyTask = (BuyItem) parent.task;
                 parent.priceFinder =
                         CompletableFuture.supplyAsync(
                                 () -> AuctionBrowser.INSTANCE.getAuctionWithBestPrice(
-                                        parent.task.getItemName(),
-                                        parent.task.getLoreKeyWords(),
-                                        parent.task.getPriceLimit()));
+                                        buyTask.getItemName(),
+                                        buyTask.getLoreKeyWords(),
+                                        buyTask.getPriceLimit()));
                 parent.priceFinderRunning = true;
             }
 
@@ -105,10 +105,11 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
             assert client.player != null;
             Utils.sendChatMessage(auctionCommand);
 
-            return new WaitingForNamedMenu(parent, parent.task.getAHMenuName())
-                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getBuySlotName())
-                        .setNextState(new WaitingForNamedMenu(parent, parent.task.getConfirmMenuName())
-                            .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getConfirmSlotName())
+            BuyItem buyTask = (BuyItem) parent.task;
+            return new WaitingForNamedMenu(parent, buyTask.getAHMenuName())
+                    .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getBuySlotName())
+                        .setNextState(new WaitingForNamedMenu(parent, buyTask.getConfirmMenuName())
+                            .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getConfirmSlotName())
                                 .setNextState(new CheckingBuyResult())
                             )
                         )
@@ -152,12 +153,13 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
             assert client.player != null;
             Utils.sendChatMessage("/ah");
 
-            return new WaitingForNamedMenu(parent, parent.task.getViewBidsMenuName())
-                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getViewBidsSlotName())
-                        .setNextState(new WaitingForNamedMenu(parent, parent.task.getViewBidsMenuName())
-                            .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getItemName())
-                                .setNextState(new WaitingForNamedMenu(parent, parent.task.getClaimMenuName())
-                                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getCollectAuctionSlotName())
+            BuyItem buyTask = (BuyItem) parent.task;
+            return new WaitingForNamedMenu(parent, buyTask.getViewBidsMenuName())
+                    .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getViewBidsSlotName())
+                        .setNextState(new WaitingForNamedMenu(parent, buyTask.getViewBidsMenuName())
+                            .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getItemName())
+                                .setNextState(new WaitingForNamedMenu(parent, buyTask.getClaimMenuName())
+                                    .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getCollectAuctionSlotName())
                                         .setNextState(new WaitingForItem())
                                     )
                                 )
@@ -173,7 +175,8 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
-            if (SBUtils.isItemInInventory(parent.task.getItemName())) {
+            BuyItem buyTask = (BuyItem) parent.task;
+            if (SBUtils.isItemInInventory(buyTask.getItemName())) {
                 return new WaitForMenuToClose(new Complete(parent));
             } else {
                 if(waitForItemCounter++ >= MenuClickersSettings.maxWaitForStuff) {

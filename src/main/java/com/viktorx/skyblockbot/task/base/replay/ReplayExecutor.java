@@ -3,7 +3,6 @@ package com.viktorx.skyblockbot.task.base.replay;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
-import com.viktorx.skyblockbot.task.Task;
 import com.viktorx.skyblockbot.task.base.BaseExecutor;
 import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.ExecutorState;
@@ -41,7 +40,6 @@ public class ReplayExecutor extends BaseExecutor {
     public int debugFullCounter = 0;
     private Replay replay;
     private int tickIterator;
-    private ExecutorState state = new Idle();
 
     public void Init() {
         whitelistedBlocks.add("oak_sign");
@@ -71,7 +69,7 @@ public class ReplayExecutor extends BaseExecutor {
     public synchronized void stopRecording() {
         SkyblockBot.LOGGER.info("stopped recording");
 
-        if(GlobalExecutorInfo.debugMode.get()) {
+        if (GlobalExecutorInfo.debugMode.get()) {
             printDebugInfo();
         }
 
@@ -91,6 +89,7 @@ public class ReplayExecutor extends BaseExecutor {
             return new Idle();
         }
 
+        this.task = task;
         this.replay = (Replay) task;
 
         if (this.replay.size() == 0) {
@@ -133,6 +132,7 @@ public class ReplayExecutor extends BaseExecutor {
 
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
+        SkyblockBot.LOGGER.error("ReplayExecutor.whenExecute() was called! That is not supposed to happen");
         return null;
     }
 
@@ -175,6 +175,7 @@ public class ReplayExecutor extends BaseExecutor {
         return false;
     }
 
+    @Override
     public synchronized void abort() {
         if (state.getClass().equals(Idle.class)) {
             SkyblockBot.LOGGER.info("Can't abort replay, already idle");
@@ -280,6 +281,7 @@ public class ReplayExecutor extends BaseExecutor {
         CompletableFuture.runAsync(() -> replay.saveToFile(filename));
     }
 
+    @Override
     public synchronized void pause() {
         if (!state.getClass().equals(Playing.class)) {
             SkyblockBot.LOGGER.info("Can't pause when not playing");
@@ -291,6 +293,7 @@ public class ReplayExecutor extends BaseExecutor {
         SkyblockBot.LOGGER.info("Paused");
     }
 
+    @Override
     public synchronized void resume() {
         if (!state.getClass().equals(Paused.class)) {
             SkyblockBot.LOGGER.info("Can't unpause when not paused");
@@ -310,14 +313,6 @@ public class ReplayExecutor extends BaseExecutor {
 
         state = new Playing();
         SkyblockBot.LOGGER.info("Unpaused");
-    }
-
-    public boolean isExecuting(Task task) {
-        return !state.getClass().equals(Idle.class) && replay == task;
-    }
-
-    public boolean isPaused() {
-        return state.getClass().equals(Paused.class);
     }
 
     public boolean isRecording() {
@@ -397,7 +392,8 @@ public class ReplayExecutor extends BaseExecutor {
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             if (antiDetectTriggeredTickCounter++ == ReplayBotSettings.antiDetectTriggeredWaitTicks ||
-                    parent.tickIterator == 0 || parent.tickIterator == parent.replay.size()) {
+                    parent.tickIterator == 0 || parent.tickIterator == parent.replay.size() ||
+                    client.currentScreen != null) {
                 parent.abort();
                 antiDetectDone();
                 return new Idle();
@@ -443,13 +439,6 @@ public class ReplayExecutor extends BaseExecutor {
                         false
                 );
             });
-        }
-    }
-
-    protected static class NotIdle implements ExecutorState {
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            return this;
         }
     }
 
@@ -504,6 +493,11 @@ public class ReplayExecutor extends BaseExecutor {
             if (GlobalExecutorInfo.worldLoading.get()) {
                 abort();
                 return new Idle();
+            }
+
+            if (client.currentScreen != null) {
+                SkyblockBot.LOGGER.warn("currentScreen isn't null!!! ReplayExecutor waiting until it's null again");
+                return this;
             }
 
             if (antiDetect(client)) {
@@ -638,7 +632,7 @@ public class ReplayExecutor extends BaseExecutor {
         /**
          * Corrects position
          * return - true if it is correct or was corrected (correct by changing tickIterator to index of state closest to current state)
-         *          false if the position can't be corrected(which means player was teleported to check for macros or lagged back too far)
+         * false if the position can't be corrected(which means player was teleported to check for macros or lagged back too far)
          */
         private boolean checkPosAdjustLag(@NotNull ClientPlayerEntity player) {
             TickState state = replay.getTickState(tickIterator - 1);

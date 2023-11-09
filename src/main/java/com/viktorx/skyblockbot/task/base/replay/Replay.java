@@ -59,7 +59,10 @@ public class Replay extends BaseTask<ReplayExecutor> {
         try {
             File f = new File("replays");
             if (!f.isDirectory()) {
-                f.mkdir();
+                if(!f.mkdir()) {
+                    SkyblockBot.LOGGER.error("Can't create \"replays\" to save the replay!");
+                    return;
+                }
             }
             OutputStream os = new FileOutputStream("replays\\\\" + filename, false);
 
@@ -71,14 +74,6 @@ public class Replay extends BaseTask<ReplayExecutor> {
         } catch (IOException e) {
             SkyblockBot.LOGGER.info("Exception when trying to save movement recording to a file");
         }
-    }
-
-    public boolean isExecuting() {
-        return ReplayExecutor.INSTANCE.isExecuting(this);
-    }
-
-    public boolean isPaused() {
-        return ReplayExecutor.INSTANCE.isPaused();
     }
 
     public void loadFromFile(String filename) {

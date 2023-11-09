@@ -16,7 +16,6 @@ import java.util.concurrent.CompletableFuture;
 public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
     public static BuyBZItemExecutor INSTANCE = new BuyBZItemExecutor();
-    private BuyBZItem task;
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickBuy);
@@ -27,7 +26,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
         SkyblockBot.LOGGER.warn("BuyBZItem restart happened when state was " + state.getClass().getSimpleName());
         CompletableFuture.runAsync(() -> {
             blockingCloseCurrentInventory();
-            SkyblockBot.LOGGER.warn("Can't buy " + task.getItemName() + ". Restarting task");
+            SkyblockBot.LOGGER.warn("Can't buy " + ((BuyBZItem) task).getItemName() + ". Restarting task");
             execute(task);
         });
         return new Idle();
@@ -35,7 +34,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
-        this.task = (BuyBZItem) task;
+        this.task = task;
         return new SendingCommand();
     }
 
@@ -57,10 +56,11 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
             if (waitBeforeAction()) {
                 return this;
             }
-            Utils.sendChatMessage(parent.task.getBZCommand());
+            BuyBZItem buyTask = (BuyBZItem) parent.task;
+            Utils.sendChatMessage(buyTask.getBZCommand());
 
-            return new WaitingForNamedMenu(parent, parent.task.getBZMenuName())
-                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getSearchItemName())
+            return new WaitingForNamedMenu(parent, buyTask.getBZMenuName())
+                    .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getSearchItemName())
                             .setNextState(new WaitingForScreenChange()
                                     .setNextState(new Searching())
                             )
@@ -77,7 +77,8 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                 return this;
             }
 
-            parent.typeIntoCurrentScreen(parent.task.getItemName());
+            BuyBZItem buyTask = (BuyBZItem) parent.task;
+            parent.typeIntoCurrentScreen(buyTask.getItemName());
 
             assert client.currentScreen != null;
             client.currentScreen.close();
@@ -88,11 +89,11 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
              * so we need to enter custom amount
              */
             ExecutorState buyOneOrEnterAmount;
-            if (parent.task.getItemCount() == 1) {
-                buyOneOrEnterAmount = new ClickOnSlotOrRestart(parent, parent.task.getBuyOneItemName())
+            if (buyTask.getItemCount() == 1) {
+                buyOneOrEnterAmount = new ClickOnSlotOrRestart(parent, buyTask.getBuyOneItemName())
                         .setNextState(new WaitingForItem());
             } else {
-                buyOneOrEnterAmount = new ClickOnSlotOrRestart(parent, parent.task.getEnterAmountItemName())
+                buyOneOrEnterAmount = new ClickOnSlotOrRestart(parent, buyTask.getEnterAmountItemName())
                         .setNextState(new WaitingForScreenChange()
                                 .setNextState(new EnteringAmount()
                                 )
@@ -102,10 +103,10 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
             /*
              * No matter what amount of items we need to buy these steps are the same
              */
-            return new WaitingForNamedMenu(parent, parent.task.getSearchResultMenuName())
-                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getItemName())
-                            .setNextState(new WaitingForNamedMenu(parent, parent.task.getItemMenuName())
-                                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getBuyInstantlyItemName())
+            return new WaitingForNamedMenu(parent, buyTask.getSearchResultMenuName())
+                    .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getItemName())
+                            .setNextState(new WaitingForNamedMenu(parent, buyTask.getItemMenuName())
+                                    .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getBuyInstantlyItemName())
                                             .setNextState(buyOneOrEnterAmount)
                                     )
                             )
@@ -122,13 +123,14 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                 return this;
             }
 
-            parent.typeIntoCurrentScreen(Integer.toString(parent.task.getItemCount()));
+            BuyBZItem buyTask = (BuyBZItem) parent.task;
+            parent.typeIntoCurrentScreen(Integer.toString(buyTask.getItemCount()));
 
             assert client.currentScreen != null;
             client.currentScreen.close();
 
-            return new WaitingForNamedMenu(parent, parent.task.getBuyCustomAmountMenuName())
-                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getBuyCustomAmountItemName())
+            return new WaitingForNamedMenu(parent, buyTask.getBuyCustomAmountMenuName())
+                    .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getBuyCustomAmountItemName())
                             .setNextState(new WaitingForItem()
                             )
                     );
@@ -146,7 +148,8 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                 closedInventory = true;
             }
 
-            if (SBUtils.isItemInInventory(parent.task.getItemName()) && client.currentScreen == null) {
+            BuyBZItem buyTask = (BuyBZItem) parent.task;
+            if (SBUtils.isItemInInventory(buyTask.getItemName()) && client.currentScreen == null) {
                 parent.task.completed();
                 return new Idle();
             }
@@ -169,9 +172,12 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
             if (client.currentScreen == null) {
                 return this;
             }
-            if (client.currentScreen.getClass().equals(parent.task.getSearchScreenClass())) {
+
+            BuyBZItem buyTask = (BuyBZItem) parent.task;
+            if (client.currentScreen.getClass().equals(buyTask.getSearchScreenClass())) {
                 return nextState;
             }
+
             if (waitForScreenLoadingCounter++ > MenuClickersSettings.maxWaitForStuff) {
                 return parent.restart();
             }

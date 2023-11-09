@@ -13,7 +13,6 @@ import net.minecraft.client.MinecraftClient;
 public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
 
     public static final AssembleCraftExecutor INSTANCE = new AssembleCraftExecutor();
-    private AssembleCraft task;
     private ItemPutter itemPutter;
 
     public void Init() {
@@ -28,7 +27,7 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         this.itemPutter = new ItemPutter();
-        this.task = (AssembleCraft) task;
+        this.task = task;
         return new CheckingIngredients();
     }
 
@@ -41,7 +40,8 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
-            for (Pair<String, Integer> ingredient : parent.task.getRecipe().getIngredients()) {
+            AssembleCraft craftTask = (AssembleCraft) parent.task;
+            for (Pair<String, Integer> ingredient : craftTask.getRecipe().getIngredients()) {
                 if (!SBUtils.isAmountInInventory(ingredient.getKey(), ingredient.getValue())) {
                     parent.abort();
                     return new Idle();
@@ -63,9 +63,11 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
         public ExecutorState onTick(MinecraftClient client) {
             if (!waitBeforeAction()) {
                 Keybinds.asyncPressKeyAfterTick(client.options.useKey);
-                return new WaitingForNamedMenu(parent, parent.task.getSBMenuName())
-                        .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getCraftingTableSlotName())
-                                .setNextState(new WaitingForNamedMenu(parent, parent.task.getCraftingTableMenuName())
+
+                AssembleCraft craftTask = (AssembleCraft) parent.task;
+                return new WaitingForNamedMenu(parent, craftTask.getSBMenuName())
+                        .setNextState(new ClickOnSlotOrRestart(parent, craftTask.getCraftingTableSlotName())
+                                .setNextState(new WaitingForNamedMenu(parent, craftTask.getCraftingTableMenuName())
                                         .setNextState(new PuttingItems()
                                         )
                                 )
@@ -109,8 +111,9 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
 
         private boolean putNextCraftItem() {
             Pair<String, Integer> ingredient;
+            AssembleCraft craftTask = (AssembleCraft) task;
             do {
-                ingredient = task.getRecipe().getIngredient(ingridientIterator);
+                ingredient = craftTask.getRecipe().getIngredient(ingridientIterator);
             } while (ingredient == null);
 
             switch (putItemState) {

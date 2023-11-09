@@ -28,7 +28,7 @@ public class TalkToVisitorExecutor extends AbstractVisitorExecutor {
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         SkyblockBot.LOGGER.info("Executing talk to visitor!");
-        this.task = (TalkToVisitor) task;
+        this.task = task;
         return new StartTrackingVisitor(this);
     }
 

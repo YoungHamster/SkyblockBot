@@ -24,7 +24,7 @@ public class GiveVisitorItemsExecutor extends AbstractVisitorExecutor {
 
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
-        this.task = (GiveVisitorItems) task;
+        this.task = task;
         return new StartTrackingVisitor(this);
     }
 

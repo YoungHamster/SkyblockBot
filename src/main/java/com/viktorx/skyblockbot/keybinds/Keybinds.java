@@ -68,7 +68,7 @@ public class Keybinds {
             // this does the clicking
             CompletableFuture.runAsync(Keybinds::asyncPressKeyAfterTick);
 
-            if (startStopBot.wasPressed()) {
+            while (startStopBot.wasPressed()) {
                 if (!FarmingTask.INSTANCE.isExecuting()) {
                     FarmingTask.INSTANCE.execute();
                 } else {
@@ -76,7 +76,7 @@ public class Keybinds {
                 }
             }
 
-            if (startStopRecording.wasPressed()) {
+            while (startStopRecording.wasPressed()) {
                 if (!ReplayExecutor.INSTANCE.isRecording()) {
                     ReplayExecutor.INSTANCE.startRecording();
                 } else {
@@ -84,7 +84,7 @@ public class Keybinds {
                 }
             }
 
-            if (loadRecording.wasPressed()) {
+            while (loadRecording.wasPressed()) {
                 try {
                     GlobalSettingsManager.getInstance().loadSettings();
                 } catch (IOException e) {
@@ -93,7 +93,7 @@ public class Keybinds {
                 FarmingTask.INSTANCE.loadRecordingAsync();
             }
 
-            if (pauseTask.wasPressed()) {
+            while (pauseTask.wasPressed()) {
                 if (!FarmingTask.INSTANCE.isPaused()) {
                     FarmingTask.INSTANCE.pause();
                 } else if (FarmingTask.INSTANCE.isPaused()) {

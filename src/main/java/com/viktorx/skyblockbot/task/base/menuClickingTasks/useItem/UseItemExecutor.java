@@ -5,8 +5,8 @@ import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseTask;
-import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import com.viktorx.skyblockbot.task.base.ExecutorState;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerInventory;
@@ -16,8 +16,6 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
     private static final int defaultHotbarSlot = 1;
 
     public static UseItemExecutor INSTANCE = new UseItemExecutor();
-
-    private UseItem task;
     private int startingSlot;
     private boolean wasUsedHotbarSlotEmpty = true;
 
@@ -27,9 +25,9 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
 
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
-        this.task = (UseItem) task;
+        this.task = task;
         wasUsedHotbarSlotEmpty = true;
-        return new CheckingInventory(this);
+        return new CheckingInventory();
     }
 
     @Override
@@ -46,8 +44,9 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
         assert client.player != null;
         PlayerInventory inventory = client.player.getInventory();
 
+        UseItem useItemTask = (UseItem) task;
         for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
-            if (inventory.getStack(i).getName().getString().equals(task.getItemName())) {
+            if (inventory.getStack(i).getName().getString().equals(useItemTask.getItemName())) {
                 return i;
             }
         }
@@ -56,7 +55,7 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
          * In a desperate attempt to find anything we look again for item who's name only contains our desired name
          */
         for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
-            if (inventory.getStack(i).getName().getString().contains(task.getItemName())) {
+            if (inventory.getStack(i).getName().getString().contains(useItemTask.getItemName())) {
                 return i;
             }
         }
@@ -64,23 +63,19 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
     }
 
     protected static class CheckingInventory implements ExecutorState {
-        private final UseItemExecutor parent;
-
-        public CheckingInventory(UseItemExecutor parent) {
-            this.parent = parent;
-        }
+        private final UseItemExecutor parent = UseItemExecutor.INSTANCE;
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             int itemSlot = parent.getItemSlot(client);
             if (itemSlot == -1) {
-                SkyblockBot.LOGGER.warn("Item " + parent.task.getItemName() + " can't be found in inventory. Aborting UseItem.");
+                SkyblockBot.LOGGER.warn("Item " + ((UseItem) parent.task).getItemName() + " can't be found in inventory. Aborting UseItem.");
                 parent.task.aborted();
                 return new Idle();
             }
 
             if (itemSlot < 9) {
-                return new GoingBackToHotBarSlot(parent);
+                return new GoingToHotBarSlot();
             } else {
                 return new OpeningInventory();
             }
@@ -103,22 +98,18 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
             assert client.player != null;
             parent.startingSlot = client.player.getInventory().selectedSlot;
 
-            if (parent.getItemSlot(client) < 9) {
-                Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[parent.getItemSlot(client)]);
-            } else {
-                Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[defaultHotbarSlot]);
+            int slot = parent.getItemSlot(client);
+            if (slot > 8) {
+                slot = defaultHotbarSlot;
             }
+            SkyblockBot.LOGGER.info("UseItem goes to hotbar slot: " + slot);
+            Keybinds.asyncPressKeyAfterTick(client.options.hotbarKeys[slot]);
 
-            return new UsingItem(parent);
+            return new UsingItem();
         }
     }
 
     protected static class UsingItem extends WaitingExecutorState {
-        private final UseItemExecutor parent;
-
-        public UsingItem(UseItemExecutor parent) {
-            this.parent = parent;
-        }
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
@@ -127,16 +118,11 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
             }
 
             client.options.useKey.setPressed(true);
-            return new ItemInUse(parent);
+            return new ItemInUse();
         }
     }
 
     protected static class ItemInUse extends WaitingExecutorState {
-        private final UseItemExecutor parent;
-
-        public ItemInUse(UseItemExecutor parent) {
-            this.parent = parent;
-        }
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
@@ -145,16 +131,12 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
             }
 
             client.options.useKey.setPressed(false);
-            return new GoingBackToHotBarSlot(parent);
+            return new GoingBackToHotBarSlot();
         }
     }
 
     protected static class GoingBackToHotBarSlot extends WaitingExecutorState {
-        private final UseItemExecutor parent;
-
-        public GoingBackToHotBarSlot(UseItemExecutor parent) {
-            this.parent = parent;
-        }
+        private final UseItemExecutor parent = UseItemExecutor.INSTANCE;
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
@@ -185,11 +167,7 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
     }
 
     protected static class MovingItemToCorrectSlot extends WaitingExecutorState {
-        private final UseItemExecutor parent;
-
-        public MovingItemToCorrectSlot() {
-            parent = UseItemExecutor.INSTANCE;
-        }
+        private final UseItemExecutor parent = UseItemExecutor.INSTANCE;
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {

@@ -10,7 +10,6 @@ import net.minecraft.client.MinecraftClient;
 
 public class ChangeIslandExecutor extends BaseExecutor {
     public static ChangeIslandExecutor INSTANCE = new ChangeIslandExecutor();
-    private ChangeIsland task;
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTickChangeIsland);
@@ -18,7 +17,7 @@ public class ChangeIslandExecutor extends BaseExecutor {
 
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
-        this.task = (ChangeIsland) task;
+        this.task = task;
         return new SendingCommand();
     }
 
@@ -31,7 +30,9 @@ public class ChangeIslandExecutor extends BaseExecutor {
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             GlobalExecutorInfo.worldLoaded.set(false);
-            Utils.sendChatMessage(parent.task.getCommand());
+
+            ChangeIsland islandTask = (ChangeIsland) parent.task;
+            Utils.sendChatMessage(islandTask.getCommand());
             return new WaitingAfterCommand();
         }
     }
@@ -50,7 +51,9 @@ public class ChangeIslandExecutor extends BaseExecutor {
                     } else {
                         assert client.player != null;
                         waitBeforeAttemptTickCounter = 0;
-                        Utils.sendChatMessage(parent.task.getCommand());
+
+                        ChangeIsland islandTask = (ChangeIsland) parent.task;
+                        Utils.sendChatMessage(islandTask.getCommand());
                     }
                 }
             } else {

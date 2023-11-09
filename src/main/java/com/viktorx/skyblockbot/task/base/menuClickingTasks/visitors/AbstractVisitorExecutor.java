@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecutor {
     protected AtomicBoolean keepTracking = new AtomicBoolean(false);
-    protected AbstractVisitorTask<?> task;
 
     protected abstract ExecutorState getStateWhenVisitorOpened();
 
@@ -28,7 +27,8 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
-            Entity npc = Utils.getClosestEntity(parent.task.getVisitorName());
+            AbstractVisitorTask<?> currentTask = (AbstractVisitorTask<?>) parent.task;
+            Entity npc = Utils.getClosestEntity(currentTask.getVisitorName());
             if (npc != null) {
                 /*
                  * If npc is moving we wait
@@ -67,7 +67,8 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
          */
         @Override
         public ExecutorState onTick(MinecraftClient client) {
-            Entity npc = Utils.getClosestEntity(parent.task.getVisitorName());
+            AbstractVisitorTask<?> currentTask = (AbstractVisitorTask<?>) parent.task;
+            Entity npc = Utils.getClosestEntity(currentTask.getVisitorName());
             /*
              * If npc is moving we stop tracking and wait till they stop
              */
@@ -94,7 +95,7 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
                 Keybinds.asyncPressKeyAfterTick(client.options.useKey);
                 keepTracking.set(false);
                 SkyblockBot.LOGGER.info("Clicked on visitor. Waiting.");
-                return new WaitingForNamedMenu(parent, parent.task.getVisitorName())
+                return new WaitingForNamedMenu(parent, currentTask.getVisitorName())
                         .setNextState(parent.getStateWhenVisitorOpened());
             }
             return this;

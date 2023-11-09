@@ -18,11 +18,7 @@ public abstract class BaseExecutor {
             return new Idle();
         }
 
-        /*
-         * Resetting syncIdChanged in case it changed sometime before this task's execution
-         */
-        CurrentInventory.syncIDChanged();
-
+        this.task = task;
         state = whenExecute(task);
         return state;
     }
@@ -47,11 +43,19 @@ public abstract class BaseExecutor {
     }
 
     public synchronized void abort() {
+        if(state.getClass().equals(Idle.class)) {
+            SkyblockBot.LOGGER.warn("Can't abort task when it's already idle!");
+        }
+
         state = new Idle();
+        task.aborted();
     }
 
     public <T extends BaseTask<?>> boolean isExecuting(T task) {
-        return !state.getClass().equals(Idle.class) && this.task == task;
+        if(this.task == null) {
+            return false;
+        }
+        return !state.getClass().equals(Idle.class) && this.task.equals(task);
     }
 
     public boolean isPaused() {

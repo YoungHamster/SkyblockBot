@@ -28,7 +28,7 @@ ComplexFarmingTask
 ComplexFarmingTask.pauseInterval: 3600000
 ComplexFarmingTask.checkGuestsInterval: 600000
 ComplexFarmingTask.pauseDuration: 600000
-ComplexFarmingTask.intervalBetweenRegularChecks: 300000
+ComplexFarmingTask.intervalBetweenRegularChecks: 30000
 ComplexFarmingTask.godPotBuyThreshold: 1800000
 ComplexFarmingTask.cookieBuyThreshold: 1800000
 ComplexFarmingTask.gardenName: Plot
@@ -36,12 +36,12 @@ ComplexFarmingTask.retryGetOutOfLimboDelay: 600000
 
 GlobalExecutorInfo
 GlobalExecutorInfo.debugMode: False
-GlobalExecutorInfo.waitTicksBeforeAction: 20
+GlobalExecutorInfo.waitTicksBeforeAction: 30
 GlobalExecutorInfo.totalSackCountLimit: 40000
 
 TGBotDaemon
-TGBotDaemon.firstDelay: 3000
+TGBotDaemon.firstDelay: 300000
 TGBotDaemon.delayBetweenUpdates: 600000
 
 VisitorExecutor
-VisitorExecutor.npcTooFarTickThreshold: 80
+VisitorExecutor.npcTooFarTickThreshold: 100

@@ -35,6 +35,8 @@ public abstract class CompoundTask extends Task {
     public boolean isExecuting() {
         if (currentTask != null) {
             return currentTask.isExecuting();
+        } else {
+            SkyblockBot.LOGGER.warn(this.getClass().getSimpleName() + ".currentTask is null!");
         }
         return false;
     }

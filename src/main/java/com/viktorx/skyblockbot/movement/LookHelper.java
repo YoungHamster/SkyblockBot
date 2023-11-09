@@ -47,6 +47,11 @@ public class LookHelper {
         float degreesPerStep = deltaAngle / 20.0F;
 
         while (Math.abs(MathHelper.subtractAngles(getYaw(), targetYaw)) > 0.3f) {
+            if(MinecraftClient.getInstance().currentScreen != null) {
+                SkyblockBot.LOGGER.error("Tried to change Yaw while currentScreen != null. Aborted changeYawSmooth method");
+                return;
+            }
+
             player.setYaw(player.getYaw() + degreesPerStep);
 
             if (Math.abs(degreesPerStep) >= 0.2f) {
@@ -71,6 +76,11 @@ public class LookHelper {
         float degreesPerStep = deltaAngle / 20.0F;
 
         while (Math.abs(MathHelper.subtractAngles(player.getPitch(), targetPitch)) > 0.3f) {
+            if(MinecraftClient.getInstance().currentScreen != null) {
+                SkyblockBot.LOGGER.error("Tried to change Pitch while currentScreen != null. Aborted changePitchSmooth method");
+                return;
+            }
+
             player.setPitch(player.getPitch() + degreesPerStep);
 
             if (Math.abs(degreesPerStep) >= 0.2f) {

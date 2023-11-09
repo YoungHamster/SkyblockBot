@@ -12,8 +12,6 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
 
     public static SellSacksExecutor INSTANCE = new SellSacksExecutor();
 
-    private SellSacks task;
-
     SellSacksExecutor() {
         possibleErrors.add("You may only use this command after");
     }
@@ -36,7 +34,7 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
 
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
-        this.task = (SellSacks) task;
+        this.task = task;
         SkyblockBot.LOGGER.info("Executing sell sacks");
         return new SendingCommand();
     }
@@ -49,11 +47,12 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
-            Utils.sendChatMessage(parent.task.getCommand());
-            return new WaitingForNamedMenu(parent, parent.task.getBZMenuName())
-                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getSellStacksSlotName())
-                        .setNextState(new WaitingForNamedMenu(parent, parent.task.getConfirmMenuName())
-                            .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getConfirmSlotName())
+            SellSacks sellTask = (SellSacks) parent.task;
+            Utils.sendChatMessage(sellTask.getCommand());
+            return new WaitingForNamedMenu(parent, sellTask.getBZMenuName())
+                    .setNextState(new ClickOnSlotOrRestart(parent, sellTask.getSellStacksSlotName())
+                        .setNextState(new WaitingForNamedMenu(parent, sellTask.getConfirmMenuName())
+                            .setNextState(new ClickOnSlotOrRestart(parent, sellTask.getConfirmSlotName())
                                 .setNextState(new WaitingBeforeClosingMenu())
                             )
                         )

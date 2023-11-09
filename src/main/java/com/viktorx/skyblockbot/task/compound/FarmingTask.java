@@ -174,7 +174,7 @@ public class FarmingTask extends CompoundTask {
     }
 
     private void debugExecute() {
-        currentTask = gardenVisitorsTask;
+        currentTask = new UseItem(ItemNames.ARMADILLO.getName(), this::defaultWhenCompleted, this::defaultWhenAborted);
         currentTask.execute();
     }
 
@@ -245,6 +245,8 @@ public class FarmingTask extends CompoundTask {
     public void abort() {
         if (currentTask.isExecuting()) {
             currentTask.abort();
+        } else {
+            SkyblockBot.LOGGER.warn("Current task is not executing, FarmingTask can't abort anything!");
         }
         currentTask = null;
 
