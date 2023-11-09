@@ -24,6 +24,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
     @Override
     protected synchronized ExecutorState restart() {
         SkyblockBot.LOGGER.warn("BuyBZItem restart happened when state was " + state.getClass().getSimpleName());
+        state = new Idle();
         CompletableFuture.runAsync(() -> {
             blockingCloseCurrentInventory();
             SkyblockBot.LOGGER.warn("Can't buy " + ((BuyBZItem) task).getItemName() + ". Restarting task");
@@ -105,9 +106,11 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
              */
             return new WaitingForNamedMenu(parent, buyTask.getSearchResultMenuName())
                     .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getItemName())
-                            .setNextState(new WaitingForNamedMenu(parent, buyTask.getItemMenuName())
-                                    .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getBuyInstantlyItemName())
-                                            .setNextState(buyOneOrEnterAmount)
+                        .setNextState(new WaitingForNamedMenu(parent, buyTask.getItemMenuName())
+                            .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getBuyInstantlyItemName())
+                                .setNextState(new WaitingForNamedMenu(parent, buyTask.getBuyInstantlyMenuName())
+                                    .setNextState(buyOneOrEnterAmount)
+                                            )
                                     )
                             )
                     );

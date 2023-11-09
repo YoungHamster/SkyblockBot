@@ -59,27 +59,22 @@ public class BuyItem extends BaseTask<BuyItemExecutor> {
     }
 
     public String getAHMenuName() {
-        // TODO
-        return "";
+        return "Auction House";
+    }
+
+    public String getBinAuctionMenuName() {
+        return "BIN";
     }
 
     public String getConfirmMenuName() {
-        // TODO
-        return "";
+        return "Confirm Purchase";
     }
 
     public String getViewBidsMenuName() {
-        // TODO
-        return "";
-    }
-
-    public String getBidMenuName() {
-        // TODO
-        return "";
+        return "Your Bids";
     }
 
     public String getClaimMenuName() {
-        // TODO
-        return "";
+        return "Auction View";
     }
 }

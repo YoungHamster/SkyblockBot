@@ -22,12 +22,10 @@ public class AssembleCraft extends BaseTask<AssembleCraftExecutor> {
     }
 
     public String getSBMenuName() {
-        // TODO
-        return "";
+        return "SkyBlock Menu";
     }
 
     public String getCraftingTableMenuName() {
-        // TODO
-        return "";
+        return "Craft Item";
     }
 }

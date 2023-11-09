@@ -22,6 +22,7 @@ public class TalkToVisitorExecutor extends AbstractVisitorExecutor {
     @Override
     protected synchronized ExecutorState restart() {
         keepTracking.set(false);
+        state = new Idle();
         return execute(task);
     }
 

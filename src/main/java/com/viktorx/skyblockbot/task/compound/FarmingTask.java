@@ -174,8 +174,9 @@ public class FarmingTask extends CompoundTask {
     }
 
     private void debugExecute() {
-        currentTask = new UseItem(ItemNames.ARMADILLO.getName(), this::defaultWhenCompleted, this::defaultWhenAborted);
+        currentTask = new BuyItem(ItemNames.ARMADILLO.getName(), new String[0], this::defaultWhenCompleted, this::defaultWhenAborted);
         currentTask.execute();
+        taskQueue.add(new UseItem(ItemNames.ARMADILLO.getName(), this::defaultWhenCompleted, this::defaultWhenAborted));
     }
 
     public void execute() {

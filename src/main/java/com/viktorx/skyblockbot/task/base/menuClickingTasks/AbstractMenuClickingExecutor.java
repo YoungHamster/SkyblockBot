@@ -9,6 +9,7 @@ import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseExecutor;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.InputUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +51,7 @@ public abstract class AbstractMenuClickingExecutor extends BaseExecutor {
 
     protected void blockingCloseCurrentInventory() {
         if (MinecraftClient.getInstance().currentScreen != null) {
-            Keybinds.blockingPressKey(MinecraftClient.getInstance().options.inventoryKey);
+            Keybinds.asyncPressKeyAfterTick(InputUtil.GLFW_KEY_ESCAPE);
         }
         while(MinecraftClient.getInstance().currentScreen != null) {
             try {

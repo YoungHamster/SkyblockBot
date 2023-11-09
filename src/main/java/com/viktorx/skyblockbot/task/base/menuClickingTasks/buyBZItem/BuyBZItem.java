@@ -82,27 +82,34 @@ public class BuyBZItem extends BaseTask<BuyBZItemExecutor> {
     }
 
     public String getBZMenuName() {
-        // TODO
-        return "";
+        return "Bazaar";
     }
 
     public String getSearchResultMenuName() {
-        // TODO
-        return "";
+        if(itemName.length() > 17) {
+            return itemName.substring(0, 17);
+        } else {
+            return itemName;
+        }
     }
 
     public String getItemMenuName() {
-        // TODO
-        return "";
+        if(itemName.length() > 17) {
+            return itemName.substring(0, 17);
+        } else {
+            return itemName;
+        }
     }
 
     public String getBuyInstantlyMenuName() {
-        // TODO
-        return "";
+        if(itemName.length() > 17) {
+            return itemName.substring(0, 17);
+        } else {
+            return itemName;
+        }
     }
 
     public String getBuyCustomAmountMenuName() {
-        // TODO
-        return "";
+        return "Confirm Instant Buy";
     }
 }

@@ -113,6 +113,10 @@ public class Keybinds {
         Keybinds.tickKeyPressQueue.add(((KeyBindingMixin) key).getBoundKey().getCode());
     }
 
+    public static void asyncPressKeyAfterTick(int key) {
+        Keybinds.tickKeyPressQueue.add(key);
+    }
+
     private static void asyncPressKeyAfterTick() {
         Integer key;
         key = Keybinds.tickKeyPressQueue.poll();

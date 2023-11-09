@@ -32,6 +32,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
     @Override
     protected synchronized ExecutorState restart() {
         SkyblockBot.LOGGER.warn("BuyItem restart happened when state was " + state.getClass().getSimpleName());
+        state = new Idle();
         CompletableFuture.runAsync(() -> {
             blockingCloseCurrentInventory();
             SkyblockBot.LOGGER.warn("Can't buy from auction. Restarting task");
@@ -106,7 +107,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
             Utils.sendChatMessage(auctionCommand);
 
             BuyItem buyTask = (BuyItem) parent.task;
-            return new WaitingForNamedMenu(parent, buyTask.getAHMenuName())
+            return new WaitingForNamedMenu(parent, buyTask.getBinAuctionMenuName())
                     .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getBuySlotName())
                         .setNextState(new WaitingForNamedMenu(parent, buyTask.getConfirmMenuName())
                             .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getConfirmSlotName())
@@ -154,7 +155,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
             Utils.sendChatMessage("/ah");
 
             BuyItem buyTask = (BuyItem) parent.task;
-            return new WaitingForNamedMenu(parent, buyTask.getViewBidsMenuName())
+            return new WaitingForNamedMenu(parent, buyTask.getAHMenuName())
                     .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getViewBidsSlotName())
                         .setNextState(new WaitingForNamedMenu(parent, buyTask.getViewBidsMenuName())
                             .setNextState(new ClickOnSlotOrRestart(parent, buyTask.getItemName())

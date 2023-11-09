@@ -34,12 +34,10 @@ public class SellSacks extends BaseTask<SellSacksExecutor> {
     }
 
     public String getBZMenuName() {
-        // TODO
-        return "";
+        return "Bazaar";
     }
 
     public String getConfirmMenuName() {
-        // TODO
-        return "";
+        return "Are you sure?";
     }
 }

@@ -19,6 +19,7 @@ public class GiveVisitorItemsExecutor extends AbstractVisitorExecutor {
     @Override
     protected synchronized ExecutorState restart() {
         SkyblockBot.LOGGER.info("Restarting GiveVisitorItems");
+        state = new Idle();
         return execute(task);
     }
 

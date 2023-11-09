@@ -8,6 +8,8 @@ import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingE
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
+import java.util.concurrent.CompletableFuture;
+
 public class SellSacksExecutor extends AbstractMenuClickingExecutor {
 
     public static SellSacksExecutor INSTANCE = new SellSacksExecutor();
@@ -27,8 +29,11 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
     @Override
     protected synchronized ExecutorState restart() {
         SkyblockBot.LOGGER.info("Restarting sellSacks");
-        blockingCloseCurrentInventory();
-        execute(task);
+        state = new Idle();
+        CompletableFuture.runAsync(() -> {
+            blockingCloseCurrentInventory();
+            execute(task);
+        });
         return new Idle();
     }
 

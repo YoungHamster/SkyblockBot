@@ -33,6 +33,7 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
     @Override
     protected synchronized ExecutorState restart() {
         SkyblockBot.LOGGER.info("Restarting UseItem task");
+        state = new Idle();
         return execute(task);
     }
 
