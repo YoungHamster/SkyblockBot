@@ -9,7 +9,10 @@ import com.viktorx.skyblockbot.utils.Utils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec2f;
+import net.minecraft.util.math.Vec3d;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecutor {
@@ -19,6 +22,7 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
 
     public static class StartTrackingVisitor implements ExecutorState {
         private AtomicBoolean keepTracking = new AtomicBoolean(false);
+        private final List<Vec3d> npcPosHistory = new ArrayList<>();
         private final AbstractVisitorExecutor parent;
 
         public StartTrackingVisitor(AbstractVisitorExecutor parent) {
@@ -32,8 +36,10 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
             if (npc != null) {
                 /*
                  * If npc is moving we wait
+                 * but if npc hasn't moved at all in past 10 ticks we look at it and talk to it
                  */
-                if (npc.getLerpedPos(10).subtract(npc.getPos()).length() != 0) {
+                npcPosHistory.add(npc.getPos());
+                if (npcPosHistory.get(npcPosHistory.size() - 12).subtract(npc.getPos()).length() != 0) {
                     return this;
                 }
 
