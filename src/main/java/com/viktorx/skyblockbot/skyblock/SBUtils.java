@@ -268,7 +268,7 @@ public class SBUtils {
         List<Slot> slotList;
         MinecraftClient client = MinecraftClient.getInstance();
 
-        int numberOfTries = 40;
+        int numberOfTries = 120; // this means it will wait for about 6 seconds before giving up and throwing TimeoutException
         int i = 0;
 
         do {
