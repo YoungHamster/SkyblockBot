@@ -23,37 +23,19 @@ public class GiveVisitorItemsExecutor extends AbstractVisitorExecutor {
     }
 
     @Override
-    protected ExecutorState whenMenuOpened() {
-        SkyblockBot.LOGGER.info("Menu loaded!");
-        return new AcceptingOffer(this);
-    }
-
-    @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
-        currentClickRunning = false;
-        waitForMenuCounter = 0;
         this.task = (GiveVisitorItems) task;
         return new StartTrackingVisitor(this);
     }
 
-    private synchronized void onTick(MinecraftClient client) {
-        state = state.onTick(client);
+    @Override
+    protected ExecutorState getStateWhenVisitorOpened() {
+        return new ClickOnSlotOrRestart(this, ((GiveVisitorItems) task).getAcceptOfferStr())
+                .setNextState(new WaitingTillNpcLeaves(this));
     }
 
-    protected static class AcceptingOffer implements ExecutorState {
-        private final GiveVisitorItemsExecutor parent;
-
-        public AcceptingOffer(GiveVisitorItemsExecutor parent) {
-            this.parent = parent;
-        }
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (!parent.asyncClickOrRestart(((GiveVisitorItems) parent.task).getAcceptOfferStr())) {
-                return this;
-            }
-            return new WaitingTillNpcLeaves(parent);
-        }
+    private synchronized void onTick(MinecraftClient client) {
+        state = state.onTick(client);
     }
 
     protected static class WaitingTillNpcLeaves implements ExecutorState {

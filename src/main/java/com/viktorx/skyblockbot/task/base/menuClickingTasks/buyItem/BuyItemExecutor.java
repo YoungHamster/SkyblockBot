@@ -6,6 +6,7 @@ import com.viktorx.skyblockbot.skyblock.flipping.auction.AuctionBrowser;
 import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import com.viktorx.skyblockbot.task.base.ExecutorState;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.MenuClickersSettings;
 import com.viktorx.skyblockbot.utils.Utils;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
@@ -16,7 +17,6 @@ import java.util.concurrent.ExecutionException;
 public class BuyItemExecutor extends AbstractMenuClickingExecutor {
 
     public static final BuyItemExecutor INSTANCE = new BuyItemExecutor();
-    private ExecutorState nextState;
     private BuyItem task;
     private CompletableFuture<String> priceFinder;
     private boolean priceFinderRunning = false;
@@ -42,15 +42,9 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
     }
 
     @Override
-    protected ExecutorState whenMenuOpened() {
-        return nextState;
-    }
-
-    @Override
     public synchronized  <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         CompletableFuture.runAsync(AuctionBrowser.INSTANCE::loadAH);
         priceFinderRunning = false;
-        currentClickRunning = false;
         this.task = (BuyItem) task;
         return new LoadingAuctions();
     }
@@ -93,7 +87,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
             }
 
             parent.priceFinderRunning = false;
-            String auctionCommand = null;
+            String auctionCommand;
 
             try {
                 auctionCommand = parent.priceFinder.get();
@@ -111,58 +105,36 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
             assert client.player != null;
             Utils.sendChatMessage(auctionCommand);
 
-            parent.nextState = new Buying();
-            return new WaitingForMenu(parent);
+            return new WaitingForNamedMenu(parent, parent.task.getAHMenuName())
+                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getBuySlotName())
+                        .setNextState(new WaitingForNamedMenu(parent, parent.task.getConfirmMenuName())
+                            .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getConfirmSlotName())
+                                .setNextState(new CheckingBuyResult())
+                            )
+                        )
+                    );
 
-        }
-    }
-
-    protected static class Buying implements ExecutorState {
-        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (!parent.asyncClickOrRestart(parent.task.getBuySlotName())) {
-                return this;
-            }
-
-            parent.nextState = new ConfirmingBuy();
-            return new WaitingForMenu(parent);
-        }
-    }
-
-    protected static class ConfirmingBuy implements ExecutorState {
-        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (!parent.asyncClickOrRestart(parent.task.getConfirmSlotName())) {
-                return this;
-            }
-
-            parent.nextState = new CheckingBuyResult();
-            return new WaitingForMenu(parent);
         }
     }
 
     protected static class CheckingBuyResult extends WaitingExecutorState {
         private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
+        private int waitForResultCounter = 0;
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
-
-            if (waitBeforeAction()) {
-                return this;
-            }
-
             if (Utils.isStringInRecentChat("You claimed", 5)) {
                 parent.task.completed();
                 return new Idle();
             } else if (Utils.isStringInRecentChat("Visit the Auction House", 5)) {
                 return new ClaimingAuction();
             } else {
-                SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 159");
-                return parent.restart();
+                if(waitForResultCounter++ >= MenuClickersSettings.maxWaitForStuff) {
+                    SkyblockBot.LOGGER.warn("Error when buying item from ah. Restarting! Line 159");
+                    return parent.restart();
+                } else {
+                    return this;
+                }
             }
         }
     }
@@ -180,60 +152,35 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
             assert client.player != null;
             Utils.sendChatMessage("/ah");
 
-            parent.nextState = new ClaimingAuctionViewBids();
-            return new WaitingForMenu(parent);
-        }
-    }
-
-    protected static class ClaimingAuctionViewBids implements ExecutorState {
-        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (!parent.asyncClickOrRestart(parent.task.getViewBidsSlotName())) {
-                return this;
-            }
-
-            parent.nextState = new ClaimingAuctionBid();
-            return new WaitingForMenu(parent);
-        }
-    }
-
-    protected static class ClaimingAuctionBid implements ExecutorState {
-        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (!parent.asyncClickOrRestart(parent.task.getItemName())) {
-                return this;
-            }
-
-            parent.nextState = new ClaimingAuctionClaim();
-            return new WaitingForMenu(parent);
-        }
-    }
-
-    protected static class ClaimingAuctionClaim implements ExecutorState {
-        private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (parent.asyncClickOrRestart(parent.task.getCollectAuctionSlotName())) {
-                return new WaitingForItem();
-            }
-            return this;
+            return new WaitingForNamedMenu(parent, parent.task.getViewBidsMenuName())
+                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getViewBidsSlotName())
+                        .setNextState(new WaitingForNamedMenu(parent, parent.task.getViewBidsMenuName())
+                            .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getItemName())
+                                .setNextState(new WaitingForNamedMenu(parent, parent.task.getClaimMenuName())
+                                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getCollectAuctionSlotName())
+                                        .setNextState(new WaitingForItem())
+                                    )
+                                )
+                            )
+                        )
+                    );
         }
     }
 
     protected static class WaitingForItem implements ExecutorState {
         private final BuyItemExecutor parent = BuyItemExecutor.INSTANCE;
+        private int waitForItemCounter = 0;
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             if (SBUtils.isItemInInventory(parent.task.getItemName())) {
                 return new WaitForMenuToClose(new Complete(parent));
+            } else {
+                if(waitForItemCounter++ >= MenuClickersSettings.maxWaitForStuff) {
+                    return parent.restart();
+                }
+                return this;
             }
-            return this;
         }
     }
 }

@@ -28,7 +28,6 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         this.task = (UseItem) task;
-        waitForMenuCounter = 0;
         wasUsedHotbarSlotEmpty = true;
         return new CheckingInventory(this);
     }
@@ -37,12 +36,6 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
     protected synchronized ExecutorState restart() {
         SkyblockBot.LOGGER.info("Restarting UseItem task");
         return execute(task);
-    }
-
-    // This class isn't supposed to use this method, so it returns null
-    @Override
-    protected ExecutorState whenMenuOpened() {
-        return null;
     }
 
     private synchronized void onTick(MinecraftClient client) {

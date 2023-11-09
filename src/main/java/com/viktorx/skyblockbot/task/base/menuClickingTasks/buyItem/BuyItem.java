@@ -4,8 +4,8 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.task.base.BaseTask;
 
 public class BuyItem extends BaseTask<BuyItemExecutor> {
-    private String itemName = null;
-    private String[] loreKeyWords;
+    private final String itemName;
+    private final String[] loreKeyWords;
     private long priceLimit = 10000000;
 
     public BuyItem(String itemName, String[] loreKeyWords, Runnable whenCompleted, Runnable whenAborted) {
@@ -14,17 +14,11 @@ public class BuyItem extends BaseTask<BuyItemExecutor> {
         this.loreKeyWords = loreKeyWords;
     }
 
-    public void setItemInfo(String itemName, String[] itemLoreKeyWords) {
-        if (!BuyItemExecutor.INSTANCE.isExecuting(this)) {
-            this.itemName = itemName;
-            this.loreKeyWords = itemLoreKeyWords;
-        }
-    }
-
-    public void setPriceLimit(long priceLimit) {
-        if (!BuyItemExecutor.INSTANCE.isExecuting(this)) {
-            this.priceLimit = priceLimit;
-        }
+    public BuyItem(String itemName, String[] loreKeyWords, long priceLimit, Runnable whenCompleted, Runnable whenAborted) {
+        super(BuyItemExecutor.INSTANCE, whenCompleted, whenAborted);
+        this.itemName = itemName;
+        this.loreKeyWords = loreKeyWords;
+        this.priceLimit = priceLimit;
     }
 
     public long getPriceLimit() {
@@ -62,5 +56,30 @@ public class BuyItem extends BaseTask<BuyItemExecutor> {
 
     public String getCollectAuctionSlotName() {
         return "Collect Auction";
+    }
+
+    public String getAHMenuName() {
+        // TODO
+        return "";
+    }
+
+    public String getConfirmMenuName() {
+        // TODO
+        return "";
+    }
+
+    public String getViewBidsMenuName() {
+        // TODO
+        return "";
+    }
+
+    public String getBidMenuName() {
+        // TODO
+        return "";
+    }
+
+    public String getClaimMenuName() {
+        // TODO
+        return "";
     }
 }

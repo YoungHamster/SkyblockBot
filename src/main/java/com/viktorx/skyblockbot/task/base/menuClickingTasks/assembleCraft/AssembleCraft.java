@@ -20,4 +20,14 @@ public class AssembleCraft extends BaseTask<AssembleCraftExecutor> {
     public String getCraftingTableSlotName() {
         return "Crafting Table";
     }
+
+    public String getSBMenuName() {
+        // TODO
+        return "";
+    }
+
+    public String getCraftingTableMenuName() {
+        // TODO
+        return "";
+    }
 }

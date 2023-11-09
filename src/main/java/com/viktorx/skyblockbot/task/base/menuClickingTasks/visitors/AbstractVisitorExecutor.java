@@ -3,8 +3,8 @@ package com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.movement.LookHelper;
-import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import com.viktorx.skyblockbot.task.base.ExecutorState;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import com.viktorx.skyblockbot.utils.Utils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
@@ -15,6 +15,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecutor {
     protected AtomicBoolean keepTracking = new AtomicBoolean(false);
     protected AbstractVisitorTask<?> task;
+
+    protected abstract ExecutorState getStateWhenVisitorOpened();
 
     public static class StartTrackingVisitor implements ExecutorState {
         private AtomicBoolean keepTracking = new AtomicBoolean(false);
@@ -31,7 +33,7 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
                 /*
                  * If npc is moving we wait
                  */
-                if(npc.getLerpedPos(10).subtract(npc.getPos()).length() != 0) {
+                if (npc.getLerpedPos(10).subtract(npc.getPos()).length() != 0) {
                     return this;
                 }
 
@@ -54,7 +56,7 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
         private int npcTooFarTickCounter = 0;
         private final AbstractVisitorExecutor parent;
 
-        public TrackingVisitor(AbstractVisitorExecutor parent ,AtomicBoolean keepTracking) {
+        public TrackingVisitor(AbstractVisitorExecutor parent, AtomicBoolean keepTracking) {
             this.keepTracking = keepTracking;
             this.parent = parent;
         }
@@ -69,18 +71,18 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
             /*
              * If npc is moving we stop tracking and wait till they stop
              */
-            if(npc.getLerpedPos(10).subtract(npc.getPos()).length() != 0) {
+            if (npc.getLerpedPos(10).subtract(npc.getPos()).length() != 0) {
                 keepTracking.set(false);
                 return new StartTrackingVisitor(parent);
             }
 
             Vec2f dPdY = LookHelper.getAngleDeltaForEntity(npc); // delta pitch, delta yaw
 
-            if(Math.abs(dPdY.x) < 1.0f && Math.abs(dPdY.y) < 1.0f) {
+            if (Math.abs(dPdY.x) < 1.0f && Math.abs(dPdY.y) < 1.0f) {
                 assert client.player != null;
-                if(Utils.distanceBetween(npc.getPos(), client.player.getPos()) > 4.0d) {
+                if (Utils.distanceBetween(npc.getPos(), client.player.getPos()) > 4.0d) {
                     npcTooFarTickCounter++;
-                    if(npcTooFarTickCounter > VisitorExecutorSettings.npcTooFarTickThreshold) {
+                    if (npcTooFarTickCounter > VisitorExecutorSettings.npcTooFarTickThreshold) {
                         SkyblockBot.LOGGER.warn("Visitor npc is too far, can't reach it, aborting visitor task.");
                         parent.abort();
                         return new Idle();
@@ -92,7 +94,8 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
                 Keybinds.asyncPressKeyAfterTick(client.options.useKey);
                 keepTracking.set(false);
                 SkyblockBot.LOGGER.info("Clicked on visitor. Waiting.");
-                return new WaitingForMenu(parent);
+                return new WaitingForNamedMenu(parent, parent.task.getVisitorName())
+                        .setNextState(parent.getStateWhenVisitorOpened());
             }
             return this;
         }

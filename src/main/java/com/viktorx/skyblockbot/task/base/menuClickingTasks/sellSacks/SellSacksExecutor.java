@@ -13,7 +13,6 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
     public static SellSacksExecutor INSTANCE = new SellSacksExecutor();
 
     private SellSacks task;
-    private ExecutorState nextState;
 
     SellSacksExecutor() {
         possibleErrors.add("You may only use this command after");
@@ -36,11 +35,6 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
     }
 
     @Override
-    protected ExecutorState whenMenuOpened() {
-        return nextState;
-    }
-
-    @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         this.task = (SellSacks) task;
         SkyblockBot.LOGGER.info("Executing sell sacks");
@@ -56,39 +50,14 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             Utils.sendChatMessage(parent.task.getCommand());
-            parent.nextState = new Selling();
-            return new WaitingForMenu(parent);
-        }
-    }
-
-    protected static class Selling implements ExecutorState {
-        private final SellSacksExecutor parent;
-        public Selling() {
-            this.parent = SellSacksExecutor.INSTANCE;
-        }
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if(!parent.asyncClickOrRestart(parent.task.getSellStacksSlotName())) {
-                return this;
-            }
-            parent.nextState = new Confirming();
-            return new WaitingForMenu(parent);
-        }
-    }
-
-    protected static class Confirming implements ExecutorState {
-        private final SellSacksExecutor parent;
-        public Confirming() {
-            this.parent = SellSacksExecutor.INSTANCE;
-        }
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if(!parent.asyncClickOrRestart(parent.task.getConfirmSlotName())) {
-                return this;
-            }
-            return new WaitingBeforeClosingMenu();
+            return new WaitingForNamedMenu(parent, parent.task.getBZMenuName())
+                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getSellStacksSlotName())
+                        .setNextState(new WaitingForNamedMenu(parent, parent.task.getConfirmMenuName())
+                            .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getConfirmSlotName())
+                                .setNextState(new WaitingBeforeClosingMenu())
+                            )
+                        )
+                    );
         }
     }
 

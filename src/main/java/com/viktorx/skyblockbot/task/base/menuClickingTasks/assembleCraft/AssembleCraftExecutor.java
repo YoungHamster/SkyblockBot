@@ -1,23 +1,19 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks.assembleCraft;
 
-import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseTask;
-import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import com.viktorx.skyblockbot.task.base.ExecutorState;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import javafx.util.Pair;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
-
-import java.util.concurrent.TimeoutException;
 
 public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
 
     public static final AssembleCraftExecutor INSTANCE = new AssembleCraftExecutor();
     private AssembleCraft task;
-    private ExecutorState nextState;
     private ItemPutter itemPutter;
 
     public void Init() {
@@ -27,11 +23,6 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
     @Override
     protected synchronized ExecutorState restart() {
         return new OpeningSBMenu();
-    }
-
-    @Override
-    protected ExecutorState whenMenuOpened() {
-        return nextState;
     }
 
     @Override
@@ -72,27 +63,13 @@ public class AssembleCraftExecutor extends AbstractMenuClickingExecutor {
         public ExecutorState onTick(MinecraftClient client) {
             if (!waitBeforeAction()) {
                 Keybinds.asyncPressKeyAfterTick(client.options.useKey);
-                parent.nextState = new OpeningCraftingTable();
-                return new WaitingForMenu(parent);
-            }
-            return this;
-        }
-    }
-
-    protected static class OpeningCraftingTable extends WaitingExecutorState {
-        private final AssembleCraftExecutor parent = AssembleCraftExecutor.INSTANCE;
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (!waitBeforeAction()) {
-                try {
-                    SBUtils.leftClickOnSlot(parent.task.getCraftingTableSlotName());
-                    parent.nextState = new PuttingItems();
-                    return new WaitingForMenu(parent);
-                } catch (TimeoutException e) {
-                    SkyblockBot.LOGGER.warn("Can't click on crafting table slot! Restarting AssembleCraft tsak");
-                    return parent.restart();
-                }
+                return new WaitingForNamedMenu(parent, parent.task.getSBMenuName())
+                        .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getCraftingTableSlotName())
+                                .setNextState(new WaitingForNamedMenu(parent, parent.task.getCraftingTableMenuName())
+                                        .setNextState(new PuttingItems()
+                                        )
+                                )
+                        );
             }
             return this;
         }

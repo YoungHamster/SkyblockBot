@@ -4,10 +4,9 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.IAbstractSignEditScreenMixin;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.base.BaseTask;
+import com.viktorx.skyblockbot.task.base.ExecutorState;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.MenuClickersSettings;
-import com.viktorx.skyblockbot.task.base.ExecutorState;
-import com.viktorx.skyblockbot.utils.CurrentInventory;
 import com.viktorx.skyblockbot.utils.Utils;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
@@ -17,8 +16,6 @@ import java.util.concurrent.CompletableFuture;
 public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
     public static BuyBZItemExecutor INSTANCE = new BuyBZItemExecutor();
-    private ExecutorState nextState;
-    private ExecutorState prevState;
     private BuyBZItem task;
 
     public void Init() {
@@ -27,8 +24,7 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
     @Override
     protected synchronized ExecutorState restart() {
-        SkyblockBot.LOGGER.warn("BuyBZItem restart happened when state was " + state.getClass().getSimpleName() +
-                " and next state was " + nextState.getClass().getSimpleName());
+        SkyblockBot.LOGGER.warn("BuyBZItem restart happened when state was " + state.getClass().getSimpleName());
         CompletableFuture.runAsync(() -> {
             blockingCloseCurrentInventory();
             SkyblockBot.LOGGER.warn("Can't buy " + task.getItemName() + ". Restarting task");
@@ -38,14 +34,8 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
     }
 
     @Override
-    protected ExecutorState whenMenuOpened() {
-        return nextState;
-    }
-
-    @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         this.task = (BuyBZItem) task;
-        currentClickRunning = false;
         return new SendingCommand();
     }
 
@@ -69,22 +59,12 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
             }
             Utils.sendChatMessage(parent.task.getBZCommand());
 
-            parent.nextState = new ClickingToSearch();
-            return new WaitingForMenu(parent);
-        }
-    }
-
-    protected static class ClickingToSearch implements ExecutorState {
-        private final BuyBZItemExecutor parent = BuyBZItemExecutor.INSTANCE;
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (!parent.asyncClickOrRestart(parent.task.getSearchItemName())) {
-                return this;
-            }
-
-            parent.nextState = new Searching();
-            return new WaitingForScreenChange();
+            return new WaitingForNamedMenu(parent, parent.task.getBZMenuName())
+                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getSearchItemName())
+                            .setNextState(new WaitingForScreenChange()
+                                    .setNextState(new Searching())
+                            )
+                    );
         }
     }
 
@@ -102,70 +82,34 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
             assert client.currentScreen != null;
             client.currentScreen.close();
 
-            parent.nextState = new ClickingOnItem();
-            return new WaitingForMenu(parent);
-        }
-    }
-
-    protected static class ClickingOnItem implements ExecutorState {
-        private final BuyBZItemExecutor parent = BuyBZItemExecutor.INSTANCE;
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (!parent.asyncClickOrRestart(parent.task.getItemName())) {
-                return this;
-            }
-
-            parent.nextState = new ClickingBuyInstantly();
-            return new WaitingForMenu(parent);
-        }
-    }
-
-    protected static class ClickingBuyInstantly implements ExecutorState {
-        private final BuyBZItemExecutor parent = BuyBZItemExecutor.INSTANCE;
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (!parent.asyncClickOrRestart(parent.task.getBuyInstantlyItemName())) {
-                return this;
-            }
-
+            /*
+             * Depending on amount of items we need to buy execution goes
+             * one of two ways. We either buy one item and that's all, or we need to buy more than one
+             * so we need to enter custom amount
+             */
+            ExecutorState buyOneOrEnterAmount;
             if (parent.task.getItemCount() == 1) {
-                parent.nextState = new BuyingOne();
+                buyOneOrEnterAmount = new ClickOnSlotOrRestart(parent, parent.task.getBuyOneItemName())
+                        .setNextState(new WaitingForItem());
             } else {
-                parent.nextState = new ClickingEnterAmount();
-            }
-            return new WaitingForMenu(parent);
-        }
-    }
-
-    protected static class BuyingOne implements ExecutorState {
-        private final BuyBZItemExecutor parent = BuyBZItemExecutor.INSTANCE;
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (!parent.asyncClickOrRestart(parent.task.getBuyOneItemName())) {
-                return this;
+                buyOneOrEnterAmount = new ClickOnSlotOrRestart(parent, parent.task.getEnterAmountItemName())
+                        .setNextState(new WaitingForScreenChange()
+                                .setNextState(new EnteringAmount()
+                                )
+                        );
             }
 
-            parent.asyncCloseCurrentInventory();
-
-            return new WaitingForItem();
-        }
-    }
-
-    protected static class ClickingEnterAmount implements ExecutorState {
-        private final BuyBZItemExecutor parent = BuyBZItemExecutor.INSTANCE;
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (!parent.asyncClickOrRestart(parent.task.getEnterAmountItemName())) {
-                return this;
-            }
-
-            parent.prevState = this;
-            parent.nextState = new EnteringAmount();
-            return new WaitingForScreenChange();
+            /*
+             * No matter what amount of items we need to buy these steps are the same
+             */
+            return new WaitingForNamedMenu(parent, parent.task.getSearchResultMenuName())
+                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getItemName())
+                            .setNextState(new WaitingForNamedMenu(parent, parent.task.getItemMenuName())
+                                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getBuyInstantlyItemName())
+                                            .setNextState(buyOneOrEnterAmount)
+                                    )
+                            )
+                    );
         }
     }
 
@@ -180,35 +124,28 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
 
             parent.typeIntoCurrentScreen(Integer.toString(parent.task.getItemCount()));
 
-            CurrentInventory.syncIDChanged(); // Reseting this for reasons
             assert client.currentScreen != null;
             client.currentScreen.close();
 
-            parent.nextState = new BuyingCustomAmount();
-            return new WaitingForMenu(parent);
-        }
-    }
-
-    protected static class BuyingCustomAmount implements ExecutorState {
-        private final BuyBZItemExecutor parent = BuyBZItemExecutor.INSTANCE;
-
-        @Override
-        public ExecutorState onTick(MinecraftClient client) {
-            if (!parent.asyncClickOrRestart(parent.task.getBuyCustomAmountItemName())) {
-                return this;
-            }
-
-            parent.asyncCloseCurrentInventory();
-
-            return new WaitingForItem();
+            return new WaitingForNamedMenu(parent, parent.task.getBuyCustomAmountMenuName())
+                    .setNextState(new ClickOnSlotOrRestart(parent, parent.task.getBuyCustomAmountItemName())
+                            .setNextState(new WaitingForItem()
+                            )
+                    );
         }
     }
 
     protected static class WaitingForItem implements ExecutorState {
         private final BuyBZItemExecutor parent = BuyBZItemExecutor.INSTANCE;
+        private boolean closedInventory = false;
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
+            if (!closedInventory) {
+                parent.asyncCloseCurrentInventory();
+                closedInventory = true;
+            }
+
             if (SBUtils.isItemInInventory(parent.task.getItemName()) && client.currentScreen == null) {
                 parent.task.completed();
                 return new Idle();
@@ -220,6 +157,12 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
     protected static class WaitingForScreenChange implements ExecutorState {
         private final BuyBZItemExecutor parent = BuyBZItemExecutor.INSTANCE;
         protected int waitForScreenLoadingCounter = 0;
+        private ExecutorState nextState;
+
+        public WaitingForScreenChange setNextState(ExecutorState nextState) {
+            this.nextState = nextState;
+            return this;
+        }
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
@@ -227,10 +170,10 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
                 return this;
             }
             if (client.currentScreen.getClass().equals(parent.task.getSearchScreenClass())) {
-                return parent.nextState;
+                return nextState;
             }
-            if (waitForScreenLoadingCounter++ > MenuClickersSettings.maxWaitForScreen) {
-                return parent.prevState;
+            if (waitForScreenLoadingCounter++ > MenuClickersSettings.maxWaitForStuff) {
+                return parent.restart();
             }
             return this;
         }

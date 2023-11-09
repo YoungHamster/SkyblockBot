@@ -80,4 +80,29 @@ public class BuyBZItem extends BaseTask<BuyBZItemExecutor> {
     public String getBuyCustomAmountItemName() {
         return "Custom Amount";
     }
+
+    public String getBZMenuName() {
+        // TODO
+        return "";
+    }
+
+    public String getSearchResultMenuName() {
+        // TODO
+        return "";
+    }
+
+    public String getItemMenuName() {
+        // TODO
+        return "";
+    }
+
+    public String getBuyInstantlyMenuName() {
+        // TODO
+        return "";
+    }
+
+    public String getBuyCustomAmountMenuName() {
+        // TODO
+        return "";
+    }
 }

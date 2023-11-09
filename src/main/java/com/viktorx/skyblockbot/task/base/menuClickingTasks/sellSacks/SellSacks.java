@@ -32,4 +32,14 @@ public class SellSacks extends BaseTask<SellSacksExecutor> {
     public String getConfirmSlotName() {
         return "Selling whole inventory";
     }
+
+    public String getBZMenuName() {
+        // TODO
+        return "";
+    }
+
+    public String getConfirmMenuName() {
+        // TODO
+        return "";
+    }
 }

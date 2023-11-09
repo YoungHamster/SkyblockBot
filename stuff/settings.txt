@@ -21,8 +21,8 @@ ChangeIsland.ticksToWaitForChunks: 80
 ChangeIsland.ticksToWaitBeforeAttempt: 80
 ChangeIsland.maxAttempts: 10
 
-BuySell
-BuySell.waitTicksBetweenLetters: 2
+MenuClickers
+MenuClickers.maxWaitForStuff: 80
 
 ComplexFarmingTask
 ComplexFarmingTask.pauseInterval: 3600000
