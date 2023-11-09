@@ -16,7 +16,6 @@ import com.viktorx.skyblockbot.task.base.replay.ReplayBotSettings;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -25,7 +24,6 @@ public class FarmingTask extends CompoundTask {
     public static final FarmingTask INSTANCE = new FarmingTask(null, null);
     private final Task getToSkyblock;
     private final Task getToGarden;
-    private final Task sellSacks;
     private final Task gardenVisitorsTask;
     private final Task farm;
     private final List<Runnable> runWhenFarmCompleted = new ArrayList<>();
@@ -37,7 +35,6 @@ public class FarmingTask extends CompoundTask {
 
         this.getToSkyblock = new GetToSkyblock(this::whenGetToSkyblockCompleted, this::whenGetToSkyblockAborted);
         this.getToGarden = new ChangeIsland("/warp garden", this::defaultWhenCompleted, this::whenGetToGardenAborted);
-        this.sellSacks = new SellSacks(this::defaultWhenCompleted, this::defaultWhenAborted);
         this.farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE, this::whenFarmCompleted, this::whenFarmAborted);
 
         this.gardenVisitorsTask = new GardenVisitors(this::defaultWhenCompleted, this::whenGardenVisitorsAborted);
@@ -159,13 +156,17 @@ public class FarmingTask extends CompoundTask {
 
     private void whenGardenVisitorsAborted() {
         printTaskInfoAbort();
-
         defaultWhenCompleted();
-        // TODO
     }
 
+    /*
+     * I don't want to see which task was completed when i'm not actively debugging,
+     * but i always want to see which task was aborted
+     */
     private void printTaskInfoCompl() {
-        SkyblockBot.LOGGER.info(getTaskName() + " completed");
+        if(GlobalExecutorInfo.debugMode.get()) {
+            SkyblockBot.LOGGER.info(getTaskName() + " completed");
+        }
     }
 
     private void printTaskInfoAbort() {
@@ -378,11 +379,14 @@ public class FarmingTask extends CompoundTask {
     }
 
     private class CheckSacksTimerTask extends TimerTask {
+        private SellSacks sellSacks;
+
         @Override
         public void run() {
             if (GlobalExecutorInfo.carrotCount.get() / 160 > GlobalExecutorInfo.totalSackCountLimit) {
                 if (!taskQueue.contains(sellSacks)) {
                     SkyblockBot.LOGGER.info("Queueing to sell sacks");
+                    sellSacks = new SellSacks(FarmingTask.this::defaultWhenCompleted, FarmingTask.this::defaultWhenAborted);
                     taskQueue.add(sellSacks);
                 }
             }

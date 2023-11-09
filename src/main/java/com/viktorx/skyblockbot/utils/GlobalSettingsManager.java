@@ -1,6 +1,7 @@
 package com.viktorx.skyblockbot.utils;
 
 import com.viktorx.skyblockbot.keybinds.KeybindsSettings;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.VisitorExecutorSettings;
 import com.viktorx.skyblockbot.task.compound.FarmingTaskSettings;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.MenuClickersSettings;
@@ -73,5 +74,7 @@ public class GlobalSettingsManager {
 
         TGBotDaemonSettings.firstDelay = Long.parseLong(settings.get("TGBotDaemon.firstDelay"));
         TGBotDaemonSettings.delayBetweenUpdates = Long.parseLong(settings.get("TGBotDaemon.delayBetweenUpdates"));
+
+        VisitorExecutorSettings.npcTooFarTickThreshold = Integer.parseInt(settings.get("VisitorExecutor.npcTooFarTickThreshold"));
     }
 }

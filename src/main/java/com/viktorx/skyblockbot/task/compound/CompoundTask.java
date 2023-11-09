@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.task.compound;
 
+import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.task.Task;
 
 public abstract class CompoundTask extends Task {
@@ -25,6 +26,8 @@ public abstract class CompoundTask extends Task {
     public void abort() {
         if (currentTask != null) {
             currentTask.abort();
+        } else {
+            SkyblockBot.LOGGER.warn("Can't abort compound task " + this.getClass().getSimpleName() + " because current task is null");
         }
         currentTask = null;
     }
@@ -48,7 +51,7 @@ public abstract class CompoundTask extends Task {
         if(currentTask == null) {
             return "null. No task is currently executing";
         } else {
-            return currentTask.getClass().getSimpleName();
+            return currentTask.getTaskName();
         }
     }
 }

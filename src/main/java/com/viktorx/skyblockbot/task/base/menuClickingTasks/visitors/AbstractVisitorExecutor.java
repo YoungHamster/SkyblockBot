@@ -51,6 +51,7 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
 
     public static class TrackingVisitor implements ExecutorState {
         private final AtomicBoolean keepTracking;
+        private int npcTooFarTickCounter = 0;
         private final AbstractVisitorExecutor parent;
 
         public TrackingVisitor(AbstractVisitorExecutor parent ,AtomicBoolean keepTracking) {
@@ -76,6 +77,18 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
             Vec2f dPdY = LookHelper.getAngleDeltaForEntity(npc); // delta pitch, delta yaw
 
             if(Math.abs(dPdY.x) < 1.0f && Math.abs(dPdY.y) < 1.0f) {
+                assert client.player != null;
+                if(Utils.distanceBetween(npc.getPos(), client.player.getPos()) > 4.0d) {
+                    npcTooFarTickCounter++;
+                    if(npcTooFarTickCounter > VisitorExecutorSettings.npcTooFarTickThreshold) {
+                        SkyblockBot.LOGGER.warn("Visitor npc is too far, can't reach it, aborting visitor task.");
+                        parent.abort();
+                        return new Idle();
+                    }
+
+                    return this;
+                }
+
                 Keybinds.asyncPressKeyAfterTick(client.options.useKey);
                 keepTracking.set(false);
                 SkyblockBot.LOGGER.info("Clicked on visitor. Waiting.");

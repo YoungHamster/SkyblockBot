@@ -42,3 +42,6 @@ GlobalExecutorInfo.totalSackCountLimit: 40000
 TGBotDaemon
 TGBotDaemon.firstDelay: 3000
 TGBotDaemon.delayBetweenUpdates: 600000
+
+VisitorExecutor
+VisitorExecutor.npcTooFarTickThreshold: 80

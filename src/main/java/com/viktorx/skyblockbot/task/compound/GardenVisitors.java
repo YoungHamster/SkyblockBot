@@ -28,8 +28,8 @@ public class GardenVisitors extends CompoundTask {
         this.goToVisitors = new Replay(goToVisitorsRecName, this::whenGoToVisitorsCompleted, this::whenGoToVisitorsAborted);
         this.goBackToFarm = new Replay(goBackToFarmRecName, this::whenGoBackToFarmCompleted, this::whenGoBackToFarmAborted);
 
-        this.talkToVisitor = new TalkToVisitor(this::whenTalkToVisitorCompleted, this::whenTalkToVisitorAborted);
-        this.giveVisitorItems = new GiveVisitorItems(this::whenGiveVisitorItemsCompleted, this::whenGiveVisitorItemsAborted);
+        this.talkToVisitor = new TalkToVisitor(this::whenTalkToVisitorCompleted, this::defaultWhenAborted);
+        this.giveVisitorItems = new GiveVisitorItems(this::whenGiveVisitorItemsCompleted, this::defaultWhenAborted);
     }
 
     private void whenGoToVisitorsCompleted() {
@@ -56,13 +56,13 @@ public class GardenVisitors extends CompoundTask {
     }
 
     private void whenTalkToVisitorCompleted() {
-        Pair<String, Integer> itemNameCount =  ((TalkToVisitor) talkToVisitor).getNextItem();
+        Pair<String, Integer> itemNameCount = ((TalkToVisitor) talkToVisitor).getNextItem();
         String itemName = itemNameCount.getKey();
         int itemCount = itemNameCount.getValue();
 
         SkyblockBot.LOGGER.info("Just talked to visitor " + currentVisitor);
 
-        currentTask = new BuyBZItem(itemName, itemCount, this::whenBuyBZItemCompleted, this::whenBuyBZItemAborted);
+        currentTask = new BuyBZItem(itemName, itemCount, this::whenBuyBZItemCompleted, this::defaultWhenAborted);
 
         if (SBUtils.isItemInInventory(itemName)) {
             try {
@@ -78,15 +78,15 @@ public class GardenVisitors extends CompoundTask {
         currentTask.execute();
     }
 
-    private void whenTalkToVisitorAborted() {
-        SkyblockBot.LOGGER.warn("TalkToVisitors task aborted! Going back to farm");
+    private void defaultWhenAborted() {
+        SkyblockBot.LOGGER.warn(currentTask.getTaskName() + " task aborted! Going back to farm");
         currentTask = goBackToFarm;
         currentTask.execute();
     }
 
     private void whenBuyBZItemCompleted() {
-        if(((TalkToVisitor) talkToVisitor).isItemRemaining()) {
-            Pair<String, Integer> itemNameCount =  ((TalkToVisitor) talkToVisitor).getNextItem();
+        if (((TalkToVisitor) talkToVisitor).isItemRemaining()) {
+            Pair<String, Integer> itemNameCount = ((TalkToVisitor) talkToVisitor).getNextItem();
             String itemName = itemNameCount.getKey();
             int itemCount = itemNameCount.getValue();
 
@@ -99,22 +99,17 @@ public class GardenVisitors extends CompoundTask {
         currentTask.execute();
     }
 
-    private void whenBuyBZItemAborted() {
-        SkyblockBot.LOGGER.warn("BuyBZItem task aborted! Aborting GardenVisitors task");
-        this.aborted();
-        currentTask = null;
-    }
-
     private void whenGiveVisitorItemsCompleted() {
-        while(true) {
+        while (true) {
             String firstVisitor = SBUtils.getFirstVisitor();
-            if(firstVisitor == null) {
+            if (firstVisitor == null) {
                 currentTask = goBackToFarm;
                 break;
-            } else if(firstVisitor.equals(currentVisitor)) {
+            } else if (firstVisitor.equals(currentVisitor)) {
                 try {
                     Thread.sleep(50);
-                } catch (InterruptedException ignored) {}
+                } catch (InterruptedException ignored) {
+                }
             } else {
                 currentVisitor = firstVisitor;
                 ((TalkToVisitor) talkToVisitor).setVisitorName(currentVisitor);
@@ -125,18 +120,12 @@ public class GardenVisitors extends CompoundTask {
         currentTask.execute();
     }
 
-    private void whenGiveVisitorItemsAborted() {
-        SkyblockBot.LOGGER.warn("GiveVisitorsItems task aborted! Aborting GardenVisitors task");
-        this.aborted();
-        currentTask = null;
-    }
-
     public void execute() {
         if (isExecuting()) {
             SkyblockBot.LOGGER.info("Can't execute GardenVisitorsTask, already in execution");
             return;
         }
-        if(SBUtils.getGardenVisitorCount() == 0) {
+        if (SBUtils.getGardenVisitorCount() == 0) {
             SkyblockBot.LOGGER.warn("Can't execute GardenVisitors when there are no visitors!");
             this.aborted();
             return;
@@ -146,7 +135,15 @@ public class GardenVisitors extends CompoundTask {
     }
 
     public void reloadRecordings() {
-        goToVisitors.loadFromFile(goToVisitorsRecName);
-        goBackToFarm.loadFromFile(goBackToFarmRecName);
+        if(!goToVisitors.isExecuting()) {
+            goToVisitors.loadFromFile(goToVisitorsRecName);
+        } else {
+            SkyblockBot.LOGGER.warn("Can't reload goToVisitors recording, because it is being executed");
+        }
+        if(!goBackToFarm.isExecuting()) {
+            goBackToFarm.loadFromFile(goBackToFarmRecName);
+        } else {
+            SkyblockBot.LOGGER.warn("Can't reload goBackToFarm recording, because it is being executed");
+        }
     }
 }
