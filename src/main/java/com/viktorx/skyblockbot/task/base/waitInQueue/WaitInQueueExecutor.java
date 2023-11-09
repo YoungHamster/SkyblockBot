@@ -3,7 +3,7 @@ package com.viktorx.skyblockbot.task.base.waitInQueue;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseExecutor;
 import com.viktorx.skyblockbot.task.base.BaseTask;
-import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
+import com.viktorx.skyblockbot.task.base.ExecutorState;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 

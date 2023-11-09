@@ -2,7 +2,7 @@ package com.viktorx.skyblockbot.task.base.menuClickingTasks.getSkills;
 
 import com.viktorx.skyblockbot.task.base.BaseExecutor;
 import com.viktorx.skyblockbot.task.base.BaseTask;
-import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
+import com.viktorx.skyblockbot.task.base.ExecutorState;
 
 public class GetSkillsExecutor extends BaseExecutor {
 

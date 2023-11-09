@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.task.base.replay;
+package com.viktorx.skyblockbot.task.base;
 
 import net.minecraft.client.MinecraftClient;
 

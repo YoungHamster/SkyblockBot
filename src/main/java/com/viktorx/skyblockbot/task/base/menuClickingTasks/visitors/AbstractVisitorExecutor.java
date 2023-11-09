@@ -4,7 +4,7 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
-import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
+import com.viktorx.skyblockbot.task.base.ExecutorState;
 import com.viktorx.skyblockbot.utils.Utils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;

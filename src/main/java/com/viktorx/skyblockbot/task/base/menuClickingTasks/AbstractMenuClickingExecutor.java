@@ -1,7 +1,7 @@
 package com.viktorx.skyblockbot.task.base.menuClickingTasks;
 
 
-import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
+import com.viktorx.skyblockbot.task.base.ExecutorState;
 import com.viktorx.skyblockbot.utils.CurrentInventory;
 import com.viktorx.skyblockbot.utils.Utils;
 import com.viktorx.skyblockbot.keybinds.Keybinds;

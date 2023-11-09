@@ -4,7 +4,7 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.AbstractVisitorExecutor;
-import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
+import com.viktorx.skyblockbot.task.base.ExecutorState;
 import javafx.util.Pair;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;

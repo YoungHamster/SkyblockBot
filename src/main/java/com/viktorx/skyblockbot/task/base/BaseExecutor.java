@@ -1,8 +1,6 @@
 package com.viktorx.skyblockbot.task.base;
 
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.task.Task;
-import com.viktorx.skyblockbot.task.base.replay.ExecutorState;
 import com.viktorx.skyblockbot.utils.CurrentInventory;
 import net.minecraft.client.MinecraftClient;
 

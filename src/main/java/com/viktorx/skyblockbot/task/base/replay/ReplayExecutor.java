@@ -6,6 +6,7 @@ import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.Task;
 import com.viktorx.skyblockbot.task.base.BaseExecutor;
 import com.viktorx.skyblockbot.task.base.BaseTask;
+import com.viktorx.skyblockbot.task.base.ExecutorState;
 import com.viktorx.skyblockbot.task.base.replay.tickState.AnyKeyRecord;
 import com.viktorx.skyblockbot.task.base.replay.tickState.TickState;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
@@ -55,8 +56,6 @@ public class ReplayExecutor extends BaseExecutor {
             return;
         }
 
-        state = new NotIdle();
-
         SkyblockBot.LOGGER.info("started recording");
         replay = new Replay();
 
@@ -72,7 +71,10 @@ public class ReplayExecutor extends BaseExecutor {
     public synchronized void stopRecording() {
         SkyblockBot.LOGGER.info("stopped recording");
 
-        printDebugInfo();
+        if(GlobalExecutorInfo.debugMode.get()) {
+            printDebugInfo();
+        }
+
         saveRecordingAsync();
 
         state = new Idle();
@@ -97,9 +99,6 @@ public class ReplayExecutor extends BaseExecutor {
             return new Idle();
         }
 
-        state = new NotIdle();
-        tickIterator = 0;
-
         assert MinecraftClient.getInstance().player != null;
 
         /*
@@ -107,8 +106,12 @@ public class ReplayExecutor extends BaseExecutor {
          * to current position
          * If we do we can just start for the middle of the replay instead of refusing to work
          */
+        tickIterator = 0;
         if (!isPlayerInCorrectPosition()) {
-            if (tryStartingFromMiddleOfRecording(this.replay)) return new Idle();
+            if (tryStartingFromMiddleOfRecording(this.replay)) {
+                state = new Idle();
+                return state;
+            }
         }
 
         SkyblockBot.LOGGER.info("Starting playing");
@@ -124,7 +127,7 @@ public class ReplayExecutor extends BaseExecutor {
         debugPositionAndOnGroundCounter = 0;
         debugFullCounter = 0;
 
-        state = prepareToStart();
+        state = new PreparingToStart();
         return state;
     }
 
@@ -257,32 +260,6 @@ public class ReplayExecutor extends BaseExecutor {
             }
         }
         return keys;
-    }
-
-    private ExecutorState prepareToStart() {
-        CompletableFuture<Void> pitchTask = LookHelper.changePitchSmoothAsync(replay.getTickState(tickIterator).getPitch());
-        CompletableFuture<Void> yawTask = LookHelper.changeYawSmoothAsync(replay.getTickState(tickIterator).getYaw());
-
-        /*
-         * Turns out if you drink mushroom soup you always spawn in the garden in flight, so to account for it a have to land before doing anything
-         */
-        CompletableFuture<Void> stopFlyingTask = CompletableFuture.runAsync(() -> {
-            assert MinecraftClient.getInstance().player != null;
-            if (!MinecraftClient.getInstance().player.isOnGround()) {
-                MinecraftClient.getInstance().options.sneakKey.setPressed(true);
-
-                while (!MinecraftClient.getInstance().player.isOnGround()) {
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException ignored) {
-                    }
-                }
-
-                MinecraftClient.getInstance().options.sneakKey.setPressed(false);
-            }
-        });
-
-        return new PreparingToStart(yawTask, pitchTask, stopFlyingTask);
     }
 
     private void printDebugInfo() {
@@ -419,7 +396,8 @@ public class ReplayExecutor extends BaseExecutor {
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
-            if (antiDetectTriggeredTickCounter++ == ReplayBotSettings.antiDetectTriggeredWaitTicks || parent.tickIterator == 0) {
+            if (antiDetectTriggeredTickCounter++ == ReplayBotSettings.antiDetectTriggeredWaitTicks ||
+                    parent.tickIterator == 0 || parent.tickIterator == parent.replay.size()) {
                 parent.abort();
                 antiDetectDone();
                 return new Idle();
@@ -437,11 +415,6 @@ public class ReplayExecutor extends BaseExecutor {
             client.player.setPitch(client.player.getPitch() + deltaCam.y);
 
             parent.tickIterator++;
-            if (parent.tickIterator == parent.replay.size()) {
-                parent.abort();
-                antiDetectDone();
-                return new Idle();
-            }
             return this;
         }
 
@@ -485,10 +458,28 @@ public class ReplayExecutor extends BaseExecutor {
         private final CompletableFuture<Void> pitchTask;
         private final CompletableFuture<Void> stopFlyingTask;
 
-        public PreparingToStart(CompletableFuture<Void> yawTask, CompletableFuture<Void> pitchTask, CompletableFuture<Void> stopFlyingTask) {
-            this.yawTask = yawTask;
-            this.pitchTask = pitchTask;
-            this.stopFlyingTask = stopFlyingTask;
+        public PreparingToStart() {
+            pitchTask = LookHelper.changePitchSmoothAsync(replay.getTickState(tickIterator).getPitch());
+            yawTask = LookHelper.changeYawSmoothAsync(replay.getTickState(tickIterator).getYaw());
+
+            /*
+             * Turns out if you drink mushroom soup you always spawn in the garden in flight, so to account for it a have to land before doing anything
+             */
+            stopFlyingTask = CompletableFuture.runAsync(() -> {
+                assert MinecraftClient.getInstance().player != null;
+                if (!MinecraftClient.getInstance().player.isOnGround()) {
+                    MinecraftClient.getInstance().options.sneakKey.setPressed(true);
+
+                    while (!MinecraftClient.getInstance().player.isOnGround()) {
+                        try {
+                            Thread.sleep(50);
+                        } catch (InterruptedException ignored) {
+                        }
+                    }
+
+                    MinecraftClient.getInstance().options.sneakKey.setPressed(false);
+                }
+            });
         }
 
         @Override
@@ -521,8 +512,6 @@ public class ReplayExecutor extends BaseExecutor {
             }
 
             TickState tickState = replay.getTickState(tickIterator);
-
-            assert client.player != null;
 
             tickState.setRotationForClient(client);
             tickState.setPositionForClient(client);
@@ -599,7 +588,6 @@ public class ReplayExecutor extends BaseExecutor {
         }
 
         private boolean isNextStatePossible(@NotNull MinecraftClient client) {
-            assert client.player != null;
             for (int i = 0; i < ReplayBotSettings.checkForCollisionsAdvanceTicks && tickIterator + i < replay.size(); i++) {
 
                 /*
@@ -612,7 +600,8 @@ public class ReplayExecutor extends BaseExecutor {
                 BlockPos above = new BlockPos(blockPos).up();
 
                 if (client.world == null) {
-                    SkyblockBot.LOGGER.warn("client.world == null wtf????????");
+                    SkyblockBot.LOGGER.error("client.world == null wtf???????? " +
+                            "Can't check if next state is possible. Returning true as default.");
                     return true;
                 }
 
@@ -646,7 +635,7 @@ public class ReplayExecutor extends BaseExecutor {
             return true;
         }
 
-        /*
+        /**
          * Corrects position
          * return - true if it is correct or was corrected (correct by changing tickIterator to index of state closest to current state)
          *          false if the position can't be corrected(which means player was teleported to check for macros or lagged back too far)
@@ -660,7 +649,9 @@ public class ReplayExecutor extends BaseExecutor {
                 int bestTickIndex = -1;
 
                 for (int i = 1; i <= ReplayBotSettings.maxLagbackTicks && tickIterator >= i; i++) {
-                    double delta = Utils.distanceBetween(player.getPos(), replay.getTickState(tickIterator - i).getPosition());
+                    double delta = Utils.distanceBetween(
+                            player.getPos(),
+                            replay.getTickState(tickIterator - i).getPosition());
 
                     /*
                      * If delta is < max then we're roughly at the correct tick
