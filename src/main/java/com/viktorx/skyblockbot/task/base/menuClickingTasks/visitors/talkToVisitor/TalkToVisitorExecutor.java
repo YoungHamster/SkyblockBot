@@ -26,15 +26,15 @@ public class TalkToVisitorExecutor extends AbstractVisitorExecutor {
     }
 
     @Override
-    protected ExecutorState whenMenuOpened() {
-        return new ReadingData(this);
-    }
-
-    @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         SkyblockBot.LOGGER.info("Executing talk to visitor!");
         this.task = (TalkToVisitor) task;
         return new StartTrackingVisitor(this);
+    }
+
+    @Override
+    protected ExecutorState getStateWhenVisitorOpened() {
+        return new ReadingData(this);
     }
 
     private synchronized void onTick(MinecraftClient client) {
