@@ -56,13 +56,15 @@ public class TalkToVisitorExecutor extends AbstractVisitorExecutor {
                 lore = SBUtils.getSlotLore(((TalkToVisitor) parent.task).getAcceptOfferStr());
             } catch (TimeoutException e) {
                 SkyblockBot.LOGGER.warn("Can't read data from visitor, timeout exception! Aborting task");
-                parent.abort();
+                parent.asyncCloseCurrentInventory();
+                parent.task.aborted();
                 return new Idle();
             }
 
             if (lore == null) {
                 SkyblockBot.LOGGER.warn("Lore is null when executing talkToVisitor task, wtf???");
-                parent.abort();
+                parent.asyncCloseCurrentInventory();
+                parent.task.aborted();
                 return new Idle();
             }
 
