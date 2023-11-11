@@ -13,7 +13,6 @@ import net.minecraft.client.util.InputUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -176,15 +175,28 @@ public abstract class AbstractMenuClickingExecutor extends BaseExecutor {
         }
     }
 
-    public static class Complete implements ExecutorState {
+    public static class Completed implements ExecutorState {
         private final AbstractMenuClickingExecutor parent;
-        public Complete(AbstractMenuClickingExecutor parent) {
+        public Completed(AbstractMenuClickingExecutor parent) {
             this.parent = parent;
         }
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             parent.task.completed();
+            return new Idle();
+        }
+    }
+
+    public static class Aborted implements ExecutorState {
+        private final AbstractMenuClickingExecutor parent;
+        public Aborted(AbstractMenuClickingExecutor parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            parent.task.aborted();
             return new Idle();
         }
     }

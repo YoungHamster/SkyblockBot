@@ -28,7 +28,6 @@ public class TalkToVisitorExecutor extends AbstractVisitorExecutor {
 
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
-        SkyblockBot.LOGGER.info("Executing talk to visitor!");
         this.task = task;
         return new StartTrackingVisitor(this);
     }
@@ -57,15 +56,13 @@ public class TalkToVisitorExecutor extends AbstractVisitorExecutor {
             } catch (TimeoutException e) {
                 SkyblockBot.LOGGER.warn("Can't read data from visitor, timeout exception! Aborting task");
                 parent.asyncCloseCurrentInventory();
-                parent.task.aborted();
-                return new Idle();
+                return new WaitForMenuToClose(new Aborted(parent));
             }
 
             if (lore == null) {
                 SkyblockBot.LOGGER.warn("Lore is null when executing talkToVisitor task, wtf???");
                 parent.asyncCloseCurrentInventory();
-                parent.task.aborted();
-                return new Idle();
+                return new WaitForMenuToClose(new Aborted(parent));
             }
 
             /*
@@ -101,7 +98,7 @@ public class TalkToVisitorExecutor extends AbstractVisitorExecutor {
         public ExecutorState onTick(MinecraftClient client) {
             if (!waitBeforeAction()) {
                 parent.asyncCloseCurrentInventory();
-                return new WaitForMenuToClose(new Complete(parent));
+                return new WaitForMenuToClose(new Completed(parent));
             }
             return this;
         }

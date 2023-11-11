@@ -52,6 +52,14 @@ public class SBUtils {
 
     public static void quickSwapSlotWithHotbar(int slotID, int hotbar) {
         MinecraftClient client = MinecraftClient.getInstance();
+        if(slotID < 0 || slotID > GlobalExecutorInfo.inventorySlotCount) {
+            SkyblockBot.LOGGER.error("Invalid argument to quickSwapSlotWithHotbar!!! slotID: " + slotID);
+            return;
+        }
+        if(hotbar < 0 || hotbar > 8) {
+            SkyblockBot.LOGGER.error("Invalid argument to quickSwapSlotWithHotbar!!! hotbar: " + hotbar);
+            return;
+        }
 
         assert client.interactionManager != null;
         client.interactionManager.clickSlot(CurrentInventory.getSyncId(), slotID, hotbar, SlotActionType.SWAP, client.player);

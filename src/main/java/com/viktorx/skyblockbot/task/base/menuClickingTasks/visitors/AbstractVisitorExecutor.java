@@ -39,7 +39,7 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
                  * but if npc hasn't moved at all in past 10 ticks we look at it and talk to it
                  */
                 npcPosHistory.add(npc.getPos());
-                if (npcPosHistory.get(npcPosHistory.size() - 12).subtract(npc.getPos()).length() != 0) {
+                if (npcPosHistory.size() < 12 || npcPosHistory.get(npcPosHistory.size() - 12).subtract(npc.getPos()).length() != 0) {
                     return this;
                 }
 

@@ -15,6 +15,7 @@ import com.viktorx.skyblockbot.task.base.replay.Replay;
 import com.viktorx.skyblockbot.task.base.replay.ReplayBotSettings;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
+import com.viktorx.skyblockbot.utils.Utils;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -44,30 +45,25 @@ public class FarmingTask extends CompoundTask {
         TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getTaskName());
         printTaskInfoCompl();
 
-        if (!SBUtils.getIslandOrArea().contains(FarmingTaskSettings.gardenName)) {
-            currentTask = getToGarden;
-        } else {
-            defaultWhenCompleted();
-            return;
-        }
-        currentTask.execute();
+        defaultWhenCompleted();
     }
 
     private void whenGetToSkyblockAborted() {
         printTaskInfoAbort();
-
-        currentTask = null;
     }
 
     private void whenGetToGardenAborted() {
         printTaskInfoAbort();
-
-        currentTask = null;
     }
 
     private void defaultWhenCompleted() {
         TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getTaskName());
         printTaskInfoCompl();
+
+        if(!checkIfOnGarden()) {
+            currentTask.execute();
+            return;
+        }
 
         if (!taskQueue.isEmpty()) {
             currentTask = taskQueue.poll();
@@ -80,7 +76,9 @@ public class FarmingTask extends CompoundTask {
     private void defaultWhenAborted() {
         printTaskInfoAbort();
 
-        currentTask = farm;
+        if(checkIfOnGarden()) {
+            currentTask = farm;
+        }
         currentTask.execute();
     }
 
@@ -110,7 +108,6 @@ public class FarmingTask extends CompoundTask {
 
         if (!isPositionCorrect) {
             SkyblockBot.LOGGER.error("Farm completed, we waited to respawn, but position isn't correct! Stopping ComplexFarmingTask");
-            currentTask = null;
             return;
         }
 
@@ -145,10 +142,8 @@ public class FarmingTask extends CompoundTask {
                 }
             }
 
-            if (SBUtils.isServerSkyblock()) {
-                currentTask = getToGarden;
-            } else {
-                currentTask = getToSkyblock;
+            if(checkIfOnGarden()) {
+                currentTask = farm;
             }
             currentTask.execute();
         }
@@ -156,7 +151,30 @@ public class FarmingTask extends CompoundTask {
 
     private void whenGardenVisitorsAborted() {
         printTaskInfoAbort();
+
         defaultWhenCompleted();
+    }
+
+    /**
+     * @return true if on garden plot, false otherwise
+     * it also does /warp garden if it is in garden, but not on the garden plot and returns true in that case
+     */
+    private boolean checkIfOnGarden() {
+        if(!SBUtils.isServerSkyblock()) {
+            currentTask = getToSkyblock;
+            return false;
+        } else if(SBUtils.getIslandOrArea().contains("Garden")) {
+            Utils.sendChatMessage("/warp garden");
+            while(!ReplayExecutor.INSTANCE.isPlayerInCorrectPosition() && currentTask != null) {
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException ignored) {}
+            }
+        } else if(!SBUtils.getIslandOrArea().contains("Plot")) {
+                currentTask = getToGarden;
+                return false;
+        }
+        return true;
     }
 
     /*
@@ -174,9 +192,8 @@ public class FarmingTask extends CompoundTask {
     }
 
     private void debugExecute() {
-        currentTask = new BuyItem(ItemNames.ARMADILLO.getName(), new String[0], this::defaultWhenCompleted, this::defaultWhenAborted);
+        currentTask = gardenVisitorsTask;
         currentTask.execute();
-        taskQueue.add(new UseItem(ItemNames.ARMADILLO.getName(), this::defaultWhenCompleted, this::defaultWhenAborted));
     }
 
     public void execute() {
@@ -194,20 +211,15 @@ public class FarmingTask extends CompoundTask {
         runWhenFarmCompleted.clear();
         taskQueue.clear();
 
-        /*
-         * If server isn't skyblock then we start by going to skyblock
-         * If it is skyblock but not garden then we start by going to graden
-         * If it is garden we just farm
-         */
-        if (!SBUtils.isServerSkyblock()) {
-            currentTask = getToSkyblock;
-        } else if (!SBUtils.getIslandOrArea().contains(FarmingTaskSettings.gardenName)) {
-            currentTask = getToGarden;
-        } else {
+        if (checkIfOnGarden()) {
             currentTask = farm;
         }
-
         currentTask.execute();
+
+        timers.forEach(timer -> {
+            timer.cancel();
+            timer.purge();
+        });
 
         /*
          * Basically every durationInMs we tell the farming bot to pause for 10 minutes when it's done the loop
@@ -249,7 +261,6 @@ public class FarmingTask extends CompoundTask {
         } else {
             SkyblockBot.LOGGER.warn("Current task is not executing, FarmingTask can't abort anything!");
         }
-        currentTask = null;
 
         for (Timer timer : timers) {
             timer.cancel();

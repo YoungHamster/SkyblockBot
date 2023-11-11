@@ -178,7 +178,7 @@ public class BuyItemExecutor extends AbstractMenuClickingExecutor {
         public ExecutorState onTick(MinecraftClient client) {
             BuyItem buyTask = (BuyItem) parent.task;
             if (SBUtils.isItemInInventory(buyTask.getItemName())) {
-                return new WaitForMenuToClose(new Complete(parent));
+                return new WaitForMenuToClose(new Completed(parent));
             } else {
                 if(waitForItemCounter++ >= MenuClickersSettings.maxWaitForStuff) {
                     return parent.restart();

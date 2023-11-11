@@ -80,7 +80,7 @@ public class SellSacksExecutor extends AbstractMenuClickingExecutor {
             parent.asyncCloseCurrentInventory();
 
             SkyblockBot.LOGGER.info("Sold sacks!");
-            return new WaitForMenuToClose(new Complete(parent));
+            return new WaitForMenuToClose(new Completed(parent));
         }
     }
 

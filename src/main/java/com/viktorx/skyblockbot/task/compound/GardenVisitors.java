@@ -42,40 +42,18 @@ public class GardenVisitors extends CompoundTask {
     private void whenGoToVisitorsAborted() {
         SkyblockBot.LOGGER.warn("GoToVisitors task aborted! Aborting GardenVisitors task");
         this.aborted();
-        currentTask = null;
     }
 
     private void whenGoBackToFarmCompleted() {
-        currentTask = null;
         this.completed();
     }
 
     private void whenGoBackToFarmAborted() {
-        currentTask = null;
         this.aborted();
     }
 
     private void whenTalkToVisitorCompleted() {
-        Pair<String, Integer> itemNameCount = ((TalkToVisitor) talkToVisitor).getNextItem();
-        String itemName = itemNameCount.getKey();
-        int itemCount = itemNameCount.getValue();
-
-        SkyblockBot.LOGGER.info("Just talked to visitor " + currentVisitor);
-
-        currentTask = new BuyBZItem(itemName, itemCount, this::whenBuyBZItemCompleted, this::defaultWhenAborted);
-
-        if (SBUtils.isItemInInventory(itemName)) {
-            try {
-                if (SBUtils.getSlot(itemName).getStack().getCount() >= itemCount) {
-                    ((GiveVisitorItems) giveVisitorItems).setVisitorName(currentVisitor);
-                    currentTask = giveVisitorItems;
-                }
-            } catch (TimeoutException e) {
-                SkyblockBot.LOGGER.info("GardenVisitorsTask whenTalkToVisitorCompleted got TimeoutException\n" +
-                        "WTF?? Item is supposed to be in inventory at this point, so the shouldn't be a timeoutException");
-            }
-        }
-        currentTask.execute();
+        whenBuyBZItemCompleted();
     }
 
     private void defaultWhenAborted() {
@@ -85,18 +63,40 @@ public class GardenVisitors extends CompoundTask {
     }
 
     private void whenBuyBZItemCompleted() {
-        if (((TalkToVisitor) talkToVisitor).isItemRemaining()) {
-            Pair<String, Integer> itemNameCount = ((TalkToVisitor) talkToVisitor).getNextItem();
-            String itemName = itemNameCount.getKey();
-            int itemCount = itemNameCount.getValue();
+        Pair<String, Integer> nextItem = getNextItemToBuy();
 
-            ((BuyBZItem) currentTask).setItemName(itemName);
-            ((BuyBZItem) currentTask).setItemCount(itemCount);
-        } else {
+        if(nextItem == null) {
             ((GiveVisitorItems) giveVisitorItems).setVisitorName(currentVisitor);
             currentTask = giveVisitorItems;
+        } else {
+            currentTask = new BuyBZItem(nextItem.getKey(), nextItem.getValue(), this::whenBuyBZItemCompleted, this::defaultWhenAborted);
         }
+
         currentTask.execute();
+    }
+
+    private Pair<String, Integer> getNextItemToBuy() {
+        while (((TalkToVisitor) talkToVisitor).isItemRemaining()) {
+            Pair<String, Integer> itemNameCount = ((TalkToVisitor) talkToVisitor).getNextItem();
+            String itemName = itemNameCount.getKey();
+            Integer itemCount = itemNameCount.getValue();
+
+            if (SBUtils.isItemInInventory(itemName)) {
+                try {
+                    if (SBUtils.getSlot(itemName).getStack().getCount() >= itemCount) {
+                        continue;
+                    } else {
+                        itemCount -= SBUtils.getSlot(itemName).getStack().getCount();
+                    }
+                } catch (TimeoutException e) {
+                    SkyblockBot.LOGGER.info("GardenVisitorsTask whenTalkToVisitorCompleted got TimeoutException\n" +
+                            "WTF?? Item is supposed to be in inventory at this point, so the shouldn't be a timeoutException");
+                }
+            }
+
+            return new Pair<>(itemName, itemCount);
+        }
+        return null;
     }
 
     private void whenGiveVisitorItemsCompleted() {
