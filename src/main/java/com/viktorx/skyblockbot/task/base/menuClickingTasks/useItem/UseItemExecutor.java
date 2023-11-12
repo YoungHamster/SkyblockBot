@@ -18,6 +18,7 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
     public static UseItemExecutor INSTANCE = new UseItemExecutor();
     private int startingSlot;
     private boolean wasUsedHotbarSlotEmpty = true;
+    private int slotWhereSwappedItemWas = -1;
 
     public void Init() {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
@@ -180,6 +181,10 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
             parent.wasUsedHotbarSlotEmpty = client.player.getInventory()
                     .getStack(defaultHotbarSlot).getName().getString().equals("Air");
 
+            if(!parent.wasUsedHotbarSlotEmpty) {
+                parent.slotWhereSwappedItemWas = parent.getItemSlot(client);
+            }
+
             SBUtils.quickSwapSlotWithHotbar(parent.getItemSlot(client), defaultHotbarSlot);
 
             return new ClosingInventory();
@@ -223,7 +228,7 @@ public class UseItemExecutor extends AbstractMenuClickingExecutor {
                 return this;
             }
 
-            SBUtils.quickSwapSlotWithHotbar(parent.getItemSlot(client), defaultHotbarSlot);
+            SBUtils.quickSwapSlotWithHotbar(parent.slotWhereSwappedItemWas, defaultHotbarSlot);
             return new ClosingInventoryFinal();
         }
     }
