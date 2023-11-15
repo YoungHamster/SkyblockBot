@@ -5,7 +5,6 @@ import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.Task;
-import com.viktorx.skyblockbot.task.base.changeIsland.ChangeIsland;
 import com.viktorx.skyblockbot.task.base.changeIsland.ChangeIslandSettings;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem.BuyBZItem;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem.BuyItem;
@@ -13,9 +12,9 @@ import com.viktorx.skyblockbot.task.base.menuClickingTasks.sellSacks.SellSacks;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.useItem.UseItem;
 import com.viktorx.skyblockbot.task.base.replay.Replay;
 import com.viktorx.skyblockbot.task.base.replay.ReplayBotSettings;
-import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
 import com.viktorx.skyblockbot.utils.Utils;
+import net.minecraft.client.MinecraftClient;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -24,7 +23,6 @@ import java.util.concurrent.CompletableFuture;
 public class FarmingTask extends CompoundTask {
     public static final FarmingTask INSTANCE = new FarmingTask(null, null);
     private final Task getToSkyblock;
-    private final Task getToGarden;
     private final Task gardenVisitorsTask;
     private final Task farm;
     private final List<Runnable> runWhenFarmCompleted = new ArrayList<>();
@@ -35,10 +33,21 @@ public class FarmingTask extends CompoundTask {
         super(whenCompleted, whenAborted);
 
         this.getToSkyblock = new GetToSkyblock(this::whenGetToSkyblockCompleted, this::whenGetToSkyblockAborted);
-        this.getToGarden = new ChangeIsland("/warp garden", this::defaultWhenCompleted, this::whenGetToGardenAborted);
         this.farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE, this::whenFarmCompleted, this::whenFarmAborted);
 
         this.gardenVisitorsTask = new GardenVisitors(this::defaultWhenCompleted, this::whenGardenVisitorsAborted);
+    }
+
+    private static void changeFungiMode() {
+        String fungiCutterMode = Utils.getLatestMessageContaining("Fungi Cutter Mode");
+        if (fungiCutterMode != null && fungiCutterMode.contains("Red Mushrooms")) {
+            MinecraftClient.getInstance().options.useKey.setPressed(true);
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException ignored) {
+            }
+            MinecraftClient.getInstance().options.useKey.setPressed(false);
+        }
     }
 
     private void whenGetToSkyblockCompleted() {
@@ -52,15 +61,11 @@ public class FarmingTask extends CompoundTask {
         printTaskInfoAbort();
     }
 
-    private void whenGetToGardenAborted() {
-        printTaskInfoAbort();
-    }
-
     private void defaultWhenCompleted() {
         TGBotDaemon.INSTANCE.queueMessage("Completed task: " + getTaskName());
         printTaskInfoCompl();
 
-        if(!checkIfOnGarden()) {
+        if (!checkIfOnGarden()) {
             currentTask.execute();
             return;
         }
@@ -69,6 +74,7 @@ public class FarmingTask extends CompoundTask {
             currentTask = taskQueue.poll();
         } else {
             currentTask = farm;
+            changeFungiMode();
         }
         currentTask.execute();
     }
@@ -76,8 +82,9 @@ public class FarmingTask extends CompoundTask {
     private void defaultWhenAborted() {
         printTaskInfoAbort();
 
-        if(checkIfOnGarden()) {
+        if (checkIfOnGarden()) {
             currentTask = farm;
+            changeFungiMode();
         }
         currentTask.execute();
     }
@@ -97,7 +104,7 @@ public class FarmingTask extends CompoundTask {
                 return;
             }
 
-            isPositionCorrect = ReplayExecutor.INSTANCE.isPlayerInCorrectPosition();
+            isPositionCorrect = ((Replay) farm).isPlayerInStartingPosition();
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
@@ -142,7 +149,7 @@ public class FarmingTask extends CompoundTask {
                 }
             }
 
-            if(checkIfOnGarden()) {
+            if (checkIfOnGarden()) {
                 currentTask = farm;
             }
             currentTask.execute();
@@ -160,19 +167,17 @@ public class FarmingTask extends CompoundTask {
      * it also does /warp garden if it is in garden, but not on the garden plot and returns true in that case
      */
     private boolean checkIfOnGarden() {
-        if(!SBUtils.isServerSkyblock()) {
+        if (!SBUtils.isServerSkyblock()) {
             currentTask = getToSkyblock;
             return false;
-        } else if(SBUtils.getIslandOrArea().contains("Garden")) {
+        } else if (!SBUtils.isAreaAPlot()) {
             Utils.sendChatMessage("/warp garden");
-            while(!ReplayExecutor.INSTANCE.isPlayerInCorrectPosition() && currentTask != null) {
+            while (!((Replay) farm).isPlayerInStartingPosition()) {
                 try {
                     Thread.sleep(50);
-                } catch (InterruptedException ignored) {}
+                } catch (InterruptedException ignored) {
+                }
             }
-        } else if(!SBUtils.getIslandOrArea().contains("Plot")) {
-                currentTask = getToGarden;
-                return false;
         }
         return true;
     }
@@ -182,7 +187,7 @@ public class FarmingTask extends CompoundTask {
      * but i always want to see which task was aborted
      */
     private void printTaskInfoCompl() {
-        if(GlobalExecutorInfo.debugMode.get()) {
+        if (GlobalExecutorInfo.debugMode.get()) {
             SkyblockBot.LOGGER.info(getTaskName() + " completed");
         }
     }

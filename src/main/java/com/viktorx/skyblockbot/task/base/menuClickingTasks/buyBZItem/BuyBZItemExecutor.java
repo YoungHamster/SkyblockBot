@@ -3,6 +3,7 @@ package com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.IAbstractSignEditScreenMixin;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.ExecutorState;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
@@ -57,7 +58,23 @@ public class BuyBZItemExecutor extends AbstractMenuClickingExecutor {
             if (waitBeforeAction()) {
                 return this;
             }
+
             BuyBZItem buyTask = (BuyBZItem) parent.task;
+
+            int freeSpace = 0;
+            for(int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
+                if(client.player.getInventory().getStack(i).getName().getString().equals("Air")) {
+                    freeSpace += 64;
+                }
+            }
+            if(freeSpace < buyTask.getItemCount()) {
+                SkyblockBot.LOGGER.error("Not enough inventory space to fit "
+                        + buyTask.getItemCount() + " " + buyTask.getItemName()
+                        + ", aborting buyBZItem task. Inventory can fit: " + freeSpace + " items");
+                parent.task.aborted();
+                return new Idle();
+            }
+
             Utils.sendChatMessage(buyTask.getBZCommand());
 
             return new WaitingForNamedMenu(parent, buyTask.getBZMenuName())

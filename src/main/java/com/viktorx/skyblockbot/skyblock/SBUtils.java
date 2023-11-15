@@ -13,6 +13,7 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.scoreboard.ScoreboardDisplaySlot;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,16 +87,25 @@ public class SBUtils {
     }
 
     public static int getGardenVisitorCount() {
-        String visitorLine = getTabPlayers().stream().filter(string -> string.contains("Visitors")).collect(Collectors.joining());
-
-        if (visitorLine.length() == 0) {
-            return 0;
-        } else {
-            return Integer.parseInt(visitorLine.substring(11, 12));
+        List<String> players = getTabPlayers();
+        for (int i = 0; i < players.size(); i++) {
+            if (players.get(i).contains("Visitors")) {
+                for(int j = i; j < players.size(); j++) {
+                    if(players.get(j+1).length() == 0) {
+                        return j-i;
+                    }
+                }
+            }
         }
+
+        return 0;
     }
 
     public static String getFirstVisitor() {
+        if(getGardenVisitorCount() == 0) {
+            return null;
+        }
+
         List<String> players = getTabPlayers();
         for (int i = 0; i < players.size(); i++) {
             if (players.get(i).contains("Visitors")) {
@@ -205,6 +215,38 @@ public class SBUtils {
         return ScoreboardUtils.
                 getLines(ScoreboardDisplaySlot.SIDEBAR)
                 .stream().filter(string -> string.contains("⏣")).collect(Collectors.joining());
+    }
+
+    /**
+     * @return true if area is a garden plot, false otherwise
+     */
+    public static boolean isAreaAPlot() {
+        if(!getIslandOrArea().contains("Garden") && !getIslandOrArea().contains("Plot")) {
+            return false;
+        }
+        assert MinecraftClient.getInstance().player != null;
+        Vec3d pos = MinecraftClient.getInstance().player.getPos();
+        return pos.x < -47 || pos.x > 47 || pos.z < -47 || pos.z > 47;
+    }
+
+    public static int getComposterOrganicMatter() {
+        String matter = getTabPlayers().stream().filter(string -> string.contains("Organic Matter:")).collect(Collectors.joining());
+        matter = matter.split("[: ]")[2];
+
+        if(matter.contains("k")) {
+            return Integer.parseInt(matter.replace("k", "")) * 1000;
+        }
+        return Integer.parseInt(matter);
+    }
+
+    public static int getComposterFuel() {
+        String fuel = getTabPlayers().stream().filter(string -> string.contains("Fuel:")).collect(Collectors.joining());
+        fuel = fuel.split("[: ]")[2];
+
+        if(fuel.contains("k")) {
+            return Integer.parseInt(fuel.replace("k", "")) * 1000;
+        }
+        return Integer.parseInt(fuel);
     }
 
     // returns purse value from sidebar(right scoreboard)

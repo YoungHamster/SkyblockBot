@@ -41,4 +41,11 @@ public class MinecraftClientMixin {
     public void onWindowFocusChanged(boolean focused) {
         this.windowFocused = true;
     }
+
+    /**
+     * @author ViktorX
+     * @reason The same as "onWindowFocusChanged"-prevent bot not being able to break blocks
+     */
+    @Overwrite
+    public boolean isWindowFocused() { return true; }
 }

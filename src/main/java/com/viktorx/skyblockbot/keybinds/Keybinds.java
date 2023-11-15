@@ -70,7 +70,7 @@ public class Keybinds {
 
             while (startStopBot.wasPressed()) {
                 if (!FarmingTask.INSTANCE.isExecuting()) {
-                    FarmingTask.INSTANCE.execute();
+                    CompletableFuture.runAsync(FarmingTask.INSTANCE::execute);
                 } else {
                     FarmingTask.INSTANCE.abort();
                 }

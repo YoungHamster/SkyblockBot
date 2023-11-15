@@ -48,6 +48,12 @@ public class ReplayExecutor extends BaseExecutor {
         ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
     }
 
+    protected void setReplay(Replay replay) {
+        this.task = replay;
+        this.replay = replay;
+        tickIterator = 0;
+    }
+
     public synchronized void startRecording() {
         if (!state.getClass().equals(Idle.class)) {
             SkyblockBot.LOGGER.info("Can't start recording when state = " + state.getClass().getSimpleName());
@@ -108,8 +114,7 @@ public class ReplayExecutor extends BaseExecutor {
         tickIterator = 0;
         if (!isPlayerInCorrectPosition()) {
             if (tryStartingFromMiddleOfRecording(this.replay)) {
-                state = new Idle();
-                return state;
+                return new Idle();
             }
         }
 
@@ -177,10 +182,6 @@ public class ReplayExecutor extends BaseExecutor {
 
     @Override
     public synchronized void abort() {
-        if (state.getClass().equals(Idle.class)) {
-            SkyblockBot.LOGGER.info("Can't abort replay, already idle");
-            return;
-        }
         unpressButtons();
         tickIterator = 0;
 
@@ -189,10 +190,10 @@ public class ReplayExecutor extends BaseExecutor {
 
         printDebugInfo();
 
-        replay.aborted();
+        task.aborted();
     }
 
-    public boolean isPlayerInCorrectPosition() {
+    protected boolean isPlayerInCorrectPosition() {
         return getDistanceToExpectedPosition() < ReplayBotSettings.maxDistanceToFirstPoint;
     }
 

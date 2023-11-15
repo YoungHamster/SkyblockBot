@@ -145,4 +145,9 @@ public class Replay extends BaseTask<ReplayExecutor> {
     public void deleteFromIndexToIndex(int start, int end) {
         tickStates.subList(start + 1, end).clear();
     }
+
+    public boolean isPlayerInStartingPosition() {
+        ReplayExecutor.INSTANCE.setReplay(this);
+        return ReplayExecutor.INSTANCE.isPlayerInCorrectPosition();
+    }
 }

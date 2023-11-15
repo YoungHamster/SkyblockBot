@@ -14,10 +14,8 @@ import java.util.concurrent.TimeoutException;
 public class GardenVisitors extends CompoundTask {
 
     private static final String goToVisitorsRecName = "go_to_visitors.bin";
-    private static final String goBackToFarmRecName = "go_back_to_farm.bin";
 
     private final Task goToVisitors;
-    private final Task goBackToFarm;
     private final Task talkToVisitor;
     private final Task giveVisitorItems;
     private String currentVisitor = null;
@@ -26,7 +24,6 @@ public class GardenVisitors extends CompoundTask {
         super(whenCompleted, whenAborted);
 
         this.goToVisitors = new Replay(goToVisitorsRecName, this::whenGoToVisitorsCompleted, this::whenGoToVisitorsAborted);
-        this.goBackToFarm = new Replay(goBackToFarmRecName, this::whenGoBackToFarmCompleted, this::whenGoBackToFarmAborted);
 
         this.talkToVisitor = new TalkToVisitor(this::whenTalkToVisitorCompleted, this::defaultWhenAborted);
         this.giveVisitorItems = new GiveVisitorItems(this::whenGiveVisitorItemsCompleted, this::defaultWhenAborted);
@@ -44,28 +41,18 @@ public class GardenVisitors extends CompoundTask {
         this.aborted();
     }
 
-    private void whenGoBackToFarmCompleted() {
-        this.completed();
-    }
-
-    private void whenGoBackToFarmAborted() {
-        this.aborted();
-    }
-
     private void whenTalkToVisitorCompleted() {
         whenBuyBZItemCompleted();
     }
 
     private void defaultWhenAborted() {
-        SkyblockBot.LOGGER.warn(currentTask.getTaskName() + " task aborted! Going back to farm");
-        currentTask = goBackToFarm;
-        currentTask.execute();
+        this.aborted();
     }
 
     private void whenBuyBZItemCompleted() {
         Pair<String, Integer> nextItem = getNextItemToBuy();
 
-        if(nextItem == null) {
+        if (nextItem == null) {
             ((GiveVisitorItems) giveVisitorItems).setVisitorName(currentVisitor);
             currentTask = giveVisitorItems;
         } else {
@@ -103,8 +90,8 @@ public class GardenVisitors extends CompoundTask {
         while (true) {
             String firstVisitor = SBUtils.getFirstVisitor();
             if (firstVisitor == null) {
-                currentTask = goBackToFarm;
-                break;
+                this.completed();
+                return;
             } else if (firstVisitor.equals(currentVisitor)) {
                 try {
                     Thread.sleep(50);
@@ -135,15 +122,10 @@ public class GardenVisitors extends CompoundTask {
     }
 
     public void reloadRecordings() {
-        if(!goToVisitors.isExecuting()) {
+        if (!goToVisitors.isExecuting()) {
             goToVisitors.loadFromFile(goToVisitorsRecName);
         } else {
             SkyblockBot.LOGGER.warn("Can't reload goToVisitors recording, because it is being executed");
-        }
-        if(!goBackToFarm.isExecuting()) {
-            goBackToFarm.loadFromFile(goBackToFarmRecName);
-        } else {
-            SkyblockBot.LOGGER.warn("Can't reload goBackToFarm recording, because it is being executed");
         }
     }
 }

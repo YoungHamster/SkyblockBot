@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.utils;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.IChatHudMixin;
 import com.viktorx.skyblockbot.mixins.IMinecraftClientMixin;
@@ -43,7 +44,7 @@ public class Utils {
         ChatHud chat = MinecraftClient.getInstance().inGameHud.getChatHud();
         List<ChatHudLine> messages = ((IChatHudMixin) chat).getMessages();
         if (messages.size() == 0) {
-            SkyblockBot.LOGGER.warn("BuyItem ERROR! The message history is empty, it's weird");
+            SkyblockBot.LOGGER.warn("ERROR! Chat message history is empty, it's weird");
             return false;
         }
 
@@ -68,6 +69,28 @@ public class Utils {
         }
 
         return false;
+    }
+
+    public static String getLatestMessageContaining(String str) {
+        ChatHud chat = MinecraftClient.getInstance().inGameHud.getChatHud();
+        List<ChatHudLine> messages = ((IChatHudMixin) chat).getMessages();
+        if (messages.size() == 0) {
+            SkyblockBot.LOGGER.warn("ERROR! Chat message history is empty, it's weird");
+            return null;
+        }
+
+        Pair<String, Integer> latest = new ImmutablePair<>(null, 0);
+
+        for (int i = 0; i < messages.size(); i++) {
+            Pair<String, Integer> msg = new ImmutablePair<>(messages.get(i).content().getString(), messages.get(i).creationTick());
+            if(msg.getLeft().contains(str)) {
+                if(msg.getRight() > latest.getRight()) {
+                    latest = msg;
+                }
+            }
+        }
+
+        return latest.getLeft();
     }
 
     public static void InitItemCounter() {
@@ -160,8 +183,10 @@ public class Utils {
             return;
         }
 
-        ((IMinecraftClientMixin) client).callOpenChatScreen(message);
-        client.currentScreen.keyPressed(InputUtil.GLFW_KEY_ENTER, 0, 0);
+        RenderSystem.recordRenderCall(()-> {
+            ((IMinecraftClientMixin) client).callOpenChatScreen(message);
+            client.currentScreen.keyPressed(InputUtil.GLFW_KEY_ENTER, 0, 0);
+        });
     }
 
     public static File getLastModified(String directoryFilePath) {
