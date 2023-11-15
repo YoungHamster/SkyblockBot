@@ -25,6 +25,7 @@ public class FarmingTask extends CompoundTask {
     private final Task getToSkyblock;
     private final Task gardenVisitorsTask;
     private final Task farm;
+    private final Task composterTask;
     private final List<Runnable> runWhenFarmCompleted = new ArrayList<>();
     private final Queue<Task> taskQueue = new ArrayBlockingQueue<>(20);
     private final List<Timer> timers = new ArrayList<>();
@@ -34,6 +35,7 @@ public class FarmingTask extends CompoundTask {
 
         this.getToSkyblock = new GetToSkyblock(this::whenGetToSkyblockCompleted, this::whenGetToSkyblockAborted);
         this.farm = new Replay(ReplayBotSettings.DEFAULT_RECORDING_FILE, this::whenFarmCompleted, this::whenFarmAborted);
+        this.composterTask = new ComposterTask(this::defaultWhenCompleted, this::defaultWhenAborted);
 
         this.gardenVisitorsTask = new GardenVisitors(this::defaultWhenCompleted, this::whenGardenVisitorsAborted);
     }
@@ -257,6 +259,11 @@ public class FarmingTask extends CompoundTask {
         checkVisitorsTimer.scheduleAtFixedRate(new CheckVisitorsTimerTask(),
                 0, FarmingTaskSettings.checkVisitorsInterval);
         timers.add(checkVisitorsTimer);
+
+        Timer checkComposterTimer = new Timer(true);
+        checkComposterTimer.schedule(new CheckComposterTimerTask(),
+                0, FarmingTaskSettings.checkComposterInterval);
+        timers.add(checkComposterTimer);
     }
 
     @Override
@@ -423,6 +430,22 @@ public class FarmingTask extends CompoundTask {
                 if (!taskQueue.contains(gardenVisitorsTask) && currentTask != gardenVisitorsTask) {
                     SkyblockBot.LOGGER.info("Queueing to handle garden guests");
                     taskQueue.add(gardenVisitorsTask);
+                }
+            }
+        }
+    }
+
+    private class CheckComposterTimerTask extends TimerTask {
+        @Override
+        public void run() {
+            if (SBUtils.getComposterFuel() < 20000 || SBUtils.getComposterOrganicMatter() < 40000) {
+                if (SBUtils.getPurse() < 3000000) {
+                    SkyblockBot.LOGGER.info("Not queueing to fill composter, because purse is too low on coins. Purse: " + SBUtils.getPurse());
+                    return;
+                }
+                if (!taskQueue.contains(composterTask) && currentTask != composterTask) {
+                    SkyblockBot.LOGGER.info("Queueing to fill composter");
+                    taskQueue.add(composterTask);
                 }
             }
         }

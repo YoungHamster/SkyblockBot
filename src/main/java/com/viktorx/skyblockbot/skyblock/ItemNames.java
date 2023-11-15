@@ -6,11 +6,13 @@ public enum ItemNames {
     ENCH_CARROT("Enchanted Carrot"),
     ENCH_BROWN_MUSHROOM("Enchanted Brown Mushroom"),
     ENCH_RED_MUSHROOM("Enchanted Red Mushroom"),
+    ENCHANTED_SEED("Enchanted Seed"),
     CROPIE("Cropie"),
     CARROT("Carrot"),
     RED_MUSHROOM("Red Mushroom"),
     BROWN_MUSHROOM("Brown Mushroom"),
     MYSTICAL_MUSHROOM_SOUP("Mystical Mushroom Soup"),
+    OIL_BARREL("Oil Barrel"),
     ARMADILLO("Armadillo");
 
     private final String name;

@@ -97,7 +97,7 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
 
             if (Math.abs(dPdY.x) < 1.0f && Math.abs(dPdY.y) < 1.0f) {
                 assert client.player != null;
-                if (Utils.distanceBetween(npc.getPos(), client.player.getPos()) > 3.0d) {
+                if (Utils.distanceBetween(npc.getPos(), client.player.getPos()) >= 2.8d) {
                     npcTooFarTickCounter++;
                     if (npcTooFarTickCounter > VisitorExecutorSettings.npcTooFarTickThreshold) {
                         SkyblockBot.LOGGER.warn("Visitor npc is too far, can't reach it, trying to get closer.");
@@ -135,7 +135,7 @@ public abstract class AbstractVisitorExecutor extends AbstractMenuClickingExecut
             Entity npc = Utils.getClosestEntity(currentTask.getVisitorName());
 
             assert client.player != null;
-            if (Utils.distanceBetween(npc.getPos(), client.player.getPos()) <= 3.0d) {
+            if (Utils.distanceBetween(npc.getPos(), client.player.getPos()) < 2.8d) {
                 parent.goAroundVisitors.abort();
                 return new StartTrackingVisitor(parent);
             }

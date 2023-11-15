@@ -61,6 +61,7 @@ public class GlobalSettingsManager {
 
         FarmingTaskSettings.pauseInterval = Long.parseLong(settings.get("ComplexFarmingTask.pauseInterval"));
         FarmingTaskSettings.checkVisitorsInterval = Long.parseLong(settings.get("ComplexFarmingTask.checkGuestsInterval"));
+        FarmingTaskSettings.checkComposterInterval = Long.parseLong(settings.get("ComplexFarmingTask.checkComposterInterval"));
         FarmingTaskSettings.pauseDuration = Long.parseLong(settings.get("ComplexFarmingTask.pauseDuration"));
         FarmingTaskSettings.intervalBetweenRegularChecks = Long.parseLong(settings.get("ComplexFarmingTask.intervalBetweenRegularChecks"));
         FarmingTaskSettings.godPotBuyThreshold = Long.parseLong(settings.get("ComplexFarmingTask.godPotBuyThreshold"));
