@@ -85,8 +85,6 @@ public class GetComposterInfoExecutor extends AbstractMenuClickingExecutor {
             composterInfo.setMaxOrganicMatter(Integer.parseInt(organicMatterLimit) * 1000);
             composterInfo.setMaxFuel(Integer.parseInt(fuelLimit) * 1000);
 
-            SkyblockBot.LOGGER.info("Organic matter limit: " + organicMatterLimit + ", fuel limit: " + fuelLimit);
-
             parent.asyncCloseCurrentInventory();
             return new WaitForMenuToClose(new Completed(parent));
         }

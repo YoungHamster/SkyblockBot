@@ -2,8 +2,6 @@ package com.viktorx.skyblockbot.task.base.menuClickingTasks.composter.putItems;
 
 import com.viktorx.skyblockbot.task.base.BaseTask;
 
-import java.util.List;
-
 public class PutItemsInComposter extends BaseTask<PutItemsInComposterExecutor> {
     private final String organicMatterName;
     private final String fuelName;

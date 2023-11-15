@@ -14,6 +14,8 @@ public class ComposterTask extends CompoundTask {
     private static final String goToComposterRecName = "go_to_composter.bin";
     private static final String organicMatterSource = ItemNames.BOX_OF_SEEDS.getName();
     private static final String fuelSource = ItemNames.OIL_BARREL.getName();
+    private static final int organicMatterFromOneItem = 25600;
+    private static final int fuelFromOneItem = 10000;
     private final Task goToComposter;
     private final Task getComposterInfo;
 
@@ -32,7 +34,7 @@ public class ComposterTask extends CompoundTask {
     private void whenGetComposterInfoCompleted() {
         GetComposterInfo composterInfo = (GetComposterInfo) getComposterInfo;
         float organicMatter = composterInfo.getMaxOrganicMatter() - SBUtils.getComposterOrganicMatter();
-        int boxOfSeedsCount = Math.round(organicMatter / 25600) - Utils.countItemInInventory(organicMatterSource);
+        int boxOfSeedsCount = Math.round(organicMatter / organicMatterFromOneItem) - Utils.countItemInInventory(organicMatterSource);
 
         if(boxOfSeedsCount <= 0) {
             whenBuyMatterCompleted();
@@ -47,7 +49,7 @@ public class ComposterTask extends CompoundTask {
     private void whenBuyMatterCompleted() {
         GetComposterInfo composterInfo = (GetComposterInfo) getComposterInfo;
         float fuel = composterInfo.getMaxFuel() - SBUtils.getComposterFuel();
-        int oilBarrelCount = Math.round(fuel / 10000) - Utils.countItemInInventory(fuelSource);
+        int oilBarrelCount = Math.round(fuel / fuelFromOneItem) - Utils.countItemInInventory(fuelSource);
 
         if(oilBarrelCount <= 0) {
             whenBuyFuelCompleted();

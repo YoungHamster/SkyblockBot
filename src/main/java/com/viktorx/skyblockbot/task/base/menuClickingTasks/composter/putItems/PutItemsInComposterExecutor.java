@@ -7,12 +7,9 @@ import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.ExecutorState;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
-import com.viktorx.skyblockbot.task.base.menuClickingTasks.MenuClickersSettings;
-import com.viktorx.skyblockbot.utils.CurrentInventory;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
@@ -58,16 +55,16 @@ public class PutItemsInComposterExecutor extends AbstractMenuClickingExecutor {
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
-            if(waitBeforeAction()) {
+            if (waitBeforeAction()) {
                 return this;
             }
 
             PutItemsInComposter putItems = (PutItemsInComposter) parent.task;
 
             String itemName;
-            if(SBUtils.isItemInInventory(putItems.getOrganicMatterName()) && clickCounter < GlobalExecutorInfo.inventorySlotCount / 2) {
+            if (SBUtils.isItemInInventory(putItems.getOrganicMatterName()) && clickCounter < GlobalExecutorInfo.inventorySlotCount / 2) {
                 itemName = putItems.getOrganicMatterName();
-            } else if(SBUtils.isItemInInventory(putItems.getFuelName())) {
+            } else if (SBUtils.isItemInInventory(putItems.getFuelName())) {
                 itemName = putItems.getFuelName();
             } else {
                 parent.asyncCloseCurrentInventory();
@@ -82,7 +79,7 @@ public class PutItemsInComposterExecutor extends AbstractMenuClickingExecutor {
             }
             clickCounter++;
 
-            if(clickCounter > GlobalExecutorInfo.inventorySlotCount) {
+            if (clickCounter > GlobalExecutorInfo.inventorySlotCount) {
                 SkyblockBot.LOGGER.error("PutItemsInComposterExecutor has been clicking for too long!! Aborting");
                 parent.asyncCloseCurrentInventory();
                 return new WaitForMenuToClose(new Aborted(parent));
