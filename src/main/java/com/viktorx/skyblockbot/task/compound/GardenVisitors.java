@@ -7,6 +7,7 @@ import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem.BuyBZItem;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.giveVisitorItems.GiveVisitorItems;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.visitors.talkToVisitor.TalkToVisitor;
 import com.viktorx.skyblockbot.task.base.replay.Replay;
+import com.viktorx.skyblockbot.utils.Utils;
 import javafx.util.Pair;
 
 import java.util.concurrent.TimeoutException;
@@ -68,17 +69,9 @@ public class GardenVisitors extends CompoundTask {
             String itemName = itemNameCount.getKey();
             Integer itemCount = itemNameCount.getValue();
 
-            if (SBUtils.isItemInInventory(itemName)) {
-                try {
-                    if (SBUtils.getSlot(itemName).getStack().getCount() >= itemCount) {
-                        continue;
-                    } else {
-                        itemCount -= SBUtils.getSlot(itemName).getStack().getCount();
-                    }
-                } catch (TimeoutException e) {
-                    SkyblockBot.LOGGER.info("GardenVisitorsTask whenTalkToVisitorCompleted got TimeoutException\n" +
-                            "WTF?? Item is supposed to be in inventory at this point, so the shouldn't be a timeoutException");
-                }
+            itemCount -= Utils.countItemInInventory(itemName);
+            if(itemCount <= 0) {
+                continue;
             }
 
             return new Pair<>(itemName, itemCount);

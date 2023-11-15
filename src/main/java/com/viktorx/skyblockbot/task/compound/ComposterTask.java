@@ -3,20 +3,17 @@ package com.viktorx.skyblockbot.task.compound;
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.skyblock.ItemNames;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
-import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.Task;
-import com.viktorx.skyblockbot.task.base.composter.putItems.PutItemsInComposter;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem.BuyBZItem;
-import com.viktorx.skyblockbot.task.base.composter.getInfo.GetComposterInfo;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.composter.getInfo.GetComposterInfo;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.composter.putItems.PutItemsInComposter;
 import com.viktorx.skyblockbot.task.base.replay.Replay;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerInventory;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.viktorx.skyblockbot.utils.Utils;
 
 public class ComposterTask extends CompoundTask {
     private static final String goToComposterRecName = "go_to_composter.bin";
+    private static final String organicMatterSource = ItemNames.BOX_OF_SEEDS.getName();
+    private static final String fuelSource = ItemNames.OIL_BARREL.getName();
     private final Task goToComposter;
     private final Task getComposterInfo;
 
@@ -35,8 +32,14 @@ public class ComposterTask extends CompoundTask {
     private void whenGetComposterInfoCompleted() {
         GetComposterInfo composterInfo = (GetComposterInfo) getComposterInfo;
         float organicMatter = composterInfo.getMaxOrganicMatter() - SBUtils.getComposterOrganicMatter();
-        int enchantedSeedCount = (int) Math.floor(organicMatter / 160);
-        currentTask = new BuyBZItem(ItemNames.ENCHANTED_SEED.getName(), enchantedSeedCount,
+        int boxOfSeedsCount = Math.round(organicMatter / 25600) - Utils.countItemInInventory(organicMatterSource);
+
+        if(boxOfSeedsCount <= 0) {
+            whenBuyMatterCompleted();
+            return;
+        }
+
+        currentTask = new BuyBZItem(organicMatterSource, boxOfSeedsCount,
                 this::whenBuyMatterCompleted, this::defaultWhenAborted);
         currentTask.execute();
     }
@@ -44,25 +47,20 @@ public class ComposterTask extends CompoundTask {
     private void whenBuyMatterCompleted() {
         GetComposterInfo composterInfo = (GetComposterInfo) getComposterInfo;
         float fuel = composterInfo.getMaxFuel() - SBUtils.getComposterFuel();
-        int oilBarrelCount = (int) Math.floor(fuel / 10000);
-        currentTask = new BuyBZItem(ItemNames.OIL_BARREL.getName(), oilBarrelCount,
+        int oilBarrelCount = Math.round(fuel / 10000) - Utils.countItemInInventory(fuelSource);
+
+        if(oilBarrelCount <= 0) {
+            whenBuyFuelCompleted();
+            return;
+        }
+
+        currentTask = new BuyBZItem(fuelSource, oilBarrelCount,
                 this::whenBuyFuelCompleted, this::defaultWhenAborted);
         currentTask.execute();
     }
 
     private void whenBuyFuelCompleted() {
-        List<Integer> slots = new ArrayList<>();
-        assert MinecraftClient.getInstance().player != null;
-        PlayerInventory inventory = MinecraftClient.getInstance().player.getInventory();
-
-        for(int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
-            String stackName = inventory.getStack(i).getName().getString();
-            if(stackName.contains(ItemNames.ENCHANTED_SEED.getName()) || stackName.contains(ItemNames.OIL_BARREL.getName())) {
-                slots.add(i);
-            }
-        }
-
-        currentTask = new PutItemsInComposter(slots,
+        currentTask = new PutItemsInComposter(organicMatterSource, fuelSource,
                 this::whenPutItemsInComposterCompleted, this::defaultWhenAborted);
         currentTask.execute();
     }
@@ -82,5 +80,6 @@ public class ComposterTask extends CompoundTask {
             return;
         }
         currentTask = goToComposter;
+        currentTask.execute();
     }
 }

@@ -41,6 +41,11 @@ public class SBUtils {
     public static void leftClickOnSlot(int slotID) throws TimeoutException {
         MinecraftClient client = MinecraftClient.getInstance();
 
+        if (client.currentScreen == null) {
+            SkyblockBot.LOGGER.error("Trying to click on slot " + slotID + ", but current screen is null!!!");
+            throw new RuntimeException();
+        }
+
         /*
          * Hardcoding left mouse button because it will never change and it'll work fine
          * Actually the previous method i used here didn't work when you change attack key in settings,
@@ -53,11 +58,11 @@ public class SBUtils {
 
     public static void quickSwapSlotWithHotbar(int slotID, int hotbar) {
         MinecraftClient client = MinecraftClient.getInstance();
-        if(slotID < 0 || slotID > GlobalExecutorInfo.inventorySlotCount) {
+        if (slotID < 0 || slotID > GlobalExecutorInfo.inventorySlotCount) {
             SkyblockBot.LOGGER.error("Invalid argument to quickSwapSlotWithHotbar!!! slotID: " + slotID);
             return;
         }
-        if(hotbar < 0 || hotbar > 8) {
+        if (hotbar < 0 || hotbar > 8) {
             SkyblockBot.LOGGER.error("Invalid argument to quickSwapSlotWithHotbar!!! hotbar: " + hotbar);
             return;
         }
@@ -90,9 +95,9 @@ public class SBUtils {
         List<String> players = getTabPlayers();
         for (int i = 0; i < players.size(); i++) {
             if (players.get(i).contains("Visitors")) {
-                for(int j = i; j < players.size(); j++) {
-                    if(players.get(j+1).length() == 0) {
-                        return j-i;
+                for (int j = i; j < players.size(); j++) {
+                    if (players.get(j + 1).length() == 0) {
+                        return j - i;
                     }
                 }
             }
@@ -102,7 +107,7 @@ public class SBUtils {
     }
 
     public static String getFirstVisitor() {
-        if(getGardenVisitorCount() == 0) {
+        if (getGardenVisitorCount() == 0) {
             return null;
         }
 
@@ -221,7 +226,7 @@ public class SBUtils {
      * @return true if area is a garden plot, false otherwise
      */
     public static boolean isAreaAPlot() {
-        if(!getIslandOrArea().contains("Garden") && !getIslandOrArea().contains("Plot")) {
+        if (!getIslandOrArea().contains("Garden") && !getIslandOrArea().contains("Plot")) {
             return false;
         }
         assert MinecraftClient.getInstance().player != null;
@@ -231,22 +236,24 @@ public class SBUtils {
 
     public static int getComposterOrganicMatter() {
         String matter = getTabPlayers().stream().filter(string -> string.contains("Organic Matter:")).collect(Collectors.joining());
-        matter = matter.split("[: ]")[2];
+        String[] foo = matter.split("[: ]");
+        matter = foo[foo.length - 1];
 
-        if(matter.contains("k")) {
-            return Integer.parseInt(matter.replace("k", "")) * 1000;
+        if (matter.contains("k")) {
+            return (int) Float.parseFloat(matter.replace("k", "")) * 1000;
         }
-        return Integer.parseInt(matter);
+        return (int) Float.parseFloat(matter);
     }
 
     public static int getComposterFuel() {
         String fuel = getTabPlayers().stream().filter(string -> string.contains("Fuel:")).collect(Collectors.joining());
-        fuel = fuel.split("[: ]")[2];
+        String[] foo = fuel.split("[: ]");
+        fuel = foo[foo.length - 1];
 
-        if(fuel.contains("k")) {
-            return Integer.parseInt(fuel.replace("k", "")) * 1000;
+        if (fuel.contains("k")) {
+            return (int) Float.parseFloat(fuel.replace("k", "")) * 1000;
         }
-        return Integer.parseInt(fuel);
+        return (int) Float.parseFloat(fuel);
     }
 
     // returns purse value from sidebar(right scoreboard)

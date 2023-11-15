@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.task.base.composter.getInfo;
+package com.viktorx.skyblockbot.task.base.menuClickingTasks.composter.getInfo;
 
 import com.viktorx.skyblockbot.task.base.BaseTask;
 

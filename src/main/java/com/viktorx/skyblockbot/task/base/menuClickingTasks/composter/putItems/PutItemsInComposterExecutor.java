@@ -1,12 +1,14 @@
-package com.viktorx.skyblockbot.task.base.composter.putItems;
+package com.viktorx.skyblockbot.task.base.menuClickingTasks.composter.putItems;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
 import com.viktorx.skyblockbot.skyblock.SBUtils;
-import com.viktorx.skyblockbot.task.base.BaseExecutor;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.ExecutorState;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.AbstractMenuClickingExecutor;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.MenuClickersSettings;
+import com.viktorx.skyblockbot.utils.CurrentInventory;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
@@ -52,8 +54,7 @@ public class PutItemsInComposterExecutor extends AbstractMenuClickingExecutor {
 
     private static class PuttingItemsInComposter extends WaitingExecutorState {
         private final PutItemsInComposterExecutor parent = PutItemsInComposterExecutor.INSTANCE;
-        private int slotIterator = 0;
-        private final List<Integer> slotsToClick = ((PutItemsInComposter) parent.task).getSlotsToClick();
+        private int clickCounter = 0;
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
@@ -61,18 +62,31 @@ public class PutItemsInComposterExecutor extends AbstractMenuClickingExecutor {
                 return this;
             }
 
-            if(slotsToClick.size() == slotIterator) {
-                parent.task.completed();
-                return new Idle();
+            PutItemsInComposter putItems = (PutItemsInComposter) parent.task;
+
+            String itemName;
+            if(SBUtils.isItemInInventory(putItems.getOrganicMatterName()) && clickCounter < GlobalExecutorInfo.inventorySlotCount / 2) {
+                itemName = putItems.getOrganicMatterName();
+            } else if(SBUtils.isItemInInventory(putItems.getFuelName())) {
+                itemName = putItems.getFuelName();
+            } else {
+                parent.asyncCloseCurrentInventory();
+                return new WaitForMenuToClose(new Completed(parent));
             }
 
             try {
-                SBUtils.leftClickOnSlot(slotsToClick.get(slotIterator));
+                SBUtils.leftClickOnSlot(itemName);
             } catch (TimeoutException e) {
                 SkyblockBot.LOGGER.error("Timeout when clicking on slot during PutItemsInComposter task!");
                 return parent.restart();
             }
-            slotIterator++;
+            clickCounter++;
+
+            if(clickCounter > GlobalExecutorInfo.inventorySlotCount) {
+                SkyblockBot.LOGGER.error("PutItemsInComposterExecutor has been clicking for too long!! Aborting");
+                parent.asyncCloseCurrentInventory();
+                return new WaitForMenuToClose(new Aborted(parent));
+            }
 
             return this;
         }

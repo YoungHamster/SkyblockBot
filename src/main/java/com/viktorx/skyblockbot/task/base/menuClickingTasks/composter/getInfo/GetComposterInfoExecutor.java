@@ -1,4 +1,4 @@
-package com.viktorx.skyblockbot.task.base.composter.getInfo;
+package com.viktorx.skyblockbot.task.base.menuClickingTasks.composter.getInfo;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.keybinds.Keybinds;
@@ -38,14 +38,17 @@ public class GetComposterInfoExecutor extends AbstractMenuClickingExecutor {
         return new Idle();
     }
 
-    private static class Clicking implements ExecutorState {
+    private static class Clicking extends WaitingExecutorState {
         private final GetComposterInfoExecutor parent = GetComposterInfoExecutor.INSTANCE;
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
-            Keybinds.asyncPressKeyAfterTick(client.options.useKey);
-            return new WaitingForNamedMenu(parent, ((GetComposterInfo) parent.task).getComposterMenuName())
-                    .setNextState(new ReadingComposterData());
+            if(!waitBeforeAction()) {
+                Keybinds.asyncPressKeyAfterTick(client.options.useKey);
+                return new WaitingForNamedMenu(parent, ((GetComposterInfo) parent.task).getComposterMenuName())
+                        .setNextState(new ReadingComposterData());
+            }
+            return this;
         }
     }
 
@@ -54,12 +57,17 @@ public class GetComposterInfoExecutor extends AbstractMenuClickingExecutor {
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
+            if(waitBeforeAction()) {
+                return this;
+            }
+
             List<String> loreMatter;
             List<String> loreFuel;
             try {
                 loreMatter = SBUtils.getSlotLore("Organic Matter");
                 loreFuel = SBUtils.getSlotLore("Fuel");
             } catch (TimeoutException e) {
+                SkyblockBot.LOGGER.error("Error when getting composter info, timeout exception when trying to read item lore");
                 return parent.restart();
             }
             if (loreMatter == null || loreMatter.size() == 0 || loreFuel == null || loreFuel.size() == 0) {
@@ -77,8 +85,10 @@ public class GetComposterInfoExecutor extends AbstractMenuClickingExecutor {
             composterInfo.setMaxOrganicMatter(Integer.parseInt(organicMatterLimit) * 1000);
             composterInfo.setMaxFuel(Integer.parseInt(fuelLimit) * 1000);
 
+            SkyblockBot.LOGGER.info("Organic matter limit: " + organicMatterLimit + ", fuel limit: " + fuelLimit);
+
             parent.asyncCloseCurrentInventory();
-            return new WaitForMenuToClose(new Idle());
+            return new WaitForMenuToClose(new Completed(parent));
         }
     }
 }

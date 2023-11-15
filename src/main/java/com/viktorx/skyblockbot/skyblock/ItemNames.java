@@ -7,6 +7,7 @@ public enum ItemNames {
     ENCH_BROWN_MUSHROOM("Enchanted Brown Mushroom"),
     ENCH_RED_MUSHROOM("Enchanted Red Mushroom"),
     ENCHANTED_SEED("Enchanted Seed"),
+    BOX_OF_SEEDS("Box of Seeds"),
     CROPIE("Cropie"),
     CARROT("Carrot"),
     RED_MUSHROOM("Red Mushroom"),

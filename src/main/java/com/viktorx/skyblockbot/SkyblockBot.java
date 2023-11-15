@@ -1,8 +1,8 @@
 package com.viktorx.skyblockbot;
 
 import com.viktorx.skyblockbot.keybinds.Keybinds;
-import com.viktorx.skyblockbot.task.base.composter.getInfo.GetComposterInfoExecutor;
-import com.viktorx.skyblockbot.task.base.composter.putItems.PutItemsInComposterExecutor;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.composter.getInfo.GetComposterInfoExecutor;
+import com.viktorx.skyblockbot.task.base.menuClickingTasks.composter.putItems.PutItemsInComposterExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem.BuyBZItemExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem.BuyItemExecutor;
 import com.viktorx.skyblockbot.task.base.changeIsland.ChangeIslandExecutor;

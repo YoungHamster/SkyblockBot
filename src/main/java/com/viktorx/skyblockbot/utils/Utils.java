@@ -12,6 +12,7 @@ import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -91,6 +92,18 @@ public class Utils {
         }
 
         return latest.getLeft();
+    }
+
+    public static int countItemInInventory(String itemStackName) {
+        int count = 0;
+        assert MinecraftClient.getInstance().player != null;
+        PlayerInventory inventory = MinecraftClient.getInstance().player.getInventory();
+        for(int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
+            if(inventory.getStack(i).getName().getString().contains(itemStackName)) {
+                count += inventory.getStack(i).getCount();
+            }
+        }
+        return count;
     }
 
     public static void InitItemCounter() {
