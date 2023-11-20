@@ -174,7 +174,7 @@ public class Utils {
             }
         });
 
-        AtomicReference<Entity> result = new AtomicReference<>();
+        AtomicReference<Entity> result = new AtomicReference<>(null);
         AtomicReference<Double> lowestDistance = new AtomicReference<>(Double.MAX_VALUE);
 
         entities.forEach(e -> {

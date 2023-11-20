@@ -18,14 +18,27 @@ import java.util.List;
 public class Replay extends BaseTask<ReplayExecutor> {
     private static final long saveProtocolVersion = 42070;
     protected final List<TickState> tickStates = new ArrayList<>();
+    private final boolean relativeMode;
 
     public Replay() {
         super(ReplayExecutor.INSTANCE, null, null);
+        relativeMode = false;
     }
 
     public Replay(String filename, Runnable whenCompleted, Runnable whenAborted) {
         super(ReplayExecutor.INSTANCE, whenCompleted, whenAborted);
+        this.relativeMode = false;
         loadFromFile(filename);
+    }
+
+    public Replay(boolean relativeMode, String filename, Runnable whenCompleted, Runnable whenAborted) {
+        super(ReplayExecutor.INSTANCE, whenCompleted, whenAborted);
+        this.relativeMode = relativeMode;
+        loadFromFile(filename);
+    }
+
+    public boolean isRelative() {
+        return relativeMode;
     }
 
     public void saveToFile(String filename) {

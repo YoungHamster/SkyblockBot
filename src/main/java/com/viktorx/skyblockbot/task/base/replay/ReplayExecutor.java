@@ -508,8 +508,15 @@ public class ReplayExecutor extends BaseExecutor {
 
             TickState tickState = replay.getTickState(tickIterator);
 
-            tickState.setRotationForClient(client);
-            tickState.setPositionForClient(client);
+            if(replay.isRelative()) {
+                if(tickIterator > 0) {
+                    tickState.setRotationRelative(client, replay.getTickState(tickIterator - 1));
+                }
+                tickState.setPositionRelative(client);
+            } else {
+                tickState.setRotationForClient(client);
+                tickState.setPositionForClient(client);
+            }
             pressButtons(tickState);
 
             tickIterator++;
@@ -524,7 +531,7 @@ public class ReplayExecutor extends BaseExecutor {
             return this;
         }
 
-        /*
+        /**
          * IMPORTANT: call this method before doing anything to player like changing rotation or position
          * anti-detection stuff
          * check for correct rotation

@@ -44,15 +44,21 @@ public class TickState {
         client.player.setPitch(getPitch());
     }
 
+    public void setRotationRelative(MinecraftClient client, TickState prevTick) {
+        assert client.player != null;
+
+        float deltaYaw = prevTick.getYaw() - getYaw();
+        client.player.setYaw(client.player.getYaw() + deltaYaw);
+        client.player.setPitch(getPitch());
+    }
+
     public void setPositionForClient(MinecraftClient client) {
         assert client.player != null;
         client.player.setPosition(getPosition());
     }
 
-    public void setButtonsForClient() {
-        for (AnyKeyRecord key : keys) {
-            key.press();
-        }
+    public void setPositionRelative(MinecraftClient client) {
+
     }
 
     public Vec2f getRotation() {
