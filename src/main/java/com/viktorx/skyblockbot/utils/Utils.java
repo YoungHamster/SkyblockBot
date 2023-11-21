@@ -14,6 +14,7 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -160,6 +161,28 @@ public class Utils {
                 prevTickInventory.add(new ImmutablePair<>(stack.getName().getString(), stack.getCount()));
             }
         });
+    }
+
+    public static boolean isBlockSolid(BlockPos blockPos) {
+        final List<String> whitelistedBlocks = new ArrayList<>();
+        whitelistedBlocks.add("oak_sign");
+        whitelistedBlocks.add("iron_door");
+
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        assert client.world != null;
+        boolean isBlockSolid = client.world.getBlockState(blockPos).blocksMovement();
+
+        if (isBlockSolid) {
+            String blockName = client.world.getBlockState(blockPos).getBlock().asItem().toString();
+
+            for (String name : whitelistedBlocks) {
+                if (blockName.equals(name)) {
+                    return false;
+                }
+            }
+        }
+        return isBlockSolid;
     }
 
     public static Entity getClosestEntity(String name) {

@@ -28,7 +28,6 @@ public class ReplayExecutor extends BaseExecutor {
 
     public static final ReplayExecutor INSTANCE = new ReplayExecutor();
     private final List<String> itemsWhenStarted = new ArrayList<>();
-    private final List<String> whitelistedBlocks = new ArrayList<>();
     private final Map<Integer, AnyKeyRecord> currentlyPressedKeys = new HashMap<>();
     public boolean serverChangedPositionRotation = false;
     public boolean serverChangedItem = false;
@@ -42,8 +41,6 @@ public class ReplayExecutor extends BaseExecutor {
     private int tickIterator;
 
     public void Init() {
-        whitelistedBlocks.add("oak_sign");
-        whitelistedBlocks.add("iron_door");
 
         ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
     }
@@ -508,8 +505,8 @@ public class ReplayExecutor extends BaseExecutor {
 
             TickState tickState = replay.getTickState(tickIterator);
 
-            if(replay.isRelative()) {
-                if(tickIterator > 0) {
+            if (replay.isRelative()) {
+                if (tickIterator > 0) {
                     tickState.setRotationRelative(client, replay.getTickState(tickIterator - 1));
                 }
                 tickState.setPositionRelative(client);
@@ -607,31 +604,19 @@ public class ReplayExecutor extends BaseExecutor {
                     return true;
                 }
 
-                boolean isBlockSolid = client.world.getBlockState(blockPos).blocksMovement();
-                boolean isBlockAboveSolid = client.world.getBlockState(above).blocksMovement();
+                boolean isBlockSolid = Utils.isBlockSolid(blockPos);
+                boolean isBlockAboveSolid = Utils.isBlockSolid(above);
 
                 if (isBlockSolid || isBlockAboveSolid) {
                     String blockName = client.world.getBlockState(blockPos).getBlock().asItem().toString();
                     String blockAboveName = client.world.getBlockState(above).getBlock().asItem().toString();
 
-                    for (String name : whitelistedBlocks) {
-                        if (blockName.equals(name)) {
-                            isBlockSolid = false;
-                        }
-                        if (blockAboveName.equals(name)) {
-                            isBlockAboveSolid = false;
-                        }
-                    }
+                    SkyblockBot.LOGGER.info(
+                            "Block at " + blockPos.getX() + " " + blockPos.getY() + " " + blockPos.getZ()
+                                    + " : " + blockName + " solid-" + isBlockSolid
+                                    + "\nBlock above: " + blockAboveName + " solid-" + isBlockAboveSolid);
 
-                    // Check again after accounting for whitelisted blocks
-                    if (isBlockSolid || isBlockAboveSolid) {
-                        SkyblockBot.LOGGER.info(
-                                "Block at " + blockPos.getX() + " " + blockPos.getY() + " " + blockPos.getZ()
-                                        + " : " + blockName + " solid-" + isBlockSolid
-                                        + "\nBlock above: " + blockAboveName + " solid-" + isBlockAboveSolid);
-
-                        return false;
-                    }
+                    return false;
                 }
             }
             return true;

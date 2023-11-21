@@ -10,6 +10,7 @@ import com.viktorx.skyblockbot.utils.Utils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.entity.Entity;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 
@@ -54,26 +55,43 @@ public class PestKillerExecutor extends BaseExecutor {
 
     private static class FlyToFreeHeight implements ExecutorState {
         private final double freeHeight;
+        private static final int plotsize = 94;
+        private static final int maxY = 16; // TODO
 
         public FlyToFreeHeight() {
             freeHeight = findFreeHeight();
         }
 
         private double findFreeHeight() {
-            // TODO
-            return 6;
+            int minx = -1; // TODO;
+            int minz = -1; // TODO;
+
+            boolean goToNextY = false;
+            for (int y = 1; y < maxY; y++) {
+                for (int x = minx; (x < minx + plotsize) && !goToNextY; x++) {
+                    for (int z = minz; (z < minz + plotsize) && !goToNextY; z++) {
+                        if (Utils.isBlockSolid(new BlockPos(x, y, z))) {
+                            goToNextY = true;
+                        }
+                    }
+                }
+                if(!goToNextY) {
+                    return y;
+                }
+                goToNextY = false;
+            }
+
+            return -1;
         }
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             assert client.player != null;
             if (client.player.getPos().y < freeHeight) {
-                if (!client.options.jumpKey.isPressed()) {
-                    client.options.jumpKey.setPressed(true);
-                }
+                MyKeyboard.INSTANCE.press(client.options.jumpKey);
                 return this;
             }
-            client.options.jumpKey.setPressed(false);
+            MyKeyboard.INSTANCE.unpress(client.options.jumpKey);
 
             return new FindPest();
         }
@@ -196,7 +214,7 @@ public class PestKillerExecutor extends BaseExecutor {
         }
 
         protected void unpressAll() {
-            pressedKeys.forEach(MyKeyboard.INSTANCE::press);
+            pressedKeys.forEach(MyKeyboard.INSTANCE::unpress);
             pressedKeys.clear();
         }
     }

@@ -57,6 +57,10 @@ public class TickState {
         client.player.setPosition(getPosition());
     }
 
+    /**
+     * It doesn't do anything for now. Maybe i will change it later, but now the idea is that in relative mode i will
+     * just press buttons, and not control position
+     */
     public void setPositionRelative(MinecraftClient client) {
 
     }

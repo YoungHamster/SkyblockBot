@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.utils;
 
+import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
 import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
@@ -74,6 +75,10 @@ public class MyKeyboard {
 
     private void press(int keyCode, int action) {
         long window = MinecraftClient.getInstance().getWindow().getHandle();
-        MinecraftClient.getInstance().keyboard.onKey(window, keyCode, 0, action, 0);
+        if (keyCode < 32) {
+            ((IMouseMixin) MinecraftClient.getInstance().mouse).callOnMouseButton(window, keyCode, action, 0);
+        } else {
+            MinecraftClient.getInstance().keyboard.onKey(window, keyCode, 0, action, 0);
+        }
     }
 }
