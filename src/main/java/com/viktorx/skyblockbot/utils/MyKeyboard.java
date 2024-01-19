@@ -11,6 +11,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/*
+ * The hope is that this class bring an end to my stuggles
+ * with simulating key presses for all the different actions that the bot performs
+ */
 public class MyKeyboard {
     public static final MyKeyboard INSTANCE = new MyKeyboard();
 
@@ -30,6 +34,12 @@ public class MyKeyboard {
 
     private final Map<Integer, KeyPressedFirstLast> pressedKeys = new HashMap<>();
 
+    /**
+     * Call this any time you want the key to be pressed
+     * It tries to simulate behaviour of an actual keyboard
+     * -------------------------------------------------------------------------------------
+     * After small delay key will automatically unpress, if you don't call this method again
+     */
     public void press(KeyBinding key) {
         int keyCode = ((KeyBindingMixin) key).getBoundKey().getCode();
 
@@ -57,13 +67,17 @@ public class MyKeyboard {
         }
     }
 
+    public boolean isPressed(KeyBinding key) {
+        return pressedKeys.containsKey(((KeyBindingMixin)key).getBoundKey().getCode());
+    }
+
     private void onTick(MinecraftClient client) {
         List<Integer> unpressedKeys = new ArrayList<>();
         long currentTime = System.currentTimeMillis();
 
         synchronized (pressedKeys) {
             pressedKeys.forEach((key, value) -> {
-                if (currentTime - value.lastPressed > 30) {
+                if (currentTime - value.lastPressed > 100) { // 100ms because i want key to be pressed for roughly 2 ticks by default
                     press(key, 0);
                     unpressedKeys.add(key);
                 }

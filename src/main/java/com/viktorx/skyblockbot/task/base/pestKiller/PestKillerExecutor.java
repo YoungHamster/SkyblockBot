@@ -1,5 +1,6 @@
 package com.viktorx.skyblockbot.task.base.pestKiller;
 
+import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.movement.LookHelper;
 import com.viktorx.skyblockbot.task.base.BaseExecutor;
 import com.viktorx.skyblockbot.task.base.BaseTask;
@@ -7,6 +8,7 @@ import com.viktorx.skyblockbot.task.base.ExecutorState;
 import com.viktorx.skyblockbot.task.base.replay.Replay;
 import com.viktorx.skyblockbot.utils.MyKeyboard;
 import com.viktorx.skyblockbot.utils.Utils;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.entity.Entity;
@@ -21,9 +23,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class PestKillerExecutor extends BaseExecutor {
     public static PestKillerExecutor INSTANCE = new PestKillerExecutor();
 
+    public void Init() {
+        ClientTickEvents.START_CLIENT_TICK.register(this::onTick);
+    }
+
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
         return new StartFlying();
+    }
+
+    private void onTick(MinecraftClient client) {
+        this.state = this.state.onTick(client);
     }
 
     /**
@@ -34,19 +44,26 @@ public class PestKillerExecutor extends BaseExecutor {
         private static final int spacePressesToFly = 2;
         private static final int ticksToPress = 2;
         private int tickCounter = 0;
+        private boolean shouldBePressedCurrently = true;
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             if (tickCounter++ < ticksToPress) {
+                if(shouldBePressedCurrently) {
+                    MyKeyboard.INSTANCE.press(client.options.jumpKey);
+                } else {
+                    MyKeyboard.INSTANCE.unpress(client.options.jumpKey);
+                }
                 return this;
             }
-            if (client.options.jumpKey.isPressed()) {
+            tickCounter = 0;
+
+            if(!shouldBePressedCurrently) { // if last action was unpressing spacebar then we increase press counter
                 spacePressedCounter++;
-                client.options.jumpKey.setPressed(false);
-            } else {
-                client.options.jumpKey.setPressed(true);
             }
+            shouldBePressedCurrently = !shouldBePressedCurrently;
             if (spacePressedCounter == spacePressesToFly) {
+                SkyblockBot.LOGGER.info("Started flying, going up to free height");
                 return new FlyToFreeHeight();
             }
             return this;

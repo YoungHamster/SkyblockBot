@@ -4,6 +4,7 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
 import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
 import com.viktorx.skyblockbot.movement.LookHelper;
+import com.viktorx.skyblockbot.task.base.pestKiller.PestKiller;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.task.compound.FarmingTask;
 import com.viktorx.skyblockbot.utils.GlobalSettingsManager;
@@ -85,6 +86,10 @@ public class Keybinds {
             }
 
             while (loadRecording.wasPressed()) {
+                PestKiller pestKiller = new PestKiller("Creeper",
+                        ()->SkyblockBot.LOGGER.info("PestKiller completed"),
+                        ()->SkyblockBot.LOGGER.error("PestKiller aborteded"));
+                pestKiller.execute();
                 try {
                     GlobalSettingsManager.getInstance().loadSettings();
                 } catch (IOException e) {

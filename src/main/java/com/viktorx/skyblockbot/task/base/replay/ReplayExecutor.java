@@ -444,6 +444,7 @@ public class ReplayExecutor extends BaseExecutor {
         private final CompletableFuture<Void> yawTask;
         private final CompletableFuture<Void> pitchTask;
         private final CompletableFuture<Void> stopFlyingTask;
+        private int flightTickCounter = 0;
 
         public PreparingToStart() {
             pitchTask = LookHelper.changePitchSmoothAsync(replay.getTickState(tickIterator).getPitch());
@@ -455,9 +456,15 @@ public class ReplayExecutor extends BaseExecutor {
             stopFlyingTask = CompletableFuture.runAsync(() -> {
                 assert MinecraftClient.getInstance().player != null;
                 if (!MinecraftClient.getInstance().player.isOnGround()) {
-                    MinecraftClient.getInstance().options.sneakKey.setPressed(true);
-
                     while (!MinecraftClient.getInstance().player.isOnGround()) {
+                        if (flightTickCounter == 0) {
+                            MinecraftClient.getInstance().options.sneakKey.setPressed(true);
+                        } else if (flightTickCounter > 30) {
+                            MinecraftClient.getInstance().options.sneakKey.setPressed(false);
+                            flightTickCounter = 0;
+                        } else {
+                            flightTickCounter++;
+                        }
                         try {
                             Thread.sleep(50);
                         } catch (InterruptedException ignored) {

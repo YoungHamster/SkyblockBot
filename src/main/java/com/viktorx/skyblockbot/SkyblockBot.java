@@ -6,6 +6,7 @@ import com.viktorx.skyblockbot.task.base.menuClickingTasks.composter.putItems.Pu
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem.BuyBZItemExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem.BuyItemExecutor;
 import com.viktorx.skyblockbot.task.base.changeIsland.ChangeIslandExecutor;
+import com.viktorx.skyblockbot.task.base.pestKiller.PestKillerExecutor;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.sellSacks.SellSacksExecutor;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.useItem.UseItemExecutor;
@@ -18,6 +19,7 @@ import com.viktorx.skyblockbot.utils.Utils;
 import net.fabricmc.api.ModInitializer;
 
 import net.minecraft.client.MinecraftClient;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -52,5 +54,6 @@ public class SkyblockBot implements ModInitializer {
         WaitInQueueExecutor.INSTANCE.Init();
         PutItemsInComposterExecutor.INSTANCE.Init();
         GetComposterInfoExecutor.INSTANCE.Init();
+        PestKillerExecutor.INSTANCE.Init();
     }
 }
