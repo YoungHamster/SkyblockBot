@@ -86,7 +86,7 @@ public class Keybinds {
             }
 
             while (loadRecording.wasPressed()) {
-                PestKiller pestKiller = new PestKiller("Creeper",
+                PestKiller pestKiller = new PestKiller("Creeper", 1,
                         ()->SkyblockBot.LOGGER.info("PestKiller completed"),
                         ()->SkyblockBot.LOGGER.error("PestKiller aborteded"));
                 pestKiller.execute();

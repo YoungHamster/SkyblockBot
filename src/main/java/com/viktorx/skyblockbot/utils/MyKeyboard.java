@@ -45,9 +45,9 @@ public class MyKeyboard {
 
         synchronized (pressedKeys) {
             if (pressedKeys.containsKey(keyCode)) {
+                pressedKeys.get(keyCode).lastPressed = System.currentTimeMillis();
                 if (System.currentTimeMillis() - pressedKeys.get(keyCode).firstPressed >= 400) {
                     press(keyCode, 2);
-                    pressedKeys.get(keyCode).lastPressed = System.currentTimeMillis();
                 }
             } else {
                 press(keyCode, 1);
@@ -65,10 +65,6 @@ public class MyKeyboard {
                 pressedKeys.remove(keyCode);
             }
         }
-    }
-
-    public boolean isPressed(KeyBinding key) {
-        return pressedKeys.containsKey(((KeyBindingMixin)key).getBoundKey().getCode());
     }
 
     private void onTick(MinecraftClient client) {

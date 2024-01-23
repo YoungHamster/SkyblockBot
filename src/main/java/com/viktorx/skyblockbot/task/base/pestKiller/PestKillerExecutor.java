@@ -40,16 +40,16 @@ public class PestKillerExecutor extends BaseExecutor {
      * First bot need to start flying and get to height at which there are no blocks in current plot
      */
     private static class StartFlying implements ExecutorState {
-        private int spacePressedCounter = 0;
         private static final int spacePressesToFly = 2;
         private static final int ticksToPress = 2;
+        private int spacePressedCounter = 0;
         private int tickCounter = 0;
         private boolean shouldBePressedCurrently = true;
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             if (tickCounter++ < ticksToPress) {
-                if(shouldBePressedCurrently) {
+                if (shouldBePressedCurrently) {
                     MyKeyboard.INSTANCE.press(client.options.jumpKey);
                 } else {
                     MyKeyboard.INSTANCE.unpress(client.options.jumpKey);
@@ -58,7 +58,7 @@ public class PestKillerExecutor extends BaseExecutor {
             }
             tickCounter = 0;
 
-            if(!shouldBePressedCurrently) { // if last action was unpressing spacebar then we increase press counter
+            if (!shouldBePressedCurrently) { // if last action was unpressing spacebar then we increase press counter
                 spacePressedCounter++;
             }
             shouldBePressedCurrently = !shouldBePressedCurrently;
@@ -71,20 +71,37 @@ public class PestKillerExecutor extends BaseExecutor {
     }
 
     private static class FlyToFreeHeight implements ExecutorState {
-        private final double freeHeight;
         private static final int plotsize = 94;
-        private static final int maxY = 16; // TODO
+        private static final int maxY = 77;
+        private static final int minY = 67;
+        private final double freeHeight;
 
         public FlyToFreeHeight() {
-            freeHeight = findFreeHeight();
+            freeHeight = findFreeHeight(
+                    ((PestKiller) PestKillerExecutor.INSTANCE.task).getPlotNumber());
+            SkyblockBot.LOGGER.info("Found free height: " + freeHeight);
         }
 
-        private double findFreeHeight() {
-            int minx = -1; // TODO;
-            int minz = -1; // TODO;
+        private double findFreeHeight(int plotNumber) {
+            int minx = -1;
+            int minz = -1;
+
+            // TODO - get rid of this loop
+            for (int i = 0; i < 5; i++) {
+                for (int j = 0; j < 5; j++) {
+                    if (PestKiller.gardenPlotMap[i][j] == plotNumber) {
+                        minz = (int) ((i - 2.5) * plotsize);
+                        minx = (int) ((j - 2.5) * plotsize);
+
+                        SkyblockBot.LOGGER.info("Found plots min x and z. i = " + i + ", j = " + j);
+                    }
+                }
+            }
+
+            SkyblockBot.LOGGER.info("minX = " + minx + ", minZ = " + minz);
 
             boolean goToNextY = false;
-            for (int y = 1; y < maxY; y++) {
+            for (int y = minY; y < maxY; y++) {
                 for (int x = minx; (x < minx + plotsize) && !goToNextY; x++) {
                     for (int z = minz; (z < minz + plotsize) && !goToNextY; z++) {
                         if (Utils.isBlockSolid(new BlockPos(x, y, z))) {
@@ -92,7 +109,7 @@ public class PestKillerExecutor extends BaseExecutor {
                         }
                     }
                 }
-                if(!goToNextY) {
+                if (!goToNextY) {
                     return y;
                 }
                 goToNextY = false;
@@ -106,20 +123,23 @@ public class PestKillerExecutor extends BaseExecutor {
             assert client.player != null;
             if (client.player.getPos().y < freeHeight) {
                 MyKeyboard.INSTANCE.press(client.options.jumpKey);
+                SkyblockBot.LOGGER.info("Pressing jump key to fly to free height");
                 return this;
             }
             MyKeyboard.INSTANCE.unpress(client.options.jumpKey);
+            SkyblockBot.LOGGER.info("Got to free height, current y = " + client.player.getPos().y + ", trying to find pest");
 
             return new FindPest();
         }
     }
 
     private static class FindPest implements ExecutorState {
-        private final PestKillerExecutor parent = PestKillerExecutor.INSTANCE;
         private static final String pestFindingReplayName = "find_pest.bin";
         private static final Replay pestFindingReplay = new Replay(true, pestFindingReplayName, null, null);
+        private final PestKillerExecutor parent = PestKillerExecutor.INSTANCE;
 
         public FindPest() {
+            SkyblockBot.LOGGER.info("Playing pest finding replay");
             pestFindingReplay.execute();
         }
 
@@ -130,6 +150,7 @@ public class PestKillerExecutor extends BaseExecutor {
             Entity pest = Utils.getClosestEntity(pestTask.getPestName());
             if (pest != null) {
                 pestFindingReplay.abort();
+                SkyblockBot.LOGGER.info("Found pest, getting close to it");
                 return new GetCloseToPest(pest);
             }
 
