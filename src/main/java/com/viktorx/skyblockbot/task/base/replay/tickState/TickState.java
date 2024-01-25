@@ -52,7 +52,7 @@ public class TickState {
         float deltaPitch = startRot.x - firstTick.getPitch();
         float deltaYaw = startRot.y - firstTick.getYaw();
         client.player.setYaw(getYaw() + deltaYaw);
-        client.player.setPitch(Utils.normalize(getPitch() + deltaPitch, -90, 90));
+        client.player.setPitch(MathHelper.clamp(getPitch() + deltaPitch, -90, 90));
     }
 
     public void setPositionForClient(MinecraftClient client) {
