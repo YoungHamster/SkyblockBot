@@ -39,6 +39,8 @@ public class ReplayExecutor extends BaseExecutor {
     public int debugFullCounter = 0;
     private Replay replay;
     private int tickIterator;
+    private Vec2f startRot;
+    private Vec3d startPos;
 
     public void Init() {
 
@@ -109,9 +111,11 @@ public class ReplayExecutor extends BaseExecutor {
          * If we do we can just start for the middle of the replay instead of refusing to work
          */
         tickIterator = 0;
-        if (!isPlayerInCorrectPosition()) {
-            if (tryStartingFromMiddleOfRecording(this.replay)) {
-                return new Idle();
+        if(!replay.isRelative()) {
+            if (!isPlayerInCorrectPosition()) {
+                if (tryStartingFromMiddleOfRecording(this.replay)) {
+                    return new Idle();
+                }
             }
         }
 
@@ -447,6 +451,13 @@ public class ReplayExecutor extends BaseExecutor {
         private int flightTickCounter = 0;
 
         public PreparingToStart() {
+            if(replay.isRelative()) {
+                yawTask = CompletableFuture.runAsync(()->SkyblockBot.LOGGER.info("Relative mode - skipping yaw task"));
+                pitchTask = CompletableFuture.runAsync(()->SkyblockBot.LOGGER.info("Relative mode - skipping pitch task"));
+                stopFlyingTask = CompletableFuture.runAsync(()->SkyblockBot.LOGGER.info("Relative mode - skipping stop flying task"));
+                return;
+            }
+
             pitchTask = LookHelper.changePitchSmoothAsync(replay.getTickState(tickIterator).getPitch());
             yawTask = LookHelper.changeYawSmoothAsync(replay.getTickState(tickIterator).getYaw());
 
@@ -485,6 +496,10 @@ public class ReplayExecutor extends BaseExecutor {
                  */
                 currentlyPressedKeys.forEach((key, value) -> value.firstPress());
 
+                // TODO adapt this for relative replay mode, when starting from the middle of the recording
+                assert client.player != null;
+                startRot = client.player.getRotationClient();
+                startPos = client.player.getPos();
                 return new Playing();
 
             }
@@ -493,6 +508,7 @@ public class ReplayExecutor extends BaseExecutor {
     }
 
     protected class Playing implements ExecutorState {
+
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             if (GlobalExecutorInfo.worldLoading.get()) {
@@ -513,10 +529,8 @@ public class ReplayExecutor extends BaseExecutor {
             TickState tickState = replay.getTickState(tickIterator);
 
             if (replay.isRelative()) {
-                if (tickIterator > 0) {
-                    tickState.setRotationRelative(client, replay.getTickState(tickIterator - 1));
-                }
-                tickState.setPositionRelative(client);
+                tickState.setRotationRelative(client, replay.getTickState(0), startRot);
+                tickState.setPositionRelative(client, replay.getTickState(0), startRot, startPos);
             } else {
                 tickState.setRotationForClient(client);
                 tickState.setPositionForClient(client);

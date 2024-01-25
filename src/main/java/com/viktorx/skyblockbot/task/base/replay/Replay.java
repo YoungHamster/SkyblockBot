@@ -97,7 +97,7 @@ public class Replay extends BaseTask<ReplayExecutor> {
             file = ByteBuffer.wrap(is.readAllBytes());
             is.close();
         } catch (IOException e) {
-            SkyblockBot.LOGGER.info("Exception when trying to load from file");
+            SkyblockBot.LOGGER.info("Exception when trying to load replay from " + filename);
             return;
         }
 

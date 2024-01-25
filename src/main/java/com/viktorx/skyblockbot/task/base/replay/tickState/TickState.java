@@ -1,7 +1,9 @@
 package com.viktorx.skyblockbot.task.base.replay.tickState;
 
 import com.viktorx.skyblockbot.movement.LookHelper;
+import com.viktorx.skyblockbot.utils.Utils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 
@@ -44,12 +46,13 @@ public class TickState {
         client.player.setPitch(getPitch());
     }
 
-    public void setRotationRelative(MinecraftClient client, TickState prevTick) {
+    public void setRotationRelative(MinecraftClient client, TickState firstTick, Vec2f startRot) {
         assert client.player != null;
 
-        float deltaYaw = prevTick.getYaw() - getYaw();
-        client.player.setYaw(client.player.getYaw() + deltaYaw);
-        client.player.setPitch(getPitch());
+        float deltaPitch = startRot.x - firstTick.getPitch();
+        float deltaYaw = startRot.y - firstTick.getYaw();
+        client.player.setYaw(getYaw() + deltaYaw);
+        client.player.setPitch(Utils.normalize(getPitch() + deltaPitch, -90, 90));
     }
 
     public void setPositionForClient(MinecraftClient client) {
@@ -61,8 +64,18 @@ public class TickState {
      * It doesn't do anything for now. Maybe i will change it later, but now the idea is that in relative mode i will
      * just press buttons, and not control position
      */
-    public void setPositionRelative(MinecraftClient client) {
+    public void setPositionRelative(MinecraftClient client, TickState firstTick, Vec2f startRot, Vec3d startPos) {
+        float deltaYaw = startRot.y - getYaw();
+        double deltaYawRads = Math.toRadians(deltaYaw);
+        Vec3d deltaPos = getPosition().subtract(firstTick.getPosition());
+        // -- rotate delta pos the angle of deltaYaw
+        double rotX = deltaPos.x * Math.cos(deltaYawRads) - deltaPos.z * Math.sin(deltaYawRads);
+        double rotZ = deltaPos.z * Math.cos(deltaYawRads) + deltaPos.x * Math.sin(deltaYawRads);
 
+        Vec3d newPos = new Vec3d(startPos.x + rotX, startPos.y + (startPos.y - firstTick.getPosition().y) , startPos.z + rotZ);
+
+        assert client.player != null;
+        client.player.setPosition(newPos);
     }
 
     public Vec2f getRotation() {
