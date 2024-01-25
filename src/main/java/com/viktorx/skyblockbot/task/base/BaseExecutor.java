@@ -1,7 +1,7 @@
 package com.viktorx.skyblockbot.task.base;
 
 import com.viktorx.skyblockbot.SkyblockBot;
-import com.viktorx.skyblockbot.utils.CurrentInventory;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import net.minecraft.client.MinecraftClient;
 
 public abstract class BaseExecutor {
@@ -43,7 +43,7 @@ public abstract class BaseExecutor {
     }
 
     public synchronized void abort() {
-        if(state.getClass().equals(Idle.class)) {
+        if (state.getClass().equals(Idle.class)) {
             SkyblockBot.LOGGER.warn("Can't abort task when it's already idle!");
         }
 
@@ -52,7 +52,7 @@ public abstract class BaseExecutor {
     }
 
     public <T extends BaseTask<?>> boolean isExecuting(T task) {
-        if(this.task == null) {
+        if (this.task == null) {
             return false;
         }
         return !state.getClass().equals(Idle.class) && this.task.equals(task);
@@ -73,6 +73,23 @@ public abstract class BaseExecutor {
         @Override
         public ExecutorState onTick(MinecraftClient client) {
             return this;
+        }
+    }
+
+    public static abstract class WaitingExecutorState implements ExecutorState {
+        protected int waitTickCounter = 0;
+        protected int waitTicksBeforeAction = GlobalExecutorInfo.waitTicksBeforeAction;
+
+        protected void setWaitTickLimit(int waitTicks) {
+            waitTicksBeforeAction = waitTicks;
+        }
+
+        protected boolean waitBeforeAction() {
+            if (waitTickCounter++ < waitTicksBeforeAction) {
+                return true;
+            }
+            waitTickCounter = 0;
+            return false;
         }
     }
 }

@@ -4,7 +4,11 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.predicate.entity.TypeSpecificPredicate;
+import net.minecraft.predicate.entity.VariantPredicates;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.BlockStateRaycastContext;
 
 import java.util.Optional;
 

@@ -67,6 +67,14 @@ public class MyKeyboard {
         }
     }
 
+    // Be careful with this one
+    public void unpressAll() {
+        synchronized (pressedKeys) {
+            pressedKeys.forEach((key, value) -> press(key, 0));
+            pressedKeys.clear();
+        }
+    }
+
     private void onTick(MinecraftClient client) {
         List<Integer> unpressedKeys = new ArrayList<>();
         long currentTime = System.currentTimeMillis();

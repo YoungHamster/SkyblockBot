@@ -31,19 +31,6 @@ public abstract class AbstractMenuClickingExecutor extends BaseExecutor {
         return false;
     }
 
-
-    public static abstract class WaitingExecutorState implements ExecutorState {
-        protected int waitTickCounter = 0;
-
-        protected boolean waitBeforeAction() {
-            if (waitTickCounter++ < GlobalExecutorInfo.waitTicksBeforeAction) {
-                return true;
-            }
-            waitTickCounter = 0;
-            return false;
-        }
-    }
-
     protected void asyncCloseCurrentInventory() {
         CompletableFuture.runAsync(this::blockingCloseCurrentInventory);
     }

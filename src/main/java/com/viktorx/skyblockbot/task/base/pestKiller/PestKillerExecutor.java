@@ -10,14 +10,13 @@ import com.viktorx.skyblockbot.utils.MyKeyboard;
 import com.viktorx.skyblockbot.utils.Utils;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PestKillerExecutor extends BaseExecutor {
@@ -123,13 +122,19 @@ public class PestKillerExecutor extends BaseExecutor {
             assert client.player != null;
             if (client.player.getPos().y < freeHeight) {
                 MyKeyboard.INSTANCE.press(client.options.jumpKey);
-                SkyblockBot.LOGGER.info("Pressing jump key to fly to free height");
                 return this;
             }
             MyKeyboard.INSTANCE.unpress(client.options.jumpKey);
             SkyblockBot.LOGGER.info("Got to free height, current y = " + client.player.getPos().y + ", trying to find pest");
 
-            return new FindPest();
+            PestKiller pestTask = (PestKiller) PestKillerExecutor.INSTANCE.task;
+
+            Entity pest = Utils.getClosestEntity(pestTask.getPestName());
+            if (pest != null) {
+                return new GetCloseToPest(pest);
+            } else {
+                return new FindPest();
+            }
         }
     }
 
@@ -150,7 +155,9 @@ public class PestKillerExecutor extends BaseExecutor {
             Entity pest = Utils.getClosestEntity(pestTask.getPestName());
             if (pest != null) {
                 pestFindingReplay.abort();
-                SkyblockBot.LOGGER.info("Found pest, getting close to it");
+
+                Vec3d pestPos = pest.getPos();
+                SkyblockBot.LOGGER.info("Found pest at x: " + pestPos.x + " y: " + pestPos.y + " z: " + pestPos.z + ", getting close to it");
                 return new GetCloseToPest(pest);
             }
 
@@ -158,13 +165,31 @@ public class PestKillerExecutor extends BaseExecutor {
         }
     }
 
-    private static class GetCloseToPest extends KeyPressingState {
+    private static class GetCloseToPest implements ExecutorState {
         private final Entity pest;
         private final AtomicBoolean keepTracking = new AtomicBoolean(true);
 
         public GetCloseToPest(Entity pest) {
             this.pest = pest;
-            LookHelper.trackEntity(pest, keepTracking);
+            LookHelper.trackEntityAsync(pest, keepTracking);
+        }
+
+        private boolean isObstacleBelowPlayer(PlayerEntity player, int range) {
+            Box playerBB = player.getBoundingBox();
+            Vec3d[] corners = {new Vec3d(playerBB.minX, playerBB.minY, playerBB.minZ),
+                    new Vec3d(playerBB.maxX, playerBB.minY, playerBB.minZ),
+                    new Vec3d(playerBB.minX, playerBB.minY, playerBB.maxZ),
+                    new Vec3d(playerBB.maxX, playerBB.minY, playerBB.maxZ)};
+
+            for (Vec3d corner : corners) {
+                for (int i = 0; i < range; i++) {
+                    if (Utils.isBlockSolid(new BlockPos((int) corner.x, (int) corner.y - i, (int) corner.z))) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         @Override
@@ -176,35 +201,48 @@ public class PestKillerExecutor extends BaseExecutor {
                 Vec2f angleDelta = LookHelper.getAngleDeltaForEntity(pest);
 
                 // forward-backward
-                if (angleDelta.y > 90 || angleDelta.y < -90) {
-                    press(client.options.forwardKey);
+                if (angleDelta.y < 90 || angleDelta.y > -90) {
+                    MyKeyboard.INSTANCE.press(client.options.forwardKey);
+                    SkyblockBot.LOGGER.info("Going forward");
 
                     // up-down
-                    if (deltaPos.y > 1) {
-                        press(client.options.jumpKey);
-                    } else if (deltaPos.y < -1) {
-                        press(client.options.sneakKey);
+                    // was my intention to only change height when moving forward?
+                    // will probably change that later
+                    // unless it works unchanged
+                    if (deltaPos.y < -1) {
+                        MyKeyboard.INSTANCE.press(client.options.jumpKey);
+                        SkyblockBot.LOGGER.info("Going up");
+                    } else if (deltaPos.y > 1) {
+                        // only go down if there are no obstacles, otherwise risk shifting over block and breaking simplistic AI
+                        if (!isObstacleBelowPlayer(client.player, 2)) {
+                            MyKeyboard.INSTANCE.press(client.options.sneakKey);
+                            SkyblockBot.LOGGER.info("Going down");
+                        }
                     }
                 } else {
-                    press(client.options.backKey);
+                    MyKeyboard.INSTANCE.press(client.options.backKey);
+                    SkyblockBot.LOGGER.info("Going backward");
                 }
 
                 // left-right
-                if (angleDelta.x > 15) {
-                    press(client.options.rightKey);
-                } else if (angleDelta.x < -15) {
-                    press(client.options.leftKey);
+                if (angleDelta.y > 15) {
+                    MyKeyboard.INSTANCE.press(client.options.rightKey);
+                    SkyblockBot.LOGGER.info("Going right");
+                } else if (angleDelta.y < -15) {
+                    MyKeyboard.INSTANCE.press(client.options.leftKey);
+                    SkyblockBot.LOGGER.info("Going left");
                 }
 
                 return this;
             } else {
-                unpressAll();
+                MyKeyboard.INSTANCE.unpressAll();
+                SkyblockBot.LOGGER.info("Got close to pest, trying to kill it");
                 return new TrackAndKill(pest, keepTracking);
             }
         }
     }
 
-    private static class TrackAndKill extends KeyPressingState {
+    private static class TrackAndKill extends WaitingExecutorState {
         private final PestKillerExecutor parent = PestKillerExecutor.INSTANCE;
         private final AtomicBoolean keepTracking;
         private final Entity pest;
@@ -212,6 +250,7 @@ public class PestKillerExecutor extends BaseExecutor {
         public TrackAndKill(Entity pest, AtomicBoolean keepTracking) {
             this.keepTracking = keepTracking;
             this.pest = pest;
+            setWaitTickLimit(4);
         }
 
         @Override
@@ -221,39 +260,31 @@ public class PestKillerExecutor extends BaseExecutor {
 
             if (deltaPos.length() > 2.5) {
                 keepTracking.set(false);
-                unpressAll();
-                return new FindPest();
+
+                PestKiller pestTask = (PestKiller) parent.task;
+
+                Entity pest = Utils.getClosestEntity(pestTask.getPestName());
+                if (pest != null) {
+                    return new GetCloseToPest(pest);
+                } else {
+                    return new FindPest();
+                }
             }
 
             if (!pest.isAlive()) {
                 keepTracking.set(false);
                 parent.task.completed();
-                unpressAll();
                 return new Idle();
             }
 
             Vec2f deltaAngle = LookHelper.getAngleDeltaForEntity(pest);
 
             if (deltaAngle.x < 3 && deltaAngle.y < 3) {
-                press(client.options.attackKey);
+                if (!waitBeforeAction()) {
+                    MyKeyboard.INSTANCE.press(client.options.attackKey);
+                }
             }
             return this;
-        }
-    }
-
-    private abstract static class KeyPressingState implements ExecutorState {
-        private final List<KeyBinding> pressedKeys = new ArrayList<>();
-
-        protected void press(KeyBinding key) {
-            MyKeyboard.INSTANCE.press(key);
-            if (!pressedKeys.contains(key)) {
-                pressedKeys.add(key);
-            }
-        }
-
-        protected void unpressAll() {
-            pressedKeys.forEach(MyKeyboard.INSTANCE::unpress);
-            pressedKeys.clear();
         }
     }
 }
