@@ -45,7 +45,7 @@ public class Utils {
     public static boolean isStringInRecentChat(String str, int maxBacktrack) {
         ChatHud chat = MinecraftClient.getInstance().inGameHud.getChatHud();
         List<ChatHudLine> messages = ((IChatHudMixin) chat).getMessages();
-        if (messages.size() == 0) {
+        if (messages.isEmpty()) {
             SkyblockBot.LOGGER.warn("ERROR! Chat message history is empty, it's weird");
             return false;
         }
@@ -76,17 +76,17 @@ public class Utils {
     public static String getLatestMessageContaining(String str) {
         ChatHud chat = MinecraftClient.getInstance().inGameHud.getChatHud();
         List<ChatHudLine> messages = ((IChatHudMixin) chat).getMessages();
-        if (messages.size() == 0) {
+        if (messages.isEmpty()) {
             SkyblockBot.LOGGER.warn("ERROR! Chat message history is empty, it's weird");
             return null;
         }
 
         Pair<String, Integer> latest = new ImmutablePair<>(null, 0);
 
-        for (int i = 0; i < messages.size(); i++) {
-            Pair<String, Integer> msg = new ImmutablePair<>(messages.get(i).content().getString(), messages.get(i).creationTick());
-            if(msg.getLeft().contains(str)) {
-                if(msg.getRight() > latest.getRight()) {
+        for (ChatHudLine message : messages) {
+            Pair<String, Integer> msg = new ImmutablePair<>(message.content().getString(), message.creationTick());
+            if (msg.getLeft().contains(str)) {
+                if (msg.getRight() > latest.getRight()) {
                     latest = msg;
                 }
             }
@@ -99,8 +99,8 @@ public class Utils {
         int count = 0;
         assert MinecraftClient.getInstance().player != null;
         PlayerInventory inventory = MinecraftClient.getInstance().player.getInventory();
-        for(int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
-            if(inventory.getStack(i).getName().getString().contains(itemStackName)) {
+        for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
+            if (inventory.getStack(i).getName().getString().contains(itemStackName)) {
                 count += inventory.getStack(i).getCount();
             }
         }
@@ -119,7 +119,7 @@ public class Utils {
                 return;
             }
 
-            if (prevTickInventory.size() == 0) {
+            if (prevTickInventory.isEmpty()) {
                 for (int i = 0; i < GlobalExecutorInfo.inventorySlotCount; i++) {
                     ItemStack stack = client.player.getInventory().getStack(i);
                     prevTickInventory.add(new ImmutablePair<>(stack.getName().getString(), stack.getCount()));
@@ -203,7 +203,7 @@ public class Utils {
         entities.forEach(e -> {
             assert MinecraftClient.getInstance().player != null;
             double distance = e.getPos().subtract(MinecraftClient.getInstance().player.getPos()).length();
-            if(distance < lowestDistance.get()) {
+            if (distance < lowestDistance.get()) {
                 result.set(e);
                 lowestDistance.set(distance);
             }
@@ -219,7 +219,7 @@ public class Utils {
             return;
         }
 
-        RenderSystem.recordRenderCall(()-> {
+        RenderSystem.recordRenderCall(() -> {
             ((IMinecraftClientMixin) client).callOpenChatScreen(message);
             client.currentScreen.keyPressed(InputUtil.GLFW_KEY_ENTER, 0, 0);
         });

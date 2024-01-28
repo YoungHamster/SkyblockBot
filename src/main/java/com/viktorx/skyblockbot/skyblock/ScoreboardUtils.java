@@ -2,12 +2,14 @@ package com.viktorx.skyblockbot.skyblock;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.viktorx.skyblockbot.SkyblockBot;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.scoreboard.*;
 import net.minecraft.text.Texts;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,21 +44,28 @@ public class ScoreboardUtils {
             return lines;
         }
 
-        Collection<ScoreboardPlayerScore> scores = scoreboard.getAllPlayerScores(objective);
-        List<ScoreboardPlayerScore> list = scores.stream().filter(input -> input != null &&
-                input.getPlayerName() != null &&
-                !input.getPlayerName().startsWith("#")
+        Collection<ScoreHolder> scoreHolders = scoreboard.getKnownScoreHolders();
+
+        List<ScoreHolder> list = scoreHolders.stream().filter(input -> input != null &&
+                input.getNameForScoreboard() != null &&
+                !input.getNameForScoreboard().startsWith("#") &&
+                scoreboard.getScore(input, objective) != null
         ).collect(Collectors.toList());
 
         if (list.size() > 15) {
-            scores = Lists.newArrayList(Iterables.skip(list, scores.size() - 15));
+            scoreHolders = Lists.newArrayList(Iterables.skip(list, scoreHolders.size() - 15));
         } else {
-            scores = list;
+            scoreHolders = list;
         }
 
-        for (ScoreboardPlayerScore score : scores) {
-            Team team = scoreboard.getPlayerTeam(score.getPlayerName());
-            String line = Team.decorateName(team, Texts.toText(new MessageImpl(score.getPlayerName()))).getString();
+        scoreHolders = scoreHolders
+                        .stream()
+                        .sorted(Comparator.comparingInt(scrHldr -> scoreboard.getScore(scrHldr, objective).getScore()))
+                        .collect(Collectors.toList());
+
+        for (ScoreHolder scoreHolder : scoreHolders) {
+            Team team = scoreboard.getScoreHolderTeam(scoreHolder.getNameForScoreboard());
+            String line = Team.decorateName(team, Texts.toText(new MessageImpl(scoreHolder.getNameForScoreboard()))).getString();
             line = line.replaceAll("§.", "");
 
             lines.add(line);
