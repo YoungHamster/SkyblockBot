@@ -1,7 +1,6 @@
 package com.viktorx.skyblockbot.task.base.replay.tickState;
 
 import com.viktorx.skyblockbot.movement.LookHelper;
-import com.viktorx.skyblockbot.utils.Utils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec2f;
@@ -60,19 +59,15 @@ public class TickState {
         client.player.setPosition(getPosition());
     }
 
-    /**
-     * It doesn't do anything for now. Maybe i will change it later, but now the idea is that in relative mode i will
-     * just press buttons, and not control position
-     */
     public void setPositionRelative(MinecraftClient client, TickState firstTick, Vec2f startRot, Vec3d startPos) {
-        float deltaYaw = startRot.y - getYaw();
+        float deltaYaw = firstTick.getYaw() - startRot.y;
         double deltaYawRads = Math.toRadians(deltaYaw);
         Vec3d deltaPos = getPosition().subtract(firstTick.getPosition());
         // -- rotate delta pos the angle of deltaYaw
         double rotX = deltaPos.x * Math.cos(deltaYawRads) - deltaPos.z * Math.sin(deltaYawRads);
         double rotZ = deltaPos.z * Math.cos(deltaYawRads) + deltaPos.x * Math.sin(deltaYawRads);
 
-        Vec3d newPos = new Vec3d(startPos.x + rotX, startPos.y + (startPos.y - firstTick.getPosition().y) , startPos.z + rotZ);
+        Vec3d newPos = new Vec3d(startPos.x + rotX, startPos.y + (startPos.y - firstTick.getPosition().y), startPos.z + rotZ);
 
         assert client.player != null;
         client.player.setPosition(newPos);

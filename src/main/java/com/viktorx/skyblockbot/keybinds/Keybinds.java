@@ -4,15 +4,21 @@ import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.mixins.InputRelated.IMouseMixin;
 import com.viktorx.skyblockbot.mixins.InputRelated.KeyBindingMixin;
 import com.viktorx.skyblockbot.movement.LookHelper;
+import com.viktorx.skyblockbot.skyblock.ScoreboardUtils;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.pestKiller.PestKiller;
+import com.viktorx.skyblockbot.task.base.pestKiller.PestKillerExecutor;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
 import com.viktorx.skyblockbot.task.compound.FarmingTask;
 import com.viktorx.skyblockbot.utils.GlobalSettingsManager;
+import com.viktorx.skyblockbot.utils.Utils;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.scoreboard.ScoreboardDisplaySlot;
+import net.minecraft.util.math.BlockPos;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
@@ -86,10 +92,11 @@ public class Keybinds {
             }
 
             while (loadRecording.wasPressed()) {
-                PestKiller pestKiller = new PestKiller("Creeper", 1,
-                        ()->SkyblockBot.LOGGER.info("PestKiller completed"),
-                        ()->SkyblockBot.LOGGER.error("PestKiller aborteded"));
-                pestKiller.execute();
+                /*PestKillerExecutor.INSTANCE.abort();
+                PestKiller pk = new PestKiller("Peeper", 1, null, null);
+                pk.execute();*/
+                ScoreboardUtils.getLines(ScoreboardDisplaySlot.SIDEBAR).forEach(line -> SkyblockBot.LOGGER.info("Line: " + line));
+
                 try {
                     GlobalSettingsManager.getInstance().loadSettings();
                 } catch (IOException e) {

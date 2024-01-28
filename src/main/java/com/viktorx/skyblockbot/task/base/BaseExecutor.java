@@ -48,7 +48,9 @@ public abstract class BaseExecutor {
         }
 
         state = new Idle();
-        task.aborted();
+        if(task != null) {
+            task.aborted();
+        }
     }
 
     public <T extends BaseTask<?>> boolean isExecuting(T task) {

@@ -2,6 +2,7 @@ package com.viktorx.skyblockbot.task.base.pestKiller;
 
 import com.viktorx.skyblockbot.SkyblockBot;
 import com.viktorx.skyblockbot.movement.LookHelper;
+import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.BaseExecutor;
 import com.viktorx.skyblockbot.task.base.BaseTask;
 import com.viktorx.skyblockbot.task.base.ExecutorState;
@@ -28,6 +29,11 @@ public class PestKillerExecutor extends BaseExecutor {
 
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
+        // if already flying then no need to start flying
+        assert MinecraftClient.getInstance().player != null;
+        if (!MinecraftClient.getInstance().player.isFallFlying() && !MinecraftClient.getInstance().player.isOnGround()) {
+            return new FlyToFreeHeight();
+        }
         return new StartFlying();
     }
 
@@ -70,7 +76,7 @@ public class PestKillerExecutor extends BaseExecutor {
     }
 
     private static class FlyToFreeHeight implements ExecutorState {
-        private static final int plotsize = 94;
+        private static final int plotsize = 96;
         private static final int maxY = 77;
         private static final int minY = 67;
         private final double freeHeight;
@@ -92,12 +98,16 @@ public class PestKillerExecutor extends BaseExecutor {
                         minz = (int) ((i - 2.5) * plotsize);
                         minx = (int) ((j - 2.5) * plotsize);
 
-                        SkyblockBot.LOGGER.info("Found plots min x and z. i = " + i + ", j = " + j);
+                        if (GlobalExecutorInfo.debugMode.get()) {
+                            SkyblockBot.LOGGER.info("Found plots min x and z. i = " + i + ", j = " + j);
+                        }
                     }
                 }
             }
 
-            SkyblockBot.LOGGER.info("minX = " + minx + ", minZ = " + minz);
+            if (GlobalExecutorInfo.debugMode.get()) {
+                SkyblockBot.LOGGER.info("minX = " + minx + ", minZ = " + minz);
+            }
 
             boolean goToNextY = false;
             for (int y = minY; y < maxY; y++) {
@@ -125,14 +135,22 @@ public class PestKillerExecutor extends BaseExecutor {
                 return this;
             }
             MyKeyboard.INSTANCE.unpress(client.options.jumpKey);
-            SkyblockBot.LOGGER.info("Got to free height, current y = " + client.player.getPos().y + ", trying to find pest");
+            if (GlobalExecutorInfo.debugMode.get()) {
+                SkyblockBot.LOGGER.info("Got to free height, current y = " + client.player.getPos().y);
+            }
 
             PestKiller pestTask = (PestKiller) PestKillerExecutor.INSTANCE.task;
 
             Entity pest = Utils.getClosestEntity(pestTask.getPestName());
             if (pest != null) {
+                if (GlobalExecutorInfo.debugMode.get()) {
+                    SkyblockBot.LOGGER.info("Getting close to pest");
+                }
                 return new GetCloseToPest(pest);
             } else {
+                if (GlobalExecutorInfo.debugMode.get()) {
+                    SkyblockBot.LOGGER.info("Trying to find pest");
+                }
                 return new FindPest();
             }
         }
@@ -203,7 +221,6 @@ public class PestKillerExecutor extends BaseExecutor {
                 // forward-backward
                 if (angleDelta.y < 90 || angleDelta.y > -90) {
                     MyKeyboard.INSTANCE.press(client.options.forwardKey);
-                    SkyblockBot.LOGGER.info("Going forward");
 
                     // up-down
                     // was my intention to only change height when moving forward?
@@ -211,26 +228,24 @@ public class PestKillerExecutor extends BaseExecutor {
                     // unless it works unchanged
                     if (deltaPos.y < -1) {
                         MyKeyboard.INSTANCE.press(client.options.jumpKey);
-                        SkyblockBot.LOGGER.info("Going up");
                     } else if (deltaPos.y > 1) {
                         // only go down if there are no obstacles, otherwise risk shifting over block and breaking simplistic AI
                         if (!isObstacleBelowPlayer(client.player, 2)) {
+                            if(GlobalExecutorInfo.debugMode.get()) {
+                                SkyblockBot.LOGGER.info("Going down, no obstacles found below player");
+                            }
                             MyKeyboard.INSTANCE.press(client.options.sneakKey);
-                            SkyblockBot.LOGGER.info("Going down");
                         }
                     }
                 } else {
                     MyKeyboard.INSTANCE.press(client.options.backKey);
-                    SkyblockBot.LOGGER.info("Going backward");
                 }
 
                 // left-right
                 if (angleDelta.y > 15) {
                     MyKeyboard.INSTANCE.press(client.options.rightKey);
-                    SkyblockBot.LOGGER.info("Going right");
                 } else if (angleDelta.y < -15) {
                     MyKeyboard.INSTANCE.press(client.options.leftKey);
-                    SkyblockBot.LOGGER.info("Going left");
                 }
 
                 return this;
