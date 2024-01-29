@@ -264,6 +264,11 @@ public class FarmingTask extends CompoundTask {
         checkComposterTimer.schedule(new CheckComposterTimerTask(),
                 0, FarmingTaskSettings.checkComposterInterval);
         timers.add(checkComposterTimer);
+
+        Timer checkPestsTimer = new Timer(true);
+        checkPestsTimer.schedule(new CheckPestsTimerTask(),
+                0, FarmingTaskSettings.checkPestsInterval);
+        timers.add(checkPestsTimer);
     }
 
     @Override
@@ -447,6 +452,16 @@ public class FarmingTask extends CompoundTask {
                     SkyblockBot.LOGGER.info("Queueing to fill composter");
                     taskQueue.add(composterTask);
                 }
+            }
+        }
+    }
+
+    private class CheckPestsTimerTask extends TimerTask {
+        @Override
+        public void run() {
+            // TODO
+            if(Utils.isStringInRecentChat("Pest", 100)) {
+
             }
         }
     }
