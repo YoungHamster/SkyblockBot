@@ -19,6 +19,8 @@ public class Replay extends BaseTask<ReplayExecutor> {
     private static final long saveProtocolVersion = 42070;
     protected final List<TickState> tickStates = new ArrayList<>();
     private final boolean relativeMode;
+    private Vec2f startRot;
+    private Vec3d startPos;
 
     public Replay() {
         super(ReplayExecutor.INSTANCE, null, null);
@@ -35,6 +37,11 @@ public class Replay extends BaseTask<ReplayExecutor> {
         super(ReplayExecutor.INSTANCE, whenCompleted, whenAborted);
         this.relativeMode = relativeMode;
         loadFromFile(filename);
+    }
+
+    public void setStartRotPos(Vec2f startRot, Vec3d startPos) {
+        this.startRot = startRot;
+        this.startPos = startPos;
     }
 
     public boolean isRelative() {
@@ -148,6 +155,22 @@ public class Replay extends BaseTask<ReplayExecutor> {
 
     public TickState getTickState(int tickIterator) {
         return tickStates.get(tickIterator);
+    }
+
+    public Vec3d getTickPos(int tickIterator) {
+        if(relativeMode) {
+            return tickStates.get(tickIterator).getPositionRelative(tickStates.get(0), startRot, startPos);
+        } else {
+            return tickStates.get(tickIterator).getPosition();
+        }
+    }
+
+    public Vec2f getTickRot(int tickIterator) {
+        if(relativeMode) {
+            return tickStates.get(tickIterator).getRotationRelative(tickStates.get(0), startRot);
+        } else {
+            return tickStates.get(tickIterator).getRotation();
+        }
     }
 
     public int size() {

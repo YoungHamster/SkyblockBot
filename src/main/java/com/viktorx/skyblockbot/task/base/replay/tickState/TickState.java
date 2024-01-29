@@ -47,11 +47,9 @@ public class TickState {
 
     public void setRotationRelative(MinecraftClient client, TickState firstTick, Vec2f startRot) {
         assert client.player != null;
-
-        float deltaPitch = startRot.x - firstTick.getPitch();
-        float deltaYaw = startRot.y - firstTick.getYaw();
-        client.player.setYaw(getYaw() + deltaYaw);
-        client.player.setPitch(MathHelper.clamp(getPitch() + deltaPitch, -90, 90));
+        Vec2f rot = getRotationRelative(firstTick, startRot);
+        client.player.setPitch(rot.x);
+        client.player.setYaw(rot.y);
     }
 
     public void setPositionForClient(MinecraftClient client) {
@@ -60,6 +58,18 @@ public class TickState {
     }
 
     public void setPositionRelative(MinecraftClient client, TickState firstTick, Vec2f startRot, Vec3d startPos) {
+        assert client.player != null;
+        client.player.setPosition(getPositionRelative(firstTick, startRot, startPos));
+    }
+
+    public Vec2f getRotationRelative(TickState firstTick, Vec2f startRot) {
+        float deltaPitch = startRot.x - firstTick.getPitch();
+        float deltaYaw = startRot.y - firstTick.getYaw();
+
+        return new Vec2f(MathHelper.clamp(getPitch() + deltaPitch, -90, 90), getYaw() + deltaYaw);
+    }
+
+    public Vec3d getPositionRelative(TickState firstTick, Vec2f startRot, Vec3d startPos) {
         float deltaYaw = firstTick.getYaw() - startRot.y;
         double deltaYawRads = Math.toRadians(deltaYaw);
         Vec3d deltaPos = getPosition().subtract(firstTick.getPosition());
@@ -67,10 +77,7 @@ public class TickState {
         double rotX = deltaPos.x * Math.cos(deltaYawRads) - deltaPos.z * Math.sin(deltaYawRads);
         double rotZ = deltaPos.z * Math.cos(deltaYawRads) + deltaPos.x * Math.sin(deltaYawRads);
 
-        Vec3d newPos = new Vec3d(startPos.x + rotX, startPos.y + (startPos.y - firstTick.getPosition().y), startPos.z + rotZ);
-
-        assert client.player != null;
-        client.player.setPosition(newPos);
+        return new Vec3d(startPos.x + rotX, startPos.y + (startPos.y - firstTick.getPosition().y), startPos.z + rotZ);
     }
 
     public Vec2f getRotation() {

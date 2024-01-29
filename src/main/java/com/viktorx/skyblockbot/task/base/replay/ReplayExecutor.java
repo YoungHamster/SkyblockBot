@@ -111,7 +111,7 @@ public class ReplayExecutor extends BaseExecutor {
          * If we do we can just start for the middle of the replay instead of refusing to work
          */
         tickIterator = 0;
-        if(!replay.isRelative()) {
+        if (!replay.isRelative()) {
             if (!isPlayerInCorrectPosition()) {
                 if (tryStartingFromMiddleOfRecording(this.replay)) {
                     return new Idle();
@@ -146,6 +146,10 @@ public class ReplayExecutor extends BaseExecutor {
      * @return True if can't start from the middle, False if can
      */
     private boolean tryStartingFromMiddleOfRecording(Replay replay) {
+        if(replay.isRelative()) {
+            return true;
+        }
+
         SkyblockBot.LOGGER.info("Trying to find fitting tick state away from the start");
 
         double lowestDistance = ReplayBotSettings.maxDistanceToFirstPoint;
@@ -195,10 +199,11 @@ public class ReplayExecutor extends BaseExecutor {
     }
 
     protected boolean isPlayerInCorrectPosition() {
-        return getDistanceToExpectedPosition() < ReplayBotSettings.maxDistanceToFirstPoint;
+        return replay.isRelative() || getDistanceToExpectedPosition() < ReplayBotSettings.maxDistanceToFirstPoint;
     }
 
     private double getDistanceToExpectedPosition() {
+
         ClientPlayerEntity player = MinecraftClient.getInstance().player;
         Vec3d expected = replay.getTickState(tickIterator).getPosition();
         assert player != null;
@@ -404,8 +409,8 @@ public class ReplayExecutor extends BaseExecutor {
             asyncPlayAlarmSound();
             parent.pressButtons(parent.replay.getTickState(parent.tickIterator));
 
-            Vec2f prevRot = parent.replay.getTickState(parent.tickIterator - 1).getRotation();
-            Vec2f currentRot = parent.replay.getTickState(parent.tickIterator).getRotation();
+            Vec2f prevRot = parent.replay.getTickRot(parent.tickIterator - 1);
+            Vec2f currentRot = parent.replay.getTickRot(parent.tickIterator);
             Vec2f deltaCam = currentRot.add(prevRot.multiply(-1));
 
             assert client.player != null;
@@ -451,10 +456,10 @@ public class ReplayExecutor extends BaseExecutor {
         private int flightTickCounter = 0;
 
         public PreparingToStart() {
-            if(replay.isRelative()) {
-                yawTask = CompletableFuture.runAsync(()->SkyblockBot.LOGGER.info("Relative mode - skipping yaw task"));
-                pitchTask = CompletableFuture.runAsync(()->SkyblockBot.LOGGER.info("Relative mode - skipping pitch task"));
-                stopFlyingTask = CompletableFuture.runAsync(()->SkyblockBot.LOGGER.info("Relative mode - skipping stop flying task"));
+            if (replay.isRelative()) {
+                yawTask = CompletableFuture.runAsync(() -> SkyblockBot.LOGGER.info("Relative mode - skipping yaw task"));
+                pitchTask = CompletableFuture.runAsync(() -> SkyblockBot.LOGGER.info("Relative mode - skipping pitch task"));
+                stopFlyingTask = CompletableFuture.runAsync(() -> SkyblockBot.LOGGER.info("Relative mode - skipping stop flying task"));
                 return;
             }
 
@@ -496,10 +501,10 @@ public class ReplayExecutor extends BaseExecutor {
                  */
                 currentlyPressedKeys.forEach((key, value) -> value.firstPress());
 
-                // TODO adapt this for relative replay mode, when starting from the middle of the recording
                 assert client.player != null;
                 startRot = client.player.getRotationClient();
                 startPos = client.player.getPos();
+                replay.setStartRotPos(startRot, startPos);
                 return new Playing();
 
             }
@@ -613,7 +618,7 @@ public class ReplayExecutor extends BaseExecutor {
                 /*
                  * I want to round the Y correctly
                  */
-                Vec3d pos = replay.getTickState(tickIterator + i).getPosition();
+                Vec3d pos = replay.getTickPos(tickIterator + i);
                 pos = new Vec3d(Math.floor(pos.x), Math.rint(pos.y), Math.floor(pos.z));
 
                 BlockPos blockPos = new BlockPos((int) pos.x, (int) pos.y, (int) pos.z);
@@ -649,8 +654,8 @@ public class ReplayExecutor extends BaseExecutor {
          * false if the position can't be corrected(which means player was teleported to check for macros or lagged back too far)
          */
         private boolean checkPosAdjustLag(@NotNull ClientPlayerEntity player) {
-            TickState state = replay.getTickState(tickIterator - 1);
-            double deltaExpectedPos = Utils.distanceBetween(player.getPos(), state.getPosition());
+            Vec3d pos = replay.getTickPos(tickIterator - 1);
+            double deltaExpectedPos = Utils.distanceBetween(player.getPos(), pos);
             if (deltaExpectedPos > ReplayBotSettings.reactToLagbackThreshold) {
                 // if delta is too big something is wrong, check if we were simply lagged back and if not-stop
                 double minDelta = ReplayBotSettings.reactToLagbackThreshold;
@@ -659,7 +664,7 @@ public class ReplayExecutor extends BaseExecutor {
                 for (int i = 1; i <= ReplayBotSettings.maxLagbackTicks && tickIterator >= i; i++) {
                     double delta = Utils.distanceBetween(
                             player.getPos(),
-                            replay.getTickState(tickIterator - i).getPosition());
+                            replay.getTickPos(tickIterator - i));
 
                     /*
                      * If delta is < max then we're roughly at the correct tick
@@ -707,8 +712,8 @@ public class ReplayExecutor extends BaseExecutor {
         }
 
         private boolean checkRot(@NotNull ClientPlayerEntity player) {
-            float dPitch = Math.abs(replay.getTickState(tickIterator - 1).getPitch() - player.getPitch());
-            float expectedYaw = Utils.normalize(replay.getTickState(tickIterator - 1).getYaw());
+            float dPitch = Math.abs(replay.getTickRot(tickIterator - 1).x - player.getPitch());
+            float expectedYaw = Utils.normalize(replay.getTickRot(tickIterator - 1).y);
             float currentYaw = Utils.normalize(player.getYaw());
 
             float dYaw = Math.abs(expectedYaw - currentYaw);
