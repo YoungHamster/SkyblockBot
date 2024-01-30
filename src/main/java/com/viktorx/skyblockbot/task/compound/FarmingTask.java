@@ -10,6 +10,7 @@ import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyBZItem.BuyBZItem;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.buyItem.BuyItem;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.sellSacks.SellSacks;
 import com.viktorx.skyblockbot.task.base.menuClickingTasks.useItem.UseItem;
+import com.viktorx.skyblockbot.task.base.pestKiller.PestKiller;
 import com.viktorx.skyblockbot.task.base.replay.Replay;
 import com.viktorx.skyblockbot.task.base.replay.ReplayBotSettings;
 import com.viktorx.skyblockbot.tgBot.TGBotDaemon;
@@ -460,8 +461,14 @@ public class FarmingTask extends CompoundTask {
         @Override
         public void run() {
             // TODO
-            if(Utils.isStringInRecentChat("Pest", 100)) {
-
+            String pestMsg = Utils.getLatestMessageContaining("Pest");
+            if(pestMsg != null) {
+                // TODO parse msg for plot and pest name
+                int plot = 1;
+                String pestName = "Moth";
+                taskQueue.add(new PestKiller(pestName, plot,
+                        FarmingTask.this::defaultWhenCompleted,
+                        FarmingTask.this::defaultWhenAborted));
             }
         }
     }

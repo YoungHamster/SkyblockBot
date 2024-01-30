@@ -41,8 +41,21 @@ public class PestKillerExecutor extends BaseExecutor {
         this.state = this.state.onTick(client);
     }
 
+    private static class GetToPlot implements ExecutorState {
+
+        public GetToPlot() {
+            PestKiller pestTask = (PestKiller) PestKillerExecutor.INSTANCE.task;
+            Utils.sendChatMessage("/plottp " + pestTask.getPlotNumber());
+        }
+
+        @Override
+        public ExecutorState onTick(MinecraftClient client) {
+            if()
+        }
+    }
+
     /**
-     * First bot need to start flying and get to height at which there are no blocks in current plot
+     * First bot needs to start flying and get to height at which there are no blocks in current plot
      */
     private static class StartFlying implements ExecutorState {
         private static final int spacePressesToFly = 2;
@@ -231,7 +244,7 @@ public class PestKillerExecutor extends BaseExecutor {
                     } else if (deltaPos.y > 1) {
                         // only go down if there are no obstacles, otherwise risk shifting over block and breaking simplistic AI
                         if (!isObstacleBelowPlayer(client.player, 2)) {
-                            if(GlobalExecutorInfo.debugMode.get()) {
+                            if (GlobalExecutorInfo.debugMode.get()) {
                                 SkyblockBot.LOGGER.info("Going down, no obstacles found below player");
                             }
                             MyKeyboard.INSTANCE.press(client.options.sneakKey);
