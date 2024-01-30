@@ -28,6 +28,7 @@ ComplexFarmingTask
 ComplexFarmingTask.pauseInterval: 3600000
 ComplexFarmingTask.checkGuestsInterval: 600000
 ComplexFarmingTask.checkComposterInterval: 600000
+ComplexFarmingTask.checkPestsInterval: 5000
 ComplexFarmingTask.pauseDuration: 600000
 ComplexFarmingTask.intervalBetweenRegularChecks: 30000
 ComplexFarmingTask.godPotBuyThreshold: 1800000

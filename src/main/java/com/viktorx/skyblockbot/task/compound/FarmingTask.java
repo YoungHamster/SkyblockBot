@@ -461,7 +461,7 @@ public class FarmingTask extends CompoundTask {
         @Override
         public void run() {
             // TODO
-            String pestMsg = Utils.getLatestMessageContaining("Pest");
+            String pestMsg = Utils.getUniqueMessageContaining("Pest", 100);
             if(pestMsg != null) {
                 // TODO parse msg for plot and pest name
                 int plot = 1;

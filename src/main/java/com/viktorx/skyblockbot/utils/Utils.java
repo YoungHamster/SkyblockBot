@@ -43,11 +43,15 @@ public class Utils {
      * @return true if recent messages in chat contain str, otherwise false
      */
     public static boolean isStringInRecentChat(String str, int maxBacktrack) {
+        return getUniqueMessageContaining(str, maxBacktrack) == null;
+    }
+
+    public static String getUniqueMessageContaining(String str, int maxBacktrack) {
         ChatHud chat = MinecraftClient.getInstance().inGameHud.getChatHud();
         List<ChatHudLine> messages = ((IChatHudMixin) chat).getMessages();
         if (messages.isEmpty()) {
             SkyblockBot.LOGGER.warn("ERROR! Chat message history is empty, it's weird");
-            return false;
+            return null;
         }
 
         int limit = Math.min(messages.size(), maxBacktrack);
@@ -66,11 +70,11 @@ public class Utils {
             }
             if (messages.get(i).content().getString().contains(str)) {
                 detectedStringsInChatIds.add(msg);
-                return true;
+                return msg.getKey();
             }
         }
 
-        return false;
+        return null;
     }
 
     public static String getLatestMessageContaining(String str) {

@@ -29,12 +29,7 @@ public class PestKillerExecutor extends BaseExecutor {
 
     @Override
     public <T extends BaseTask<?>> ExecutorState whenExecute(T task) {
-        // if already flying then no need to start flying
-        assert MinecraftClient.getInstance().player != null;
-        if (!MinecraftClient.getInstance().player.isFallFlying() && !MinecraftClient.getInstance().player.isOnGround()) {
-            return new FlyToFreeHeight();
-        }
-        return new StartFlying();
+        return new GetToPlot();
     }
 
     private void onTick(MinecraftClient client) {
@@ -50,7 +45,22 @@ public class PestKillerExecutor extends BaseExecutor {
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
-            if()
+            PestKiller pestTask = (PestKiller) PestKillerExecutor.INSTANCE.task;
+            assert client.player != null;
+            if (!pestTask.isPosInsidePlot(client.player.getPos())) {
+                return this;
+            }
+
+            if (!client.player.isFallFlying() && !client.player.isOnGround()) {
+                double freeHeight = ((PestKiller) PestKillerExecutor.INSTANCE.task).findFreeHeight();
+                if (freeHeight == -1) {
+                    SkyblockBot.LOGGER.warn("Can't find free height, whole plot is taken. Aborting pest killer task!");
+                    PestKillerExecutor.INSTANCE.task.abort();
+                    return new Idle();
+                }
+                return new FlyToFreeHeight(freeHeight);
+            }
+            return new StartFlying();
         }
     }
 
@@ -82,63 +92,21 @@ public class PestKillerExecutor extends BaseExecutor {
             shouldBePressedCurrently = !shouldBePressedCurrently;
             if (spacePressedCounter == spacePressesToFly) {
                 SkyblockBot.LOGGER.info("Started flying, going up to free height");
-                return new FlyToFreeHeight();
+
+                double freeHeight = ((PestKiller) PestKillerExecutor.INSTANCE.task).findFreeHeight();
+                if (freeHeight == -1) {
+                    SkyblockBot.LOGGER.warn("Can't find free height, whole plot is taken. Aborting pest killer task!");
+                    PestKillerExecutor.INSTANCE.task.abort();
+                    return new Idle();
+                }
+
+                return new FlyToFreeHeight(freeHeight);
             }
             return this;
         }
     }
 
-    private static class FlyToFreeHeight implements ExecutorState {
-        private static final int plotsize = 96;
-        private static final int maxY = 77;
-        private static final int minY = 67;
-        private final double freeHeight;
-
-        public FlyToFreeHeight() {
-            freeHeight = findFreeHeight(
-                    ((PestKiller) PestKillerExecutor.INSTANCE.task).getPlotNumber());
-            SkyblockBot.LOGGER.info("Found free height: " + freeHeight);
-        }
-
-        private double findFreeHeight(int plotNumber) {
-            int minx = -1;
-            int minz = -1;
-
-            // TODO - get rid of this loop
-            for (int i = 0; i < 5; i++) {
-                for (int j = 0; j < 5; j++) {
-                    if (PestKiller.gardenPlotMap[i][j] == plotNumber) {
-                        minz = (int) ((i - 2.5) * plotsize);
-                        minx = (int) ((j - 2.5) * plotsize);
-
-                        if (GlobalExecutorInfo.debugMode.get()) {
-                            SkyblockBot.LOGGER.info("Found plots min x and z. i = " + i + ", j = " + j);
-                        }
-                    }
-                }
-            }
-
-            if (GlobalExecutorInfo.debugMode.get()) {
-                SkyblockBot.LOGGER.info("minX = " + minx + ", minZ = " + minz);
-            }
-
-            boolean goToNextY = false;
-            for (int y = minY; y < maxY; y++) {
-                for (int x = minx; (x < minx + plotsize) && !goToNextY; x++) {
-                    for (int z = minz; (z < minz + plotsize) && !goToNextY; z++) {
-                        if (Utils.isBlockSolid(new BlockPos(x, y, z))) {
-                            goToNextY = true;
-                        }
-                    }
-                }
-                if (!goToNextY) {
-                    return y;
-                }
-                goToNextY = false;
-            }
-
-            return -1;
-        }
+    private record FlyToFreeHeight(double freeHeight) implements ExecutorState {
 
         @Override
         public ExecutorState onTick(MinecraftClient client) {
@@ -148,6 +116,18 @@ public class PestKillerExecutor extends BaseExecutor {
                 return this;
             }
             MyKeyboard.INSTANCE.unpress(client.options.jumpKey);
+
+                /* This case is when findFreeHeight method failed to find free height when executor got to this state
+                    most likely because all Y levels are occupied
+                    Execution order:
+                    1. constructor of this state calls executor.abort() which set executor state to Idle
+                    2. constructor finishes and executor state is set to this
+                    3. on next tick we get to this if clause and finally set executor to idle
+                 */
+            if (freeHeight == -1) {
+                return new Idle();
+            }
+
             if (GlobalExecutorInfo.debugMode.get()) {
                 SkyblockBot.LOGGER.info("Got to free height, current y = " + client.player.getPos().y);
             }
