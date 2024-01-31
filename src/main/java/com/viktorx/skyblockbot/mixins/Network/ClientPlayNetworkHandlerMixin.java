@@ -2,25 +2,41 @@ package com.viktorx.skyblockbot.mixins.Network;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.viktorx.skyblockbot.utils.CurrentInventory;
 import com.viktorx.skyblockbot.task.GlobalExecutorInfo;
 import com.viktorx.skyblockbot.task.base.replay.ReplayExecutor;
+import com.viktorx.skyblockbot.utils.CurrentInventory;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.network.NetworkThreadUtils;
+import net.minecraft.network.encryption.PublicPlayerSession;
+import net.minecraft.network.message.*;
 import net.minecraft.network.packet.s2c.play.*;
+import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.text.Text;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
+import static com.viktorx.skyblockbot.SkyblockBot.LOGGER;
 
 @Mixin(ClientPlayNetworkHandler.class)
-public class ClientPlayNetworkHandlerMixin {
+public abstract class ClientPlayNetworkHandlerMixin {
+    @Shadow(remap = false)
+    private MessageSignatureStorage signatureStorage;
+
+    @Shadow(remap = false)
+    @Final
+    private DynamicRegistryManager.Immutable combinedDynamicRegistries;
 
     @Inject(method = "onInventory", at = @At("HEAD"))
     public void interceptInventory(InventoryS2CPacket packet, CallbackInfo ci) {
@@ -88,7 +104,7 @@ public class ClientPlayNetworkHandlerMixin {
             // if decrease string contains 'last' then no items were taken out of sacks
             // and chat message looks like '[Sacks] +25 items. (Last 30s.)' instead of '[Sacks] +733 items, -594 items. (Last 30s.)'
             String decrease = split[3];
-            if(!decrease.contains("Last")) {
+            if (!decrease.contains("Last")) {
                 decrease = decrease.substring(1);
                 delta -= Integer.parseInt(decrease.replace(",", ""));
             }
@@ -140,4 +156,44 @@ public class ClientPlayNetworkHandlerMixin {
             return;
         }
     }
+
+    /**
+     * @author viktorX
+     * @reason Дормоеды ебаные at microsoft think they can decide which chat messages i can see, and which can't
+     */
+    @Overwrite(remap = false)
+    public void onChatMessage(ChatMessageS2CPacket packet) {
+        NetworkThreadUtils.forceMainThread(packet, (ClientPlayNetworkHandler) ((Object) this), MinecraftClient.getInstance());
+        Optional<MessageBody> optional = packet.body().toBody(this.signatureStorage);
+        Optional<MessageType.Parameters> optional2 = packet.serializedParameters().toParameters(this.combinedDynamicRegistries);
+        if (optional.isPresent() && optional2.isPresent()) {
+            this.signatureStorage.add(optional.get(), packet.signature());
+            UUID uUID = packet.sender();
+            PlayerListEntry playerListEntry = this.getPlayerListEntry(uUID);
+
+            if (playerListEntry == null) {
+                LOGGER.error("Received player chat packet for unknown player with ID: {}", uUID);
+                MessageLink messageLink = MessageLink.of(uUID);
+
+                SignedMessage signedMessage = new SignedMessage(messageLink, packet.signature(), optional.get(), packet.unsignedContent(), packet.filterMask());
+                MinecraftClient.getInstance().getMessageHandler().onChatMessage(signedMessage, new GameProfile(uUID, "Unknown"), optional2.get());
+            } else {
+                PublicPlayerSession publicPlayerSession = playerListEntry.getSession();
+                MessageLink messageLink;
+                if (publicPlayerSession != null) {
+                    messageLink = new MessageLink(packet.index(), uUID, publicPlayerSession.sessionId());
+                } else {
+                    messageLink = MessageLink.of(uUID);
+                }
+
+                SignedMessage signedMessage = new SignedMessage(messageLink, packet.signature(), optional.get(), packet.unsignedContent(), packet.filterMask());
+                MinecraftClient.getInstance().getMessageHandler().onChatMessage(signedMessage, playerListEntry.getProfile(), optional2.get());
+            }
+        } else {
+            Objects.requireNonNull(MinecraftClient.getInstance().getNetworkHandler()).getConnection().disconnect(Text.translatable("multiplayer.disconnect.invalid_packet"));
+        }
+    }
+
+    @Shadow(remap = false)
+    public abstract PlayerListEntry getPlayerListEntry(UUID uuid);
 }
