@@ -8,6 +8,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 
+/**
+ * This may be considered a compound task, because it depends on Replay task for searching pest inside given plot,
+ * but i'll count it as a base task, because its architecture is same as other base tasks
+ */
 public class PestKiller extends BaseTask<PestKillerExecutor> {
     public static final int[][] gardenPlotMap = {{21, 13, 9, 14, 22},
             {15, 5, 1, 6, 16},

@@ -47,8 +47,10 @@ public class PestKillerExecutor extends BaseExecutor {
         public ExecutorState onTick(MinecraftClient client) {
             PestKiller pestTask = (PestKiller) PestKillerExecutor.INSTANCE.task;
             assert client.player != null;
-            if (!pestTask.isPosInsidePlot(client.player.getPos())) {
-                return this;
+            if(!GlobalExecutorInfo.debugMode.get()) {
+                if (!pestTask.isPosInsidePlot(client.player.getPos())) {
+                    return this;
+                }
             }
 
             if (!client.player.isFallFlying() && !client.player.isOnGround()) {

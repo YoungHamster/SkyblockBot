@@ -10,8 +10,7 @@
     "PlayerListHudMixin",
     "InputRelated.KeyBindingMixin",
     "Network.ClientConnectionMixin",
-    "Network.ClientPlayNetworkHandlerMixin",
-    "Network.YggdrasilMinecraftSessionServiceMixin"
+    "Network.ClientPlayNetworkHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

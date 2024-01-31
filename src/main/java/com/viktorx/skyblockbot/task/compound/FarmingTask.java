@@ -170,6 +170,11 @@ public class FarmingTask extends CompoundTask {
      * it also does /warp garden if it is in garden, but not on the garden plot and returns true in that case
      */
     private boolean checkIfOnGarden() {
+        // If in debug mode i want bot to think it's on garden
+        if(GlobalExecutorInfo.debugMode.get()) {
+            return true;
+        }
+
         if (!SBUtils.isServerSkyblock()) {
             currentTask = getToSkyblock;
             return false;
@@ -200,7 +205,7 @@ public class FarmingTask extends CompoundTask {
     }
 
     private void debugExecute() {
-        currentTask = gardenVisitorsTask;
+        currentTask = farm;
         currentTask.execute();
     }
 
@@ -213,16 +218,15 @@ public class FarmingTask extends CompoundTask {
         SkyblockBot.LOGGER.info("Debug mode: " + GlobalExecutorInfo.debugMode.get());
         if (GlobalExecutorInfo.debugMode.get()) {
             debugExecute();
-            return;
+        } else {
+            if (checkIfOnGarden()) {
+                currentTask = farm;
+            }
+            currentTask.execute();
         }
 
         runWhenFarmCompleted.clear();
         taskQueue.clear();
-
-        if (checkIfOnGarden()) {
-            currentTask = farm;
-        }
-        currentTask.execute();
 
         timers.forEach(timer -> {
             timer.cancel();
@@ -463,9 +467,10 @@ public class FarmingTask extends CompoundTask {
             // TODO
             String pestMsg = Utils.getUniqueMessageContaining("Pest", 100);
             if(pestMsg != null) {
+                SkyblockBot.LOGGER.info("Queueing to kill pest");
                 // TODO parse msg for plot and pest name
                 int plot = 1;
-                String pestName = "Moth";
+                String pestName = "Peeper";
                 taskQueue.add(new PestKiller(pestName, plot,
                         FarmingTask.this::defaultWhenCompleted,
                         FarmingTask.this::defaultWhenAborted));
