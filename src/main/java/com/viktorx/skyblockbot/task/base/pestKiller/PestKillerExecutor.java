@@ -47,7 +47,7 @@ public class PestKillerExecutor extends BaseExecutor {
         public ExecutorState onTick(MinecraftClient client) {
             PestKiller pestTask = (PestKiller) PestKillerExecutor.INSTANCE.task;
             assert client.player != null;
-            if(!GlobalExecutorInfo.debugMode.get()) {
+            if (!GlobalExecutorInfo.debugMode.get()) { // if in debug mode then skip waiting for plottp and get to flying
                 if (!pestTask.isPosInsidePlot(client.player.getPos())) {
                     return this;
                 }
@@ -167,11 +167,14 @@ public class PestKillerExecutor extends BaseExecutor {
 
             Entity pest = Utils.getClosestEntity(pestTask.getPestName());
             if (pest != null) {
-                pestFindingReplay.abort();
+                // ignore pest if it's outside target plot
+                if (pestTask.isPosInsidePlot(pest.getPos())) {
+                    pestFindingReplay.abort();
 
-                Vec3d pestPos = pest.getPos();
-                SkyblockBot.LOGGER.info("Found pest at x: " + pestPos.x + " y: " + pestPos.y + " z: " + pestPos.z + ", getting close to it");
-                return new GetCloseToPest(pest);
+                    Vec3d pestPos = pest.getPos();
+                    SkyblockBot.LOGGER.info("Found pest at x: " + pestPos.x + " y: " + pestPos.y + " z: " + pestPos.z + ", getting close to it");
+                    return new GetCloseToPest(pest);
+                }
             }
 
             return this;
